@@ -1,0 +1,32 @@
+---
+title: "Problem Description"
+author: "Ulrike Genschel, Kiegan Rice"
+output: html_document
+---
+
+#### Things to make sure we have loaded when working with this data:  
+
+```{r, message = FALSE, warning = FALSE}
+library(devtools)
+library(tidyverse)
+devtools::install_github("erichare/bulletr")
+library(bulletr)
+```
+
+#### How can we identify the location of the grooves at the edge of a bullet land?  
+_What information do we have?_  
+
+1. 3D bullet scan data in x3p format: in a matrix, values are 'z' (height) values.  
+2. 3D bullet scan data in data frame format: using `fortify_x3p` from Eric's `bulletr` package, we can get `x`, `y`, and `value` columns. These `x` and `y` have been converted to the actual micrometer location values instead of indices.  
+3. Profiles of bullet lands   
+    + For a specific value of `x`, we can plot the profile by plotting `z` vs the `y` values.  
+  
+
+```{r, warning = FALSE}
+br411_df <- bulletr::fortify_x3p(br411)
+br411_df %>% filter(between(x, 100, 110)) %>% ggplot() + geom_point(aes(x = y, y = value), size = .1)
+```
+
+4. `get_grooves` function in `bulletr` package. This is the current method of identifying the grooves at the edge of the bullet lands.  
+    + 
+    
