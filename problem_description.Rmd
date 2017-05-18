@@ -27,6 +27,10 @@ br411_df <- bulletr::fortify_x3p(br411)
 br411_df %>% filter(between(x, 100, 110)) %>% ggplot() + geom_point(aes(x = y, y = value), size = .1)
 ```
 
-4. `get_grooves` function in `bulletr` package. This is the current method of identifying the grooves at the edge of the bullet lands.  
-    + 
+4. `get_grooves` function in `bulletr` package. This is the current method of identifying the grooves at the edge of the bullet lands. According to Eric's dissertation (not the code in `bulletr`):  
+    + This is an algorithm that first finds the peak of the groove and follows the descent inwards to find the valley of the groove. 
+    + Uses a rolling average with a smoothing factor and applies this smoothing twice.  
+    + Once the profile has been twice-smoothed, it identifies the maximum (peak) and then minimum (valley)
+    + It finds the peak by finding the first doubly-smoothed value $y_i$ that is a maximum within its smoothing window {$y_i > y_{i-1}$ and $y_i > y_{i+1}$, $i \in (1, \lfloor\frac{s}{2}\rfloor)$}
+    + It then finds the valley by finding the first doubly-smoothed value $y_j$ that is a minimum within its smoothing window {$y_j < y_{j-1}$ and $y_j  < y_{j+1}$}.
     
