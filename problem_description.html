@@ -156,6 +156,16 @@ br411_df %&gt;% filter(between(x, 100, 110)) %&gt;% ggplot() + geom_point(aes(x 
 <li>It then finds the valley by finding the first doubly-smoothed value <span class="math inline">\(y_j\)</span> that is a minimum within its smoothing window {<span class="math inline">\(y_j &lt; y_{j-1}\)</span> and <span class="math inline">\(y_j &lt; y_{j+1}\)</span>}.</li>
 </ul></li>
 </ol>
+<p><em>Questions we have about the algorithm</em></p>
+<ol style="list-style-type: decimal">
+<li><span class="math inline">\(S\)</span>, the smoothing factor: how is this determined?<br />
+</li>
+<li>Y values at the end points, before <span class="math inline">\(y_{18}\)</span> and after <span class="math inline">\(y_{n-18}\)</span><br />
+</li>
+<li>Why the second smoothing? Paper explains, but not super clear still.<br />
+</li>
+<li>Indexing: why <span class="math inline">\(i \in (1, \lfloor\frac{s}{2}\rfloor)\)</span></li>
+</ol>
 </div>
 
 

@@ -34,3 +34,14 @@ br411_df %>% filter(between(x, 100, 110)) %>% ggplot() + geom_point(aes(x = y, y
     + It finds the peak by finding the first doubly-smoothed value $y_i$ that is a maximum within its smoothing window {$y_i > y_{i-1}$ and $y_i > y_{i+1}$, $i \in (1, \lfloor\frac{s}{2}\rfloor)$}
     + It then finds the valley by finding the first doubly-smoothed value $y_j$ that is a minimum within its smoothing window {$y_j < y_{j-1}$ and $y_j  < y_{j+1}$}.
     
+    
+    
+_Questions we have about the algorithm_  
+
+1. $S$, the smoothing factor: how is this determined?  
+2. Y values at the end points, before $y_{18}$ and after $y_{n-18}$  
+3. Why the second smoothing? Paper explains, but not super clear still.  
+4. Indexing: why $i \in (1, \lfloor\frac{s}{2}\rfloor)$  
+5. The identified grooves in the 'profiles' table - are those correct, and to be used for reference?  
+
+
