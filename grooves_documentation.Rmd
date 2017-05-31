@@ -19,7 +19,16 @@ How does the get_grooves_rollapply function work?
 
 4. Once there is a height value for each index, the function next applies a rolling average to the filled in data. This is done using the `rollapply` function and taking the mean of each window. By default, `rollapply` replaces the center value of the window with the resulting value from whichever function is passed to it (here, the mean). The parameter `smoothfactor`, which the user can specify, determines the width of this window. There is a `partial` parameter in `rollapply` which allows the `FUN` to be applied even when not all of the indices of the window are in the observed range of data. Here, this is set to the default (`FALSE`), so each time smoothing is applied to the object, the first $\lfloor\frac{s}{2}\rfloor$ and the last $\lfloor\frac{s}{2}\rfloor$ values will not have a calculated value ($s$ is the width whose value is passed to `smoothfactor`). Smoothing is applied a second time, meaning that we end up with $4\times\lfloor\frac{s}{2}\rfloor$ fewer observations. This could potentially present an issue if the groove happens to be very close to the edge of the crosscut (either to the very left or very right). However, if the user supplies a very wide smoothing window, that could result in a pretty significant loss of information on the ends of the bullet crosscut. That parameter should also be set with caution in order to avoid over-smoothing of the data, which could remove the ability to identify peaks and valleys.  
 
-5. Following the second smoothing of the crosscut, we are left with `smoothed_truefalse`.  
+5. Following the second smoothing of the crosscut, we are left with `smoothed_truefalse`. The `rollapply` function is used once again, now to identify where the peak of the groove is. Instead of taking a rolling average, a window of size 3 is used to find indices where the middle value - the $2^{nd}$ index in the window - is the maximum. That is, it locates the value $i$ such that $y_i > y_{i+1}$ and $y_i > y_{i-1}$. Once all of these $i$ locations are found, it takes the first instance of that maximum and sets it to be the `peak_ind` (index of the peak), adding back the missing indices ($2\times\lfloor\frac{s}{2}\rfloor$) so that it will directly translate to the original indices of `bullet$value`.    
+
+6. The next step is to identify the groove. This is done by removing all values up to the peak, then applying the same method of finding the locations where the second value in a window of width three is the minimum. The first location where this happens is noted as the `groove_ind` (index of the groove), after adding back the missing indices that were lost during smoothing.  
+
+7. The same process is followed to find the right groove, but the `rev` function is applied to the vector `smoothed_truefalse` so that the indices are flipped and we are approaching the peak and groove from the right. This results in `peak_ind2` and `groove_ind2` values. If any of these peaks or grooves are not found, the grooves are set to be the first and last indices of the original data.  
+
+8. Finally, the function returns a list: first, the values of the grooves as `groove`, with an adjustment (this is a parameter, `adjust`, which moves the values of the grooves closer to the center of the bullet for a positive value and further away for a negative value). Secondly, there is also a plot of the original data as a line with the located grooves as vertical blue lines.  
+
+
+
 
 ```{r}
 
