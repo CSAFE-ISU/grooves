@@ -158,13 +158,20 @@ br411_df %&gt;% filter(between(x, 100, 110)) %&gt;% ggplot() + geom_point(aes(x 
 </ol>
 <p><em>Questions we have about the algorithm</em></p>
 <ol style="list-style-type: decimal">
-<li><span class="math inline">\(S\)</span>, the smoothing factor: how is this determined?<br />
-</li>
-<li>Y values at the end points, before <span class="math inline">\(y_{18}\)</span> and after <span class="math inline">\(y_{n-18}\)</span><br />
-</li>
+<li><p><span class="math inline">\(S\)</span>, the smoothing factor: how is this determined?<br />
+<em>Somewhere between cross validation and ad-hoc. Not sure which.</em></p></li>
+<li><p>Y values at the end points, before <span class="math inline">\(y_{18}\)</span> and after <span class="math inline">\(y_{n-18}\)</span><br />
+<em>NA values for the first 18</em></p></li>
 <li>Why the second smoothing? Paper explains, but not super clear still.<br />
+<em>Results are better</em><br />
 </li>
-<li>Indexing: why <span class="math inline">\(i \in (1, \lfloor\frac{s}{2}\rfloor)\)</span></li>
+<li>Indexing: why <span class="math inline">\(i \in (1, \lfloor\frac{s}{2}\rfloor)\)</span><br />
+</li>
+<li>The identified grooves in the ‘profiles’ table - are those correct, and to be used for reference?<br />
+<em>Function with multiple methods for finding the grooves</em><br />
+</li>
+<li><p>Is the function taking the rolling median or the rolling mean?<br />
+<em>The mean</em></p></li>
 </ol>
 </div>
 

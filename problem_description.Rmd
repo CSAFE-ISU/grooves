@@ -39,9 +39,29 @@ br411_df %>% filter(between(x, 100, 110)) %>% ggplot() + geom_point(aes(x = y, y
 _Questions we have about the algorithm_  
 
 1. $S$, the smoothing factor: how is this determined?  
+_Somewhere between cross validation and ad-hoc. Not sure which._  
+
 2. Y values at the end points, before $y_{18}$ and after $y_{n-18}$  
+_NA values for the first 18_  
+
 3. Why the second smoothing? Paper explains, but not super clear still.  
+_Results are better_  
 4. Indexing: why $i \in (1, \lfloor\frac{s}{2}\rfloor)$  
 5. The identified grooves in the 'profiles' table - are those correct, and to be used for reference?  
+_Function with multiple methods for finding the grooves_  
+6. Is the function taking the rolling median or the rolling mean?  
+_The mean_  
 
+
+
+
+```{r, echo = FALSE}
+## Phoenix PD bullets - can get access to the CSAFE part of the las server
+## Parameter settings are sensitive to resolution
+## Random forest fails on Phoenix PD bullets
+## Features - Dr. Hofmann working on this for next week
+
+## Chumbley stuff - bigger window allows for better alignment, but more reps is also good and you can't really do both
+## get_chumbley() - not doing the best, parameter settings can have a big effect
+```
 
