@@ -1,0 +1,26 @@
+---
+title: "Grooves Documentation"
+output: html_document
+---
+
+
+## get_grooves_rollapply function  
+How does the get_grooves_rollapply function work?  
+
+1. The function begins by saving the `bullet` data frame into the object `original_bullet`. This means that `bullet` can be manipulated, but we still maintain the original structure and data in `original_bullet` for plotting.  
+
+
+2. If a the `mean_left` and `mean_right` parameters have values, that means the user has supplied an average location of the left groove or right groove for that particular land of the bullet. If that is the case, the function identifies the relevant indices for the average left groove and right groove locations. It also takes a `mean_window` parameter which allows the user to specify how large of a window around this average value to keep when the user applies the rest of the algorithm. Subject to still being within the range of indices of the original `bullet` data frame, this `mean_window` is added and subtracted from the average value, and the `bullet` data frame is updated to only include the rows corresponding to the indices in the two windows - around the left groove and right groove. This has the advantage of reducing the amount of data the algorithm needs to smooth and compare in order to identify the grooves.  
+
+3. Moving forward, the `bullet$value` object - either reduced using the average locations or the full original bullet - is filled in with the `na.fill` function. This function, using the argument "extend", fills in missing values in the following way: 
+    - If there are missing values on the "left" of the data (indices starting at row 1), it fills in by repeating the leftmost non-NA value. 
+    - If there are missing values on the "right" of the data (indices ending at the final row), it fills in by repeating the rightmost non-NA value.  
+    - If there are missing values on the interior of the data, it fills in by using linear interpolation.  
+
+4. Once there is a height value for each index, the function next applies a rolling average to the filled in data. This is done using the `rollapply` function and taking the mean of each window. By default, `rollapply` replaces the center value of the window with the resulting value from whichever function is passed to it (here, the mean). The parameter `smoothfactor`, which the user can specify, determines the width of this window. There is a `partial` parameter in `rollapply` which allows the `FUN` to be applied even when not all of the indices of the window are in the observed range of data. Here, this is set to the default (`FALSE`), so each time smoothing is applied to the object, the first $\lfloor\frac{s}{2}\rfloor$ and the last $\lfloor\frac{s}{2}\rfloor$ values will not have a calculated value ($s$ is the width whose value is passed to `smoothfactor`). Smoothing is applied a second time, meaning that we end up with $4\times\lfloor\frac{s}{2}\rfloor$ fewer observations. This could potentially present an issue if the groove happens to be very close to the edge of the crosscut (either to the very left or very right). However, if the user supplies a very wide smoothing window, that could result in a pretty significant loss of information on the ends of the bullet crosscut. That parameter should also be set with caution in order to avoid over-smoothing of the data, which could remove the ability to identify peaks and valleys.  
+
+5. Following the second smoothing of the crosscut, we are left with `smoothed_truefalse`.  
+
+```{r}
+
+```
