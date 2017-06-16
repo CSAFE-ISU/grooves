@@ -3,6 +3,7 @@ title: "Grooves Test"
 output: html_document
 ---
 
+## THIS FILE ONLY WORKS WHEN CONNECTED TO THE CSAFE SERVER, WHERE THE DATABASE IS LOCATED ##
 ```{r}
 library(RMySQL)
 library(tidyverse)
