@@ -1,0 +1,128 @@
+---
+title: "Grooves Test"
+output: html_document
+---
+
+```{r}
+library(RMySQL)
+library(tidyverse)
+library(devtools)
+library(gridExtra)
+devtools::install_github("kiegan/bulletr")
+library(bulletr)
+
+dbname <- "bullets"
+user <- "buser"
+password <- readLines("buser_pass.txt")
+host <- "127.0.0.1"
+
+library(dbplyr)
+con <- src_mysql(dbname, host, user=user, password=password)
+
+```
+
+```{r}
+signatures <- tbl(con, "signatures")
+signatures %>% head()
+
+sig_df <- signatures %>% filter(run_id == 1, profile_id > 249015) %>% collect()
+
+## with the run_id == 1, the first 100,000 results get us to profile_id == 41025. this produces multipage.pdf.
+## using profile_id > 41025 in addition to run_id == 1, the next 100,000 get us to profile_id == 82979. this produces multipage2.pdf.
+## etc...
+## > 82979 gives multipage3.pdf.
+## > 124522 gives multipage4.pdf
+## > 166081 gives multipage5.pdf
+## > 208726 gives multipage6.pdf
+## > 249015 gives multipage7.pdf - the last one! 
+
+profiles <- tbl(con, "profiles")
+head(profiles)
+
+which_profiles <- unique(sig_df$profile_id)
+which_profiles <- profiles %>% filter(profile_id %in% which_profiles) %>% collect()
+
+metadata <- tbl(con, "metadata")
+head(metadata)
+
+which_lands <- unique(which_profiles$land_id)
+which_lands <- metadata %>% filter(land_id %in% which_lands) %>% collect()
+
+head(sig_df)
+
+
+sig_df_test <- sig_df %>% select(profile_id, run_id, y, value) %>% nest(-profile_id, -run_id)
+
+sig_df_test <- left_join(sig_df_test, which_profiles, by = c("profile_id", "run_id"))
+sig_df_test <- left_join(sig_df_test, which_lands, by = "land_id") 
+sig_df_test <- sig_df_test %>% select(profile_id, run_id, data, land_id, x, study, barrel, bullet, land)
+sig_df_test <- sig_df_test %>% mutate(id_name = paste(study, paste0("bar", barrel), paste0("B", bullet), paste0("land", land), sep = "_"))
+sig_df_test <- sig_df_test %>% unnest() %>% nest(-profile_id, -run_id) 
+
+
+sig_df_test <- sig_df_test %>% mutate(grooves = purrr::map(data, .f = function(x){
+  bulletr::get_grooves(bullet = x, method = "rollapply")$plot
+}))
+
+
+ml <- marrangeGrob(sig_df_test$grooves, ncol = 2, nrow = 3)
+ggsave(ml, file = "multipage7.pdf")
+
+#ml <- grid.arrange(sig_df_test$grooves, ncol = 3, nrow = 4, newpage = TRUE)
+
+
+## hamby set 252, hamby set 44, cary are the three sets ## 
+```
+
+
+
+```{r}
+data <- tbl(con, "data")
+
+which_land <- 1
+land <- data %>% filter(land_id == which_land) %>% collect(n = Inf)
+metadata <- tbl(con, "metadata")
+which_lands <- metadata %>% filter(land_id %in% which_land) %>% collect()
+which_lands <- which_lands %>% mutate(id_name = paste(study, paste0("bar", barrel), paste0("B", bullet), paste0("land", land), sep = "_"))
+
+land$id_name <- which_lands$id_name
+
+get_grooves_multiple <- function(which_land, resolution = 1.5625){
+  land <- data %>% filter(land_id == which_land) %>% collect(n = Inf)
+  land <- land[as.numeric(rownames(land))%%3 != 0,]
+  metadata <- tbl(con, "metadata")
+  which_lands <- metadata %>% filter(land_id %in% which_land) %>% collect()
+  which_lands <- which_lands %>% mutate(id_name = paste(study, paste0("bar", barrel), paste0("B", bullet), paste0("land", land), sep = "_"))
+  land$id_name <- which_lands$id_name
+  grooves_loc <- seq(min(land$x), max(land$x), by = 1.5625*40)
+  land_slices <- land %>% filter(x %in% grooves_loc) %>% nest(-x)
+  land_slices <- land_slices %>% mutate(grooves = purrr::map(data, .f = function(x){
+    bulletr::get_grooves(bullet = x, method = "rollapply")$groove
+  }), plots = purrr::map(data, .f = function(x){
+    bulletr::get_grooves(bullet = x, method = "rollapply")$plot
+  }))
+  land_slices_un <- land_slices %>% unnest(grooves) %>% mutate(left_right = rep(c("left", "right"), times = length(unique(land_slices$x))))
+  which_x <- land_slices$x[3]
+  land_plot <- ggplot() + geom_point(data = land, aes(x = y, y = x, colour = value)) + theme(legend.position = "none") + 
+    geom_path(data = land_slices_un, aes(x = grooves, y = x, group = left_right), colour = "red") + 
+    geom_point(data = land_slices_un, aes(x = grooves, y = x), colour = "red") + 
+    geom_point(data = land_slices_un[land_slices_un$x == which_x,], aes(x = grooves, y = x), colour = "green")
+  crosscut_plot <- land_slices[land_slices$x == which_x,]$plots[[1]]
+  grid.arrange(land_plot, crosscut_plot, ncol = 1)
+}
+
+get_grooves_multiple(which_land = 1, resolution = 1.5625)
+
+
+```
+
+```{r}
+#1:510?
+lands_test <- 1:20
+
+plots <- lapply(lands_test, FUN = function(x) get_grooves_multiple(x))
+
+ml <- marrangeGrob(plots, ncol = 2, nrow = 2)
+ggsave(ml, file = "multiple_grooves.pdf")
+
+```
