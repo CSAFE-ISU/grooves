@@ -1,0 +1,26 @@
+---
+title: "Automated Methods for Groove Identification in 3D Bullet Land Scans"
+author: "Kiegan Rice"
+output: pdf_document
+---
+
+
+Goal: come up with a description for each of the methods and write them out.  
+
+
+## Method 1: Rollapply  
+
+**function name**: `get_grooves_rollapply` or `get_grooves(method = "rollapply")`
+
+```{r}
+
+```
+
+## Method 2: Robust Linear Model (4*Median Cutoff)   
+
+## Method 3: Positive Residuals Cutoff  
+
+
+## Method 4: Median Absolute Deviation Cutoff  
+
+## Method 5: Predicting Groove Sides  
