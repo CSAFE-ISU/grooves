@@ -7,6 +7,7 @@ output: pdf_document
 
 Goal: come up with a description for each of the methods and write them out.  
 
+# Description of Methods  
 
 ## Method 1: Rollapply  
 
@@ -18,9 +19,74 @@ Goal: come up with a description for each of the methods and write them out.
 
 ## Method 2: Robust Linear Model (4*Median Cutoff)   
 
+**function name**: `get_grooves_quadratic` or `get_grooves(method = "quadratic")`  
+
+Steps:  
+\begin{enumerate}
+\item Fit a robust linear model of order 2 to the averaged profile of the bullet land. This is fit using the default methods of the `rlm` function.  
+\item Calculate the absolute residuals of this model fit.  
+\item Remove all values that are more than 4 times the median absolute residual value.  
+\item Extract the range of remaining values. These are the groove locations that are reported.  
+\end{enumerate}
+
 ## Method 3: Positive Residuals Cutoff  
+
+Steps: 
+\begin{enumerate}
+\item Fit a robust linear model of order 2 to the averaged profile of the bullet land. This is fit using the default methods of the `rlm` function. 
+\item Calculate the residuals (*note: not the absolute residuals*) of this model fit. 
+\item Remove all points that have positive residuals.  
+  \begin{itemize}
+  \item Rationale: We expect the grooves to have very high positive residual values, and the robust linear model fit should lead to both positive and negative residuals within the land itself (in the area that we want to focus on).  
+  \end{itemize}
+\item Extract the range of remaining values. These are the groove locations that are reported.  
+\end{enumerate}
 
 
 ## Method 4: Median Absolute Deviation Cutoff  
+Steps: 
+\begin{enumerate}
+\item Fit a robust linear model of order 2 to the averaged profile of the bullet land. This is fit using the default methods of the `rlm` function.  
+\item Calculate the absolute residuals of this model fit.  
+\item Calculate the median absolute deviation of the absolute residuals (using the `mad` function).  
+\item Remove all points that have an absolute residual higher than the median absolute deviation.  
+  \begin{itemize}
+  \item Rationale: The median absolute deviation might give us a good cutoff because it would remove high outlying residual values (like those we expect to see in the grooves)
+  \item Question: Do we actually want to use the MAD itself? 
+  \end{itemize}
+\item Extract the range of remaining values. These are the groove locations that are reported.  
+\end{enumerate}
 
 ## Method 5: Predicting Groove Sides  
+
+Steps: 
+\begin{enumerate}
+\item Fit a robust linear model of order 2 to the averaged profile of a bullet land.  
+\item 
+\end{enumerate}
+
+
+
+# Metrics for Comparing Performance of Methods  
+
+## Metric 1:  Sums of Absolute Residuals Between True Groove, Predicted Groove  
+
+Steps:  
+\begin{enumerate}
+\item Identify predicted groove on each side. 
+\item Store the residuals from the robust linear model.  
+\item Extract the range of y values *between* the predicted left groove and manually identified left groove.
+\item Sum the residuals that occur within that range of y values.  
+\item Repeat steps 3-4 for the right groove.  
+\item Two methods of looking at these: 
+  \begin{enumerate}
+  \item Repeat for different methods, and compare the sums across the same set of lands.  
+  \item Repeat for different methods, and create comparative boxplots (again, across the same set of lands) to visually investigate whether methods are reducing large errors.  
+  \end{enumerate}
+\end{enumerate}
+
+Drawbacks:  
+\begin{enumerate}
+\item Doesn't treat "underpredicting" (not cutting off groove) and "overpredicting" (cutting off extra bullet land) differently - just sums residuals.  
+\item Is dependent on the robust linear model, because it uses the residuals from that model. So when that model is a bad fit, we will get lots of wonky things anyways.  
+\end{enumerate}
