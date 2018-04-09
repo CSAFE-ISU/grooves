@@ -654,7 +654,7 @@ sum_resid_right_m1 <- function(datafile, which_bullet){
 
 
 hamby44$rdiff_resid_sum_m1 <- 0
-for (i in 1:208){
+for (i in 1:nrow(hamby44)){
   hamby44$rdiff_resid_sum_m1[i] <- sum_resid_right_m1(datafile = hamby44, which_bullet = i)
 }
 
@@ -668,7 +668,7 @@ sum_resid_left_m1 <- function(datafile, which_bullet){
 }
 
 hamby44$ldiff_resid_sum_m1 <- 0
-for (i in 1:208){
+for (i in 1:nrow(hamby44)){
   hamby44$ldiff_resid_sum_m1[i] <- sum_resid_left_m1(datafile = hamby44, which_bullet = i)
 }
 
@@ -742,7 +742,7 @@ sum_resid_right_m2 <- function(datafile, which_bullet){
 
 
 hamby44$rdiff_resid_sum_m2 <- 0
-for (i in 1:208){
+for (i in 1:nrow(hamby44)){
   hamby44$rdiff_resid_sum_m2[i] <- sum_resid_right_m2(datafile = hamby44, which_bullet = i)
 }
 
@@ -756,7 +756,7 @@ sum_resid_left_m2 <- function(datafile, which_bullet){
 }
 
 hamby44$ldiff_resid_sum_m2 <- 0
-for (i in 1:208){
+for (i in 1:nrow(hamby44)){
   hamby44$ldiff_resid_sum_m2[i] <- sum_resid_left_m2(datafile = hamby44, which_bullet = i)
 }
 
@@ -813,7 +813,150 @@ resids_dframe %>%
 
 
 
+## Predicting which sides have grooves  
 
+We want to next try a two-step process: First, predicting which sides have grooves; then, based on whether the side has a groove or not, iteratively trimming down the data on that side until we get values that are very similar to the rollapply values.  
+
+
+I am first going to explore what y values the groove locations usually take on.  
+
+```{r explore-groove-locations, echo = F, warning = F, message = F}
+
+hamby44$left_groove <- 0
+hamby44$right_groove <- 0
+for(i in 1:nrow(hamby44)){
+  hamby44$left_groove[i] <- hamby44$grooves[[i]]$groove[1]
+  hamby44$right_groove[i] <- hamby44$grooves[[i]]$groove[2]
+}
+
+summary(hamby44$left_groove) # Left grooves, from 15.48 to 543.74
+summary(hamby44$right_groove) # Right grooves, from 1872 to 2351
+
+hamby44 %>% ggplot() + geom_histogram(aes(x = left_groove), fill = "salmon")  + 
+  geom_histogram(aes(x = right_groove), fill = "turquoise") + 
+  labs(x = "Groove Locations") + theme_bw()
+```
+
+Now, let's take a look at summing up residuals from 0 to the highest left groove location, and from the lowest right groove location up to the max y value.  
+
+```{r, echo = F, warning = F, message = F}
+hamby44 <- hamby44 %>% mutate(left_resid_sum = purrr::map_dbl(ccdata_w_resid, .f = function(bullet){
+  bullet <- bullet %>% filter(y < 600) 
+  sum(bullet$resid, na.rm = T)
+}), 
+right_resid_sum = purrr::map_dbl(ccdata_w_resid, .f = function(bullet){
+  bullet <- bullet %>% filter(y > 1750)
+  sum(bullet$resid, na.rm = T)
+}))
+
+hamby44 %>% ggplot() + geom_histogram(aes(x = left_resid_sum), fill = "salmon", alpha = 0.3) + geom_histogram(aes(x = right_resid_sum), fill = "turquoise", alpha = 0.3) + theme_bw() 
+
+## Based on the plot, let's go with a cutoff of residual higher than 1000 means there is a groove there for the right side... but I have no idea for the right side!! Let's see if we can get some sort of ground truth...  
+
+
+
+```
+```{r, echo = F, warning = F, message = F}
+
+hamby44$is_left_groove <- c(1, 1, 1, 1, 1, #5
+                            1, 1, 1, 1, 0, #10
+                            1, 1, 1, 1, 1, #15
+                            1, 1, 1, 1, 1, #20
+                            1, 1, 1, 1, 1, #25
+                            1, 1, 1, 1, 1, #30
+                            1, 0, 1, 1, 1, #35
+                            1, 1, 1, 1, 1, #40
+                            1, 1, 1, 1, 1, #45
+                            1, 1, 1, 1, 1, #50
+                            1, 1, 1, 1, 1, #55
+                            1, 1, 0, 1, 1, #60
+                            1, 1, 1, 1, 1, #65
+                            1, 1, 1, 1, 1, #70
+                            1, 1, 1, 1, 1, #75
+                            1, 1, 1, 1, 1, #80
+                            1, 1, 1, 1, 1, #85
+                            1, 1, 1, 1, 1, #90
+                            1, 1, 1, 1, 1, #95
+                            1, 1, 1, 0, 1, #100
+                            1, 1, 1, 1, 1, #105
+                            1, 1, 1, 1, 1, #110
+                            1, 1, 1, 1, 1, #115
+                            1, 1, 1, 1, 1, #120
+                            1, 1, 1, 1, 1, #125
+                            1, 1, 1, 1, 1, #130
+                            1, 1, 1, 1, 1, #135
+                            1, 1, 1, 1, 1, #140
+                            1, 1, 1, 1, 1, #145
+                            1, 1, 1, 1, 1, #150
+                            1, 1, 1, 1, 1, #155
+                            1, 1, 1, 1, 1, #160
+                            1, 1, 1, 1, 1, #165
+                            1, 1, 1, 1, 1, #170
+                            1, 1, 1, 1, 1, #175
+                            1, 1, 1, 1, 1, #180
+                            1, 1, 1, 1, 1, #185
+                            1, 1, 1, 1, 1, #190
+                            1, 1, 1, 1, 1, #195
+                            1, 1, 1, 1, 1, #200
+                            1, 1, 1, 1, 1, #205
+                            1, 1, 1)
+
+hamby44$is_right_groove <- c(1, 1, 0, 0, 0, #5 
+                             1, 0, 0, 0, 1, #10
+                             0, 0, 1, 1, 0, #15
+                             0, 1, 1, 1, 0, #20
+                             0, 0, 0, 1, 0, #25
+                             1, 0, 0, 0, 0, #30
+                             1, 1, 1, 0, 1, #35
+                             0, 1, 1, 1, 0, #40
+                             0, 0, 0, 1, 0, #45
+                             1, 0, 1, 0, 0, #50
+                             1, 0, 0, 1, 0, #55
+                             0, 0, 1, 1, 0, #60
+                             0, 1, 0, 0, 1, #65
+                             1, 0, 1, 1, 1, #70
+                             0, 0, 1, 0, 1, #75
+                             0, 1, 0, 1, 0, #80
+                             0, 1, 0, 1, 1, #85
+                             1, 0, 1, 0, 1, #90
+                             0, 0, 0, 1, 1, #95
+                             1, 0, 1, 1, 1, #100
+                             0, 0, 1, 1, 0, #105
+                             0, 0, 1, 0, 0, #110
+                             0, 1, 1, 1, 0, #115
+                             0, 1, 0, 1, 0, #120
+                             1, 1, 1, 0, 0, #125
+                             0, 1, 1, 1, 1, #130
+                             1, 1, 0, 1, 1, #135
+                             1, 1, 0, 0, 0, #140
+                             0, 0, 0, 0, 0, #145
+                             0, 1, 1, 0, 0, #150
+                             1, 1, 0, 1, 0, #155
+                             0, 1, 0, 0, 0, #160
+                             0, 0, 0, 0, 1, #165
+                             1, 0, 1, 0, 0, #170
+                             1, 1, 0, 0, 0, #175
+                             0, 0, 1, 0, 1, #180
+                             0, 1, 0, 1, 0, #185
+                             1, 1, 1, 1, 0, #190
+                             1, 1, 1, 0, 1, #195
+                             1, 1, 1, 0, 1, #200
+                             0, 1, 0, 1, 0, #205
+                             1, 0, 1)
+
+
+hamby44 %>% filter(!is.na(is_left_groove)) %>% ggplot() + geom_histogram(aes(x = left_resid_sum, fill = factor(is_left_groove))) + theme_bw()
+
+hamby44 %>% filter(!is.na(is_right_groove)) %>% ggplot() + geom_histogram(aes(x = right_resid_sum, fill = factor(is_right_groove)), binwidth = 200) + theme_bw()
+
+
+hamby44 %>% ggplot() + geom_point(aes(x = left_groove, y = left_resid_sum, colour = factor(is_left_groove)))
+
+hamby44 %>% ggplot() + geom_point(aes(x = right_resid_sum, y = right_groove, colour = factor(is_right_groove)))
+```
+
+
+## Slope of cumulative sum of residuals...?  
 
 ```{r calculate-absresid-cumsum-slopes, echo = F, warning = F, message = F}
 ## Try three different window sizes
@@ -922,6 +1065,8 @@ pred_assess %>% head()
 ass_model1 <- lm(pred_diff ~ is_right_groove + resid_sum, data = pred_assess)
 summary(ass_model1)
 ```
+
+
 
 
 
