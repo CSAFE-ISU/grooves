@@ -207,7 +207,7 @@ hamby44 <- hamby44 %>% mutate(grooves_quad_pred_pos = purrr::map(ccdata_avg, .f 
 Additionally, we can calculate differences between these and the Manually ID'd grooves, and plot the comparison between this and rollapply.  
 ```{r calculate-differences-2, echo = F, warning = F, message = F}
 
-for (i in 1:208){
+for (i in 1:nrow(hamby44)){
   hamby44$quadratic_pos_left_diff[i] <- hamby44$grooves[[i]]$groove[1] - hamby44$grooves_quad_pred_pos[[i]][1]
   hamby44$quadratic_pos_right_diff[i] <- hamby44$grooves[[i]]$groove[2] - hamby44$grooves_quad_pred_pos[[i]][2]
 }
@@ -297,7 +297,7 @@ sum_resid_right <- function(datafile, which_bullet){
 # for now, we are just going to do a quick and dirty loop. 
 
 hamby44$rdiff_resid_sum <- 0
-for (i in 1:208){
+for (i in 1:nrow(hamby44)){
   hamby44$rdiff_resid_sum[i] <- sum_resid_right(datafile = hamby44, which_bullet = i)
 }
 
@@ -311,7 +311,7 @@ sum_resid_left <- function(datafile, which_bullet){
 }
 
 hamby44$ldiff_resid_sum <- 0
-for (i in 1:208){
+for (i in 1:nrow(hamby44)){
   hamby44$ldiff_resid_sum[i] <- sum_resid_left(datafile = hamby44, which_bullet = i)
 }
 
@@ -351,7 +351,7 @@ sum_resid_right_pos <- function(datafile, which_bullet){
 # for now, we are just going to do a quick and dirty loop. 
 
 hamby44$rdiff_resid_sum_pos <- 0
-for (i in 1:208){
+for (i in 1:nrow(hamby44)){
   hamby44$rdiff_resid_sum_pos[i] <- sum_resid_right_pos(datafile = hamby44, which_bullet = i)
 }
 
@@ -365,7 +365,7 @@ sum_resid_left_pos <- function(datafile, which_bullet){
 }
 
 hamby44$ldiff_resid_sum_pos <- 0
-for (i in 1:208){
+for (i in 1:nrow(hamby44)){
   hamby44$ldiff_resid_sum_pos[i] <- sum_resid_left_pos(datafile = hamby44, which_bullet = i)
 }
 
@@ -397,7 +397,7 @@ sum_resid_right_roll <- function(datafile, which_bullet){
 }
 
 hamby44$rdiff_resid_roll <- 0
-for (i in 1:208){
+for (i in 1:nrow(hamby44)){
   hamby44$rdiff_resid_roll[i] <- sum_resid_right_roll(datafile = hamby44, which_bullet = i)
 }
 
@@ -411,7 +411,7 @@ sum_resid_left_roll <- function(datafile, which_bullet){
 }
 
 hamby44$ldiff_resid_sum_roll <- 0
-for (i in 1:208){
+for (i in 1:nrow(hamby44)){
   hamby44$ldiff_resid_sum_roll[i] <- sum_resid_left_roll(datafile = hamby44, which_bullet = i)
 }
 
@@ -765,7 +765,7 @@ for (i in 1:nrow(hamby44)){
 
 
 
-```{r}
+```{r boxplots-mad1-mad2, echo = F, warning = F, message = F }
 resids_dframe <- data.frame(roll_right = abs(hamby44$rdiff_resid_roll), roll_left = abs(hamby44$ldiff_resid_sum_roll), 
                              quad_right = abs(hamby44$rdiff_resid_sum), quad_left = abs(hamby44$ldiff_resid_sum), 
                              pos_right = abs(hamby44$rdiff_resid_sum_pos), pos_left = abs(hamby44$ldiff_resid_sum_pos),
@@ -845,7 +845,7 @@ hamby44 <- hamby44 %>% mutate(left_resid_sum = purrr::map_dbl(ccdata_w_resid, .f
   sum(bullet$resid, na.rm = T)
 }), 
 right_resid_sum = purrr::map_dbl(ccdata_w_resid, .f = function(bullet){
-  bullet <- bullet %>% filter(y > 1750)
+  bullet <- bullet %>% filter(y > 1800)
   sum(bullet$resid, na.rm = T)
 }))
 
@@ -856,7 +856,10 @@ hamby44 %>% ggplot() + geom_histogram(aes(x = left_resid_sum), fill = "salmon", 
 
 
 ```
-```{r, echo = F, warning = F, message = F}
+
+
+
+```{r define-is-groove, echo = F, warning = F, message = F}
 
 hamby44$is_left_groove <- c(1, 1, 1, 1, 1, #5
                             1, 1, 1, 1, 0, #10
@@ -945,14 +948,37 @@ hamby44$is_right_groove <- c(1, 1, 0, 0, 0, #5
                              1, 0, 1)
 
 
+```
+
+```{r, echo = F, warning = F, message = F}
+
 hamby44 %>% filter(!is.na(is_left_groove)) %>% ggplot() + geom_histogram(aes(x = left_resid_sum, fill = factor(is_left_groove))) + theme_bw()
 
 hamby44 %>% filter(!is.na(is_right_groove)) %>% ggplot() + geom_histogram(aes(x = right_resid_sum, fill = factor(is_right_groove)), binwidth = 200) + theme_bw()
 
 
-hamby44 %>% ggplot() + geom_point(aes(x = left_groove, y = left_resid_sum, colour = factor(is_left_groove)))
+hamby44 %>% ggplot() + geom_point(aes(x = left_resid_sum, y = left_groove, colour = factor(is_left_groove))) + theme_bw()
 
-hamby44 %>% ggplot() + geom_point(aes(x = right_resid_sum, y = right_groove, colour = factor(is_right_groove)))
+hamby44 %>% ggplot() + geom_point(aes(x = right_resid_sum, y = right_groove, colour = factor(is_right_groove))) + theme_bw()
+```
+
+
+Now, let's also try calculating the proportion of NA values in the "tails" of the bullet lands, (the same regions we calcuated the sums of residuals on), and whether there are strings of NA values.  
+
+```{r, echo = F, warning = F, message = F}
+hamby44 <- hamby44 %>% mutate(left_na_prop = purrr::map_dbl(ccdata_w_resid, .f = function(bullet){
+  bullet <- bullet %>% filter(y < 600)
+  sum(is.na(bullet$value))/nrow(bullet)
+}), 
+right_na_prop = purrr::map_dbl(ccdata_w_resid, .f = function(bullet){
+  bullet <- bullet %>% filter(y > 1750)
+  sum(is.na(bullet$value))/nrow(bullet)
+})) 
+
+hamby44 %>% ggplot() + geom_point(aes(x = left_na_prop, y = left_groove, colour = factor(is_left_groove))) + theme_bw()
+
+hamby44 %>% ggplot() + geom_point(aes(x = right_na_prop, y = right_groove, colour = factor(is_right_groove))) + theme_bw()
+## y < 600 for left side, y > 1750 for right side
 ```
 
 
