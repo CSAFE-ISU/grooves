@@ -73,6 +73,14 @@ Steps:
 Steps: 
 \begin{enumerate}
 \item Fit a robust linear model of order 2 to the averaged profile of a bullet land.  
+\item Sum residuals on left side - from min to 600 
+  \begin{itemize}
+  \item Rationale: The furthest in groove on the left side for Hamby44 is at 543. 
+  \end{itemize}
+\item Sum residuals on right side - from 1750 to max
+  \begin{itemize}
+  \item Rationale: The furthest in groove on the right side for Hamby44 is at 1872
+  \end{itemize}
 \item 
 \end{enumerate}
 
