@@ -69,6 +69,8 @@ Steps:
 
 
 ## Method 5: Predicting Groove Sides  
+**function name**: `get_grooves_iterate2`   
+
 
 Steps: 
 \begin{enumerate}
@@ -83,6 +85,12 @@ Steps:
   \end{itemize}
 \item Iteratively remove data from the left side (1\% at a time) until the sum of the residuals on the left side is less than or equal to 200.  
 \item Iteratively remove data from the right side (1\% at a time) until the sum of the residuals on the right side is less than or equal to 100. 
+\end{enumerate}
+
+Drawbacks: 
+\begin{enumerate}
+\item Currently, extremely dependent on robust linear model fit - all of our methods are.   
+\item Cuts off a lot of data if the robust linear model fit isn't good - there is a high sum of residuals.  
 \end{enumerate}
 
 
