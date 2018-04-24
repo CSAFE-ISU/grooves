@@ -971,15 +971,356 @@ hamby44 <- hamby44 %>% mutate(left_na_prop = purrr::map_dbl(ccdata_w_resid, .f =
   sum(is.na(bullet$value))/nrow(bullet)
 }), 
 right_na_prop = purrr::map_dbl(ccdata_w_resid, .f = function(bullet){
-  bullet <- bullet %>% filter(y > 1750)
+  bullet <- bullet %>% filter(y > 1800)
   sum(is.na(bullet$value))/nrow(bullet)
 })) 
 
 hamby44 %>% ggplot() + geom_point(aes(x = left_na_prop, y = left_groove, colour = factor(is_left_groove))) + theme_bw()
 
 hamby44 %>% ggplot() + geom_point(aes(x = right_na_prop, y = right_groove, colour = factor(is_right_groove))) + theme_bw()
-## y < 600 for left side, y > 1750 for right side
+## y < 600 for left side, y > 1800 for right side
 ```
+
+
+### Some description plots for predicting each side method!  
+
+```{r}
+
+hamby44 %>% ggplot() + geom_histogram(aes(x = left_groove), fill = "salmon")  + 
+  geom_histogram(aes(x = right_groove), fill = "turquoise") + 
+  labs(x = "Groove Locations") + theme_bw()
+
+
+ggplot() + geom_point(data = hamby44$ccdata_w_resid[[20]], aes(x = y, y = value)) + 
+  #geom_vline(xintercept = hamby44$grooves_quad_pred_pos[[20]][1], colour = "blue") + 
+  #geom_vline(xintercept = hamby44$grooves_quad_pred_pos[[20]][2], colour = "blue") + 
+  #geom_hline(yintercept = 0) +
+  #geom_vline(xintercept = hamby44$grooves[[20]]$groove[1], colour = "green")  + 
+  #geom_vline(xintercept = hamby44$grooves[[20]]$groove[2], colour = "green") + 
+  labs(x = "Y Values", y = "Height Values", title = "Predicting Groove Presence - Profile") +
+  geom_rect(aes(ymin = min(hamby44$ccdata_w_resid[[20]]$pred, na.rm = T), 
+                ymax = max(hamby44$ccdata_w_resid[[20]]$pred, na.rm = T),
+                xmax = 600, 
+                xmin = min(hamby44$ccdata_w_resid[[20]]$y)), fill = "yellow", alpha = 0.3) +
+  geom_rect(aes(ymin = min(hamby44$ccdata_w_resid[[20]]$pred, na.rm = T), 
+                ymax = max(hamby44$ccdata_w_resid[[20]]$pred, na.rm = T),
+                xmin = 1800, 
+                xmax = max(hamby44$ccdata_w_resid[[20]]$y)), fill = "yellow", alpha = 0.3) +
+  geom_line(data = hamby44$ccdata_w_resid[[20]], aes(x = y, y = pred), colour = "red") + 
+  theme_bw()
+
+
+
+ggplot() + geom_point(data = hamby44$ccdata_w_resid[[20]], aes(x = y, y = resid)) + 
+  #geom_vline(xintercept = hamby44$grooves_quad_pred_pos[[20]][1], colour = "blue") + 
+  #geom_vline(xintercept = hamby44$grooves_quad_pred_pos[[20]][2], colour = "blue") + 
+  geom_hline(yintercept = 0, colour = "red") +
+  #geom_vline(xintercept = hamby44$grooves[[20]]$groove[1], colour = "green")  + 
+  #geom_vline(xintercept = hamby44$grooves[[20]]$groove[2], colour = "green") + 
+  labs(x = "Y Values", y = "Height Values", title = "Predicting Groove Presence - Residuals") +
+  geom_rect(aes(ymin = min(hamby44$ccdata_w_resid[[20]]$resid, na.rm = T), 
+                ymax = max(hamby44$ccdata_w_resid[[20]]$resid, na.rm = T),
+                xmax = 600, 
+                xmin = min(hamby44$ccdata_w_resid[[20]]$y)), fill = "yellow", alpha = 0.3) +
+  geom_rect(aes(ymin = min(hamby44$ccdata_w_resid[[20]]$resid, na.rm = T), 
+                ymax = max(hamby44$ccdata_w_resid[[20]]$resid, na.rm = T),
+                xmin = 1800, 
+                xmax = max(hamby44$ccdata_w_resid[[20]]$y)), fill = "yellow", alpha = 0.3) +
+  #geom_line(data = hamby44$ccdata_w_resid[[20]], aes(x = y, y = pred), colour = "red") + 
+  theme_bw()
+
+
+
+
+
+st1 <- hamby44 %>% filter(!is.na(is_left_groove)) %>% ggplot() + 
+  geom_histogram(aes(x = left_resid_sum, fill = factor(is_left_groove))) + 
+  labs(x = "Sum of Residuals on Left Side") +
+  theme_bw()
+
+st2 <- hamby44 %>% filter(!is.na(is_right_groove)) %>% ggplot() + 
+  geom_histogram(aes(x = right_resid_sum, fill = factor(is_right_groove)), binwidth = 200) + 
+  labs(x = "Sum of Residuals on Right Side") + 
+  theme_bw()
+
+
+st3 <- hamby44 %>% ggplot() + 
+  geom_point(aes(x = left_resid_sum, y = left_groove, colour = factor(is_left_groove))) + 
+  labs(x = "Sum of Residuals on Left Side", y = "Location of Left Groove (Manual ID)") +
+  theme_bw()
+
+st4 <- hamby44 %>% ggplot() + 
+  geom_point(aes(x = right_resid_sum, y = right_groove, colour = factor(is_right_groove))) + 
+  labs(x = "Sum of Residuals on Right Side", y = "Location of Right Groove (Manual ID)") + 
+  theme_bw()
+
+grid.arrange(st1, st2, st3, st4, nrow = 2)
+```
+
+
+
+
+We want to iteratively remove the sides of the land, which will hopefully remove what we see as the grooves.  
+
+So what cutoffs do we use for "yes groove, no groove"?  
+
+Can we try a forest to get more intelligent cutoffs? How many features do we need for that?  
+
+No matter, what, start cutting off a percentage of the values - keep going until "rollapply" and "robust linear model" look pretty similar. But have an upper end cutoff to stop at if we haven't stopped yet...  
+
+
+
+```{r}
+get_grooves_iterate <- function(bullet, adjust){
+  sumleft <- bullet %>% filter(y < 600) ## this sums up residuals on the left 1/4 or so of the land
+  sumleft <- sum(sumleft$resid, na.rm = T)
+  sumright <- bullet %>% filter(y > 1800) ## this sums up residuals on the right 1/4 or so of the land  
+  sumright <- sum(sumright$resid, na.rm = T)
+  
+  
+  ## can't find a working "Trim" function for numerics, so I'm going to use a little workaround I found  
+  
+  ## i'm also first going to look at 
+  sum_resids <- sum(bullet$resid, na.rm = T)
+  while(sum_resids > 300 ){
+    bullet <- bullet[(round(0.01 * length(bullet$y)) : round(0.99 * length(bullet$y))),]
+    lm_new <- MASS::rlm(value_std~poly(y,2), data=bullet, maxit=100)
+    bullet$pred_new <- predict(lm_new, newdata = bullet)
+    bullet$resid_new <- with(bullet, value_std-pred_new)
+    groove <- range(bullet$y)
+    sum_resids <- sum(bullet$resid_new, na.rm = T)
+  }
+  
+  
+  
+  plot <- bullet %>% ggplot(aes(x = y, y = value_std)) + geom_line(size = .5) + theme_bw() +
+    geom_vline(xintercept=groove[1], colour = "blue") +
+    geom_vline(xintercept=groove[2], colour = "blue") 
+  return(list(groove = groove, plot = plot))
+}
+
+#get_grooves_quadratic_pos_resid <- function(bullet, adjust) {
+#  lm0 <- MASS::rlm(value_std~poly(y,2), data=bullet, maxit=100)
+#  bullet$pred <- predict(lm0, newdata=bullet)
+
+  #bullet$absresid <- with(bullet, abs(value-pred))
+#  bullet$resid <- with(bullet, value_std-pred)
+  #bullet$absresid_div <- with(bullet, absresid/value)
+#  bullet$resid_div <- with(bullet, resid/value_std)
+  #bullet %>% ggplot() + geom_point(aes(x = y, y = resid)) + theme_bw()
+  #bullet %>% ggplot() + geom_point(aes(x = y, y = resid_div)) + theme_bw()
+  
+#  bullet$resid_cutoff <- with (bullet, resid_div > 0)
+#  groove <- range(filter(bullet, !resid_cutoff)$y) + c(adjust, -adjust)
+  
+#  plot <- bullet %>% ggplot(aes(x = y, y = value_std)) + geom_line(size = .5) + theme_bw() +
+#    geom_vline(xintercept=groove[1], colour = "blue") +
+#    geom_vline(xintercept=groove[2], colour = "blue") 
+  
+#  return(list(groove = groove, plot = plot))
+#}
+```
+
+
+
+```{r}
+hamby44 <- hamby44 %>% mutate(grooves_it1 = purrr::map(ccdata_w_resid, .f = function(x){
+  get_grooves_iterate(bullet = x, adjust = 0)$groove
+}))
+
+```
+
+
+
+
+```{r sum_resid_it1, echo = F, message = F, warning = F}
+sum_resid_right_it1 <- function(datafile, which_bullet){
+  data <- datafile$ccdata_w_resid[[which_bullet]]
+  man_groove <- datafile$grooves[[which_bullet]]$groove[2]
+  pred_groove <- datafile$grooves_it1[[which_bullet]][2]
+  data <- data %>% filter(between(y, min(man_groove, pred_groove), max(man_groove, pred_groove)))
+  return(sum(data$resid, na.rm = T))
+}
+
+
+# for now, we are just going to do a quick and dirty loop. 
+
+
+hamby44$rdiff_resid_sum_it1 <- 0
+for (i in 1:nrow(hamby44)){
+  hamby44$rdiff_resid_sum_it1[i] <- sum_resid_right_it1(datafile = hamby44, which_bullet = i)
+}
+
+
+sum_resid_left_it1 <- function(datafile, which_bullet){
+  data <- datafile$ccdata_w_resid[[which_bullet]]
+  man_groove <- datafile$grooves[[which_bullet]]$groove[1]
+  pred_groove <- datafile$grooves_it1[[which_bullet]][1]
+  data <- data %>% filter(between(y, min(man_groove, pred_groove), max(man_groove, pred_groove)))
+  return(sum(data$resid, na.rm = T))
+}
+
+hamby44$ldiff_resid_sum_it1 <- 0
+for (i in 1:nrow(hamby44)){
+  hamby44$ldiff_resid_sum_it1[i] <- sum_resid_left_it1(datafile = hamby44, which_bullet = i)
+}
+
+#hamby44[1:6,]
+
+
+```
+
+
+
+
+
+
+```{r}
+get_grooves_iterate2 <- function(bullet, adjust){
+  left <- bullet %>% filter(y < 600) ## this sums up residuals on the left 1/4 or so of the land
+  sumleft <- sum(left$resid, na.rm = T)
+  right <- bullet %>% filter(y > 1800) ## this sums up residuals on the right 1/4 or so of the land  
+  sumright <- sum(right$resid, na.rm = T)
+  
+  
+  ## can't find a working "Trim" function for numerics, so I'm going to use a little workaround I found  
+  
+  ## let's first trim down the left side - we almost always need to trim it down.  
+  groove_l <- 0
+  while(sumleft > 200){
+    bullet <- bullet[(round(0.01 * length(bullet$y))) : (length(bullet$y)),]
+    lm_new <- MASS::rlm(value_std~poly(y,2), data=bullet, maxit=100)
+    bullet$pred_new <- predict(lm_new, newdata = bullet)
+    bullet$resid_new <- with(bullet, value_std-pred_new)
+    sumleft <- sum(bullet[(bullet$y < 600),]$resid_new, na.rm = T)
+    groove_l <- min(bullet$y)
+    #redefine sumleft here
+  }
+  
+  groove_r <- max(bullet$y)
+  while(sumright > 100){
+    bullet <- bullet[1:(round(0.99*length(bullet$y))),]
+    lm_new <- MASS::rlm(value_std~poly(y,2), data = bullet, maxit=100)
+    bullet$pred_new <- predict(lm_new, newdata = bullet)
+    bullet$resid_new <- with(bullet, value_std-pred_new)
+    sumright <- sum(bullet[(bullet$y > 1800),]$resid_new, na.rm = T)
+    groove_r <- max(bullet$y)
+  }
+  
+  
+  groove <- c(groove_l, groove_r)
+  
+  
+  plot <- bullet %>% ggplot(aes(x = y, y = value_std)) + geom_line(size = .5) + theme_bw() +
+    geom_vline(xintercept=groove[1], colour = "blue") +
+    geom_vline(xintercept=groove[2], colour = "blue") 
+  return(list(groove = groove, plot = plot))
+}
+```
+
+
+```{r}
+hamby44 <- hamby44 %>% mutate(grooves_it2 = purrr::map(ccdata_w_resid, .f = function(x){
+  get_grooves_iterate2(bullet = x, adjust = 0)$groove
+}))
+
+
+ggplot() + geom_point(data = hamby44$ccdata_w_resid[[4]], aes(x = y, y = value_std)) + 
+  geom_vline(data = hamby44[4,], aes(xintercept=grooves_it2[[1]][1]), colour = "blue") + 
+  geom_vline(data = hamby44[4,], aes(xintercept=grooves_it2[[1]][2]), colour = "blue") + 
+  theme_bw()
+
+```
+
+
+
+```{r sum_resid_it2, echo = F, message = F, warning = F}
+sum_resid_right_it2 <- function(datafile, which_bullet){
+  data <- datafile$ccdata_w_resid[[which_bullet]]
+  man_groove <- datafile$grooves[[which_bullet]]$groove[2]
+  pred_groove <- datafile$grooves_it2[[which_bullet]][2]
+  data <- data %>% filter(between(y, min(man_groove, pred_groove), max(man_groove, pred_groove)))
+  return(sum(data$resid, na.rm = T))
+}
+
+
+# for now, we are just going to do a quick and dirty loop. 
+
+
+hamby44$rdiff_resid_sum_it2 <- 0
+for (i in 1:nrow(hamby44)){
+  hamby44$rdiff_resid_sum_it2[i] <- sum_resid_right_it2(datafile = hamby44, which_bullet = i)
+}
+
+
+sum_resid_left_it2 <- function(datafile, which_bullet){
+  data <- datafile$ccdata_w_resid[[which_bullet]]
+  man_groove <- datafile$grooves[[which_bullet]]$groove[1]
+  pred_groove <- datafile$grooves_it2[[which_bullet]][1]
+  data <- data %>% filter(between(y, min(man_groove, pred_groove), max(man_groove, pred_groove)))
+  return(sum(data$resid, na.rm = T))
+}
+
+hamby44$ldiff_resid_sum_it2 <- 0
+for (i in 1:nrow(hamby44)){
+  hamby44$ldiff_resid_sum_it2[i] <- sum_resid_left_it2(datafile = hamby44, which_bullet = i)
+}
+
+#hamby44[1:6,]
+
+
+```
+
+
+
+```{r}
+resids_dframe <- data.frame(roll_right = abs(hamby44$rdiff_resid_roll), roll_left = abs(hamby44$ldiff_resid_sum_roll), 
+                             quad_right = abs(hamby44$rdiff_resid_sum), quad_left = abs(hamby44$ldiff_resid_sum), 
+                             pos_right = abs(hamby44$rdiff_resid_sum_pos), pos_left = abs(hamby44$ldiff_resid_sum_pos),
+                             mad1_right = abs(hamby44$rdiff_resid_sum_m1), mad1_left = abs(hamby44$ldiff_resid_sum_m1),
+                             mad2_right = abs(hamby44$rdiff_resid_sum_m2), mad2_left = abs(hamby44$ldiff_resid_sum_m2), 
+                             it1_right = abs(hamby44$rdiff_resid_sum_it1), it1_left = abs(hamby44$ldiff_resid_sum_it1), 
+                             it2_right = abs(hamby44$rdiff_resid_sum_it2), it2_left = abs(hamby44$rdiff_resid_sum_it2))
+
+apply(resids_dframe, MARGIN = 2, mean)
+apply(resids_dframe, MARGIN = 2, median)
+
+head(resids_dframe)
+
+#resids_dframe$method <- factor(resids_dframe$method, levels = rev(levels(resids_dframe$method)))
+resids_dframe <- resids_dframe %>% gather(method, residuals_sum)
+
+#resids_dframe$method <- factor(resids_dframe$method,
+#    levels = c('roll_left', 'quad_left', 'pos_left', 'mad1_left', 'mad2_left', 'roll_right', 'quad_right', 'pos_right', 'mad1_right', 'mad2_right'),ordered = TRUE)
+
+#resids_dframe %>% ggplot() + geom_boxplot(aes(x = method, y = residuals_sum)) + 
+#  theme_bw() + labs(x = "Method and Groove", y = "Residuals") + scale_x_discrete(labels = c("Rollapply, Left", "RLM, Left", "Rollapply, Right", "RLM, Right"))
+
+#resids_dframe  %>% select(-quad_right, -quad_left) %>% gather(method, residuals_sum) %>% filter(residuals_sum < 2000) %>% 
+#  ggplot() + geom_boxplot(aes(x = factor(method), y = residuals_sum)) + theme_bw()
+
+resids_dframe <- resids_dframe %>% mutate(method = as.character(method), Method = unlist(purrr::map(method, .f = function(x){
+  strsplit(x, "_")[[1]][1]
+})), GrooveSide = unlist(purrr::map(method, .f = function(x){
+  strsplit(x, "_")[[1]][2]
+})))
+
+
+resids_dframe %>% mutate(Method = factor(Method, levels = levels(as.factor(Method))[c(7,6,5,3,4,1,2)], labels = c("Rollapply", "Quadratic", "Robust Linear Model", "Median Absolute Deviation", "Median Absolute Deviation 2", "Iterate", "Iterate 2"))) %>% ggplot() + geom_boxplot(aes(x = GrooveSide, y = residuals_sum, fill = Method)) + theme_bw() + labs(y = "Sum of Residuals")
+
+
+resids_dframe %>% 
+  mutate(Method = factor(Method, levels = levels(as.factor(Method))[c(7,6,5,3,4,1,2)], 
+                         labels = c("Rollapply", "Quadratic", "Robust Linear Model", "Median Absolute Deviation", "Median Absolute Deviation 2", "Iterate", "Iterate 2")))  %>%
+  filter(residuals_sum < 1000) %>% 
+  ggplot() + geom_boxplot(aes(x = GrooveSide, y = residuals_sum, fill = Method)) + 
+  theme_bw() + labs(y = "Sum of Residuals")
+```
+
+
+
+
+
 
 
 ## Slope of cumulative sum of residuals...?  

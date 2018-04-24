@@ -77,11 +77,12 @@ Steps:
   \begin{itemize}
   \item Rationale: The furthest in groove on the left side for Hamby44 is at 543. 
   \end{itemize}
-\item Sum residuals on right side - from 1750 to max
+\item Sum residuals on right side - from 1800 to max
   \begin{itemize}
   \item Rationale: The furthest in groove on the right side for Hamby44 is at 1872
   \end{itemize}
-\item 
+\item Iteratively remove data from the left side (1\% at a time) until the sum of the residuals on the left side is less than or equal to 200.  
+\item Iteratively remove data from the right side (1\% at a time) until the sum of the residuals on the right side is less than or equal to 100. 
 \end{enumerate}
 
 
