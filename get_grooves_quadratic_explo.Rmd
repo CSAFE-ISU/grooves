@@ -1070,7 +1070,7 @@ No matter, what, start cutting off a percentage of the values - keep going until
 
 
 
-```{r}
+```{r define-get_groove_iterate, echo = F, warning = F, message = F}
 get_grooves_iterate <- function(bullet, adjust){
   sumleft <- bullet %>% filter(y < 600) ## this sums up residuals on the left 1/4 or so of the land
   sumleft <- sum(sumleft$resid, na.rm = T)
@@ -1123,7 +1123,7 @@ get_grooves_iterate <- function(bullet, adjust){
 
 
 
-```{r}
+```{r run-get_grooves_iterate}
 hamby44 <- hamby44 %>% mutate(grooves_it1 = purrr::map(ccdata_w_resid, .f = function(x){
   get_grooves_iterate(bullet = x, adjust = 0)$groove
 }))
@@ -1173,9 +1173,7 @@ for (i in 1:nrow(hamby44)){
 
 
 
-
-
-```{r}
+```{r define-get_grooves_iterate2, echo = F, message = F, warning = F}
 get_grooves_iterate2 <- function(bullet, adjust){
   left <- bullet %>% filter(y < 600) ## this sums up residuals on the left 1/4 or so of the land
   sumleft <- sum(left$resid, na.rm = T)
@@ -1219,7 +1217,7 @@ get_grooves_iterate2 <- function(bullet, adjust){
 ```
 
 
-```{r}
+```{r run-get_grooves_iterate2, echo = F, warning = F, message = F}
 hamby44 <- hamby44 %>% mutate(grooves_it2 = purrr::map(ccdata_w_resid, .f = function(x){
   get_grooves_iterate2(bullet = x, adjust = 0)$groove
 }))
@@ -1273,7 +1271,7 @@ for (i in 1:nrow(hamby44)){
 
 
 
-```{r}
+```{r boxplots-it2, echo = F, warning = F, message = F}
 resids_dframe <- data.frame(roll_right = abs(hamby44$rdiff_resid_roll), roll_left = abs(hamby44$ldiff_resid_sum_roll), 
                              quad_right = abs(hamby44$rdiff_resid_sum), quad_left = abs(hamby44$ldiff_resid_sum), 
                              pos_right = abs(hamby44$rdiff_resid_sum_pos), pos_left = abs(hamby44$ldiff_resid_sum_pos),
@@ -1316,6 +1314,10 @@ resids_dframe %>%
   ggplot() + geom_boxplot(aes(x = GrooveSide, y = residuals_sum, fill = Method)) + 
   theme_bw() + labs(y = "Sum of Residuals")
 ```
+
+
+
+
 
 
 

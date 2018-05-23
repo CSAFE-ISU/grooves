@@ -91,7 +91,18 @@ Drawbacks:
 \begin{enumerate}
 \item Currently, extremely dependent on robust linear model fit - all of our methods are.   
 \item Cuts off a lot of data if the robust linear model fit isn't good - there is a high sum of residuals.  
+\end{enumerate}  
+
+
+## Method 6: Robust Loess Fit  
+**function name**: `get_grooves_robust_loess`  
+
+Steps:  
+\begin{enumerate}
+\item Fit a robust loess model to the averaged profile of a bullet land.  
+
 \end{enumerate}
+
 
 
 
