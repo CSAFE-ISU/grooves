@@ -83,13 +83,28 @@ hamby44 <- hamby44 %>% mutate(ccdata_w_resid = purrr::map(ccdata_avg, .f = funct
   bullet$resid <- with(bullet, value_std-pred)
   
   
-  robust_loess_fit <- locfit.robust(value_std~y, data = bullet, weights = rep(1, length(value_std)))
+  robust_loess_fit <- locfit.robust(value_std~y, data = bullet, alpha = 1, kern = "tcub")
   bullet$rlo_pred <- predict(robust_loess_fit, newdata = bullet)
   
   bullet$rlo_absresid <- with(bullet, abs(value_std-rlo_pred))
   bullet$rlo_resid <- with(bullet, value_std-rlo_pred)
   return(bullet)
-}))
+}), rlm_r2 = purrr::map_dbl(ccdata_w_resid, .f = function(bullet){
+  r2 <- (cor(bullet$value_std, bullet$pred, use = "complete.obs"))^2
+  return(r2)
+}), rlo_r2 = purrr::map_dbl(ccdata_w_resid, .f = function(bullet){
+  r2 <- (cor(bullet$value_std, bullet$rlo_pred, use = "complete.obs"))^2
+  return(r2)
+})
+)
+
+hamby44 %>% ggplot() + geom_point(aes(x = rlm_r2, y = rlo_r2)) + theme_bw() + geom_abline(intercept = 0, slope = 1, colour = "red")
+
+
+#bullet_plot <- function(i){
+#  bullet <- hamby44$ccdata_w_resid[[i]]
+#  bullet %>% ggplot() + geom_point(aes(x = y, y = value_std)) + theme_bw() + geom_line(aes(x = y, y = rlo_pred), colour ="green")
+#}
 ```
 
 
@@ -424,7 +439,7 @@ hamby44 %>% ggplot() + geom_histogram(aes(x = left_groove), fill = "salmon")  +
 
 Now, let's take a look at summing up residuals from 0 to the highest left groove location, and from the lowest right groove location up to the max y value.  
 
-```{r, echo = F, warning = F, message = F}
+```{r calculate-left-right-sums-means, echo = F, warning = F, message = F}
 hamby44 <- hamby44 %>% mutate(left_resid_sum = purrr::map_dbl(ccdata_w_resid, .f = function(bullet){
   bullet <- bullet %>% filter(y < 600) 
   sum(bullet$resid, na.rm = T)
@@ -442,9 +457,32 @@ right_rlo_resid_sum = purrr::map_dbl(ccdata_w_resid, .f = function(bullet){
   sum(bullet$rlo_resid, na.rm = T)
 }))
 
+hamby44 <- hamby44 %>% mutate(left_resid_mean = purrr::map_dbl(ccdata_w_resid, .f = function(bullet){
+  bullet <- bullet %>% filter(y < 600) 
+  mean(bullet$resid, na.rm = T)
+}), 
+right_resid_mean = purrr::map_dbl(ccdata_w_resid, .f = function(bullet){
+  bullet <- bullet %>% filter(y > 1800)
+  mean(bullet$resid, na.rm = T)
+}),
+left_rlo_resid_mean = purrr::map_dbl(ccdata_w_resid, .f = function(bullet){
+  bullet <- bullet %>% filter(y < 600)
+  mean(bullet$rlo_resid, na.rm = T)
+}), 
+right_rlo_resid_mean = purrr::map_dbl(ccdata_w_resid, .f = function(bullet){
+  bullet <- bullet %>% filter(y > 1800)
+  mean(bullet$rlo_resid, na.rm = T)
+}))
+
 hamby44 %>% ggplot() + geom_histogram(aes(x = left_resid_sum), fill = "salmon", alpha = 0.3) + geom_histogram(aes(x = right_resid_sum), fill = "turquoise", alpha = 0.3) + theme_bw() 
 
 hamby44 %>% ggplot() + geom_histogram(aes(x = left_rlo_resid_sum), fill = "salmon", alpha = 0.3) + geom_histogram(aes(x = right_rlo_resid_sum), fill = "turquoise", alpha = 0.3) + theme_bw()
+
+hamby44 %>% ggplot() + geom_point(aes(x = left_resid_sum, y = left_rlo_resid_sum)) + theme_bw() + geom_abline(intercept = 0, slope = 1, color = "red")
+hamby44 %>% ggplot() + geom_point(aes(x = right_resid_sum, y = right_rlo_resid_sum)) + theme_bw() + geom_abline(intercept = 0, slope = 1, color = "red")
+
+hamby44 %>% ggplot() + geom_point(aes(x = left_resid_mean, y = left_rlo_resid_mean)) + theme_bw() + geom_abline(intercept = 0, slope = 1, color = "red")
+hamby44 %>% ggplot() + geom_point(aes(x = right_resid_mean, y = right_rlo_resid_mean)) + theme_bw() + geom_abline(intercept = 0, slope = 1, color = "red")
 
 ## Based on the plot, let's go with a cutoff of residual higher than 1000 means there is a groove there for the right side... but I have no idea for the right side!! Let's see if we can get some sort of ground truth...  
 
@@ -565,6 +603,16 @@ hamby44 %>% filter(!is.na(is_right_groove)) %>% ggplot() + geom_histogram(aes(x 
 hamby44 %>% ggplot() + geom_point(aes(x = left_rlo_resid_sum, y = left_groove, colour = factor(is_left_groove))) + theme_bw()
 
 hamby44 %>% ggplot() + geom_point(aes(x = right_rlo_resid_sum, y = right_groove, colour = factor(is_right_groove))) + theme_bw()
+
+
+hamby44 %>% filter(!is.na(is_left_groove)) %>% ggplot() + geom_histogram(aes(x = left_rlo_resid_mean, fill = factor(is_left_groove))) + theme_bw()
+
+hamby44 %>% filter(!is.na(is_right_groove)) %>% ggplot() + geom_histogram(aes(x = right_rlo_resid_mean, fill = factor(is_right_groove))) + theme_bw()
+
+
+hamby44 %>% ggplot() + geom_point(aes(x = left_rlo_resid_mean, y = left_groove, colour = factor(is_left_groove))) + theme_bw()
+
+hamby44 %>% ggplot() + geom_point(aes(x = right_rlo_resid_mean, y = right_groove, colour = factor(is_right_groove))) + theme_bw()
 ```
 
 
@@ -576,26 +624,23 @@ hamby44 %>% ggplot() + geom_point(aes(x = right_rlo_resid_sum, y = right_groove,
 ```{r explore-lowess, echo = F, warning = F, message = F}
 
 
-bullet <- hamby44$ccdata_w_resid[[3]]
+bullet <- hamby44$ccdata_w_resid[[132]]
 bullet_filter <- subset(bullet, !is.na(value_std))
-loess_fit <- fitted(loess(value_std~y, data = bullet_filter, span = 0.75))
-
-lowess_fit <- lowess(x = bullet_filter$y, y = bullet_filter$value_std, f = 0.25, iter = 3, delta = 0.001*diff(range(bullet_filter$y)))$y
-## this is doing some weird things - using the same span as in "loess", it gives a waaay smoothed out version that actually appears to be MORE affected by outliers???
+loess_fit <- fitted(loess(value_std~y, data = bullet_filter, span = 0.9))
 
 ## let's try locfit.robust from the locfit package instead
 #install.packages("locfit")
 library(locfit)
 
-robust_loess_fit <- locfit.robust(value_std~y, data = bullet, weights = rep(1, length(value_std)))
-r_loess_fit <- predict(robust_loess_fit, newdata = bullet)
+wts <- ifelse(bullet_filter$y < 100 | bullet_filter$y > 1800, 0, 1)
+robust_loess_fit <- locfit.robust(value_std~y, data = bullet_filter, kern = "tcub", alpha = 1)
+r_loess_fit <- predict(robust_loess_fit, newdata = bullet_filter)
 ## this looks like a better "robust" fit, and looks fairly promising at that!  
 
 
 ggplot() + geom_point(data = bullet_filter, aes(x = y, y = value_std)) + 
-  geom_line(aes(x = bullet_filter$y, y = loess_fit), colour = "red") + 
-  geom_line(aes(x = bullet_filter$y, y = lowess_fit), colour = "blue") + 
-  geom_line(aes(x = bullet$y, y = r_loess_fit), colour = "green") + 
+  #geom_line(aes(x = bullet_filter$y, y = loess_fit), colour = "red") + 
+  geom_line(aes(x = bullet_filter$y, y = r_loess_fit), colour = "green") + 
   theme_bw()
 
 
@@ -604,10 +649,10 @@ ggplot() + geom_point(data = bullet_filter, aes(x = y, y = value_std)) +
 
 
 
-```{r define-get_grooves_robust_loess, echo = F, warning = F, message = F}
-get_grooves_robust_loess <- function(bullet, adjust){
-  bullet$loess_fit <- predict(loess(value_std~y, data = bullet, span = 0.75), newdata = bullet)
-  bullet$robust_loess_fit <- predict(locfit.robust(value_std~y, data = bullet, weights = rep(1, length(value_std))), newdata = bullet)
+```{r define-get_grooves_robust_loess_compare, echo = F, warning = F, message = F}
+get_grooves_robust_loess_compare <- function(bullet, adjust){
+  bullet$loess_fit <- predict(loess(value_std~y, data = bullet, span = 1), newdata = bullet)
+  bullet$robust_loess_fit <- predict(locfit.robust(value_std~y, data = bullet, alpha = 1), newdata = bullet)
   
   left <- bullet %>% filter(y < 600) ## this sums up residuals on the left 1/4 or so of the land
   sumleft <- sum(left$loess_fit - left$robust_loess_fit, na.rm = T)
@@ -619,10 +664,10 @@ get_grooves_robust_loess <- function(bullet, adjust){
   
   ## let's first trim down the left side - we almost always need to trim it down.  
   groove_l <- 0
-  while(sumleft > 500){
+  while(sumleft > 300){
     bullet <- bullet[(round(0.01 * length(bullet$y))) : (length(bullet$y)),]
-    loess_new <- loess(value_std~y, data = bullet, span = 0.75)
-    rloess_new <- locfit.robust(value_std~y, data = bullet, weights = rep(1, length(value_std)))
+    loess_new <- loess(value_std~y, data = bullet, span = 1)
+    rloess_new <- locfit.robust(value_std~y, data = bullet, alpha = 1)
     #lm_new <- MASS::rlm(value_std~poly(y,2), data=bullet, maxit=100)
     bullet$pred_new <- predict(loess_new, newdata = bullet)
     bullet$rpred_new <- predict(rloess_new, newdata = bullet)
@@ -633,10 +678,10 @@ get_grooves_robust_loess <- function(bullet, adjust){
   }
   
   groove_r <- max(bullet$y)
-  while(sumright > 500){
+  while(sumright > 300){
     bullet <- bullet[1:(round(0.99*length(bullet$y))),]
-    loess_new <- loess(value_std~y, data = bullet, span = 0.75)
-    rloess_new <- locfit.robust(value_std~y, data = bullet, weights = rep(1, length(value_std)))
+    loess_new <- loess(value_std~y, data = bullet, span = 1)
+    rloess_new <- locfit.robust(value_std~y, data = bullet, alpha = 1)
     bullet$pred_new <- predict(loess_new, newdata = bullet)
     bullet$rpred_new <- predict(rloess_new, newdata = bullet)
     #lm_new <- MASS::rlm(value_std~poly(y,2), data = bullet, maxit=100)
@@ -658,12 +703,14 @@ get_grooves_robust_loess <- function(bullet, adjust){
 }
 
 
+## Look at AVERAGE residual - this will stop getting pulled up as much once the shoulders are gone! 
+## this also takes into account how many points are there (gets rid of NA issues)  
 
 ```
 
-```{r calculate-get_grooves_robust_loess, echo = F, warning = F, message = F}
+```{r calculate-get_grooves_robust_loess_compare, echo = F, warning = F, message = F}
 hamby44 <- hamby44 %>% mutate(grooves_rl1 = purrr::map(ccdata_avg, .f = function(x){
-  get_grooves_robust_loess(bullet = x, adjust = 0)$groove
+  get_grooves_robust_loess_compare(bullet = x, adjust = 0)$groove
 }))
 ```
 
@@ -685,6 +732,7 @@ sum_rresid_right_rl1 <- function(datafile, which_bullet){
   data <- data %>% filter(between(y, min(man_groove, pred_groove), max(man_groove, pred_groove)))
   return(sum(data$rlo_resid, na.rm = T))
 }
+
 
 hamby44$rdiff_resid_sum_rl1 <- 0
 hamby44$rdiff_rresid_sum_rl1 <- 0
@@ -711,7 +759,7 @@ sum_rresid_left_rl1 <- function(datafile, which_bullet){
 }
 
 hamby44$ldiff_resid_sum_rl1 <- 0
-hamby44$ldiff_rresid_sum_rl1
+hamby44$ldiff_rresid_sum_rl1 <- 0
 for (i in 1:nrow(hamby44)){
   hamby44$ldiff_resid_sum_rl1[i] <- sum_resid_left_rl1(datafile = hamby44, which_bullet = i)
   hamby44$ldiff_rresid_sum_rl1[i] <- sum_rresid_left_rl1(datafile = hamby44, which_bullet = i)
@@ -721,6 +769,227 @@ for (i in 1:nrow(hamby44)){
 ```
 
 
+Now let's try two variants on the robust loess - one where we look at the mean residuals and one where we look at a straight cutoff value.  
+
+
+```{r define-get_grooves_robust_loess_mean, echo = F, warning = F, message = F}
+get_grooves_robust_loess_mean <- function(bullet, adjust){
+  #bullet$loess_fit <- predict(loess(value_std~y, data = bullet, span = 1), newdata = bullet)
+  bullet$robust_loess_fit <- predict(locfit.robust(value_std~y, data = bullet, alpha = 1), newdata = bullet)
+  
+  bullet$resid1 <- bullet$value_std - bullet$robust_loess_fit
+  left <- bullet %>% filter(y < 600) ## this sums up residuals on the left 1/4 or so of the land
+  meanleft <- mean(left$resid1, na.rm = T)
+  right <- bullet %>% filter(y > 1800) ## this sums up residuals on the right 1/4 or so of the land  
+  meanright <- mean(right$resid1, na.rm = T)
+  
+  
+  ## can't find a working "Trim" function for numerics, so I'm going to use a little workaround I found  
+  
+  ## let's first trim down the left side - we almost always need to trim it down.  
+  groove_l <- 0
+  num_points <- sum(!is.na(left$value_std))
+  while(meanleft > 1 & num_points > 10){
+    bullet <- bullet[(round(0.01 * length(bullet$y))) : (length(bullet$y)),]
+    #loess_new <- loess(value_std~y, data = bullet, span = 1)
+    rloess_new <- locfit.robust(value_std~y, data = bullet, alpha = 1)
+    #lm_new <- MASS::rlm(value_std~poly(y,2), data=bullet, maxit=100)
+    #bullet$pred_new <- predict(loess_new, newdata = bullet)
+    bullet$rpred_new <- predict(rloess_new, newdata = bullet)
+    bullet$resid_new <- with(bullet, value_std-rpred_new)
+    meanleft <- mean(bullet[(bullet$y < 600),]$resid_new, na.rm = T)
+    num_points <- sum(!is.na(bullet[(bullet$y < 600),]$value_std))
+    groove_l <- min(bullet$y)
+    #redefine sumleft here
+  }
+  
+  groove_r <- max(bullet$y)
+  num_points <- sum(!is.na(right$value_std))
+  while(meanright > 1 & num_points > 10){
+    bullet <- bullet[1:(round(0.99*length(bullet$y))),]
+    #loess_new <- loess(value_std~y, data = bullet, span = 1)
+    rloess_new <- locfit.robust(value_std~y, data = bullet, alpha = 1)
+    #bullet$pred_new <- predict(loess_new, newdata = bullet)
+    bullet$rpred_new <- predict(rloess_new, newdata = bullet)
+    #lm_new <- MASS::rlm(value_std~poly(y,2), data = bullet, maxit=100)
+    #bullet$pred_new <- predict(lm_new, newdata = bullet)
+    bullet$resid_new <- with(bullet, value_std-rpred_new)
+    meanright <- mean(bullet[(bullet$y > 1800),]$resid_new, na.rm = T)
+    num_points <- sum(!is.na(bullet[(bullet$y > 1800),]$value_std))
+    groove_r <- max(bullet$y)
+  }
+  
+  
+  groove <- c(groove_l, groove_r)
+  
+  
+  #plot <- bullet %>% ggplot() + geom_line(aes(x = y, y = value_std), size = .5) + theme_bw() +
+  #  geom_vline(xintercept=groove[1], colour = "blue") +
+  #  geom_vline(xintercept=groove[2], colour = "blue") 
+  return(list(groove = groove))
+  #return(list(groove = groove, plot = plot))
+}
+
+
+## Look at AVERAGE residual - this will stop getting pulled up as much once the shoulders are gone! 
+## this also takes into account how many points are there (gets rid of NA issues)  
+
+```
+
+```{r calculate-get_grooves_robust_loess_mean, echo = F, warning = F, message = F}
+hamby44 <- hamby44 %>% mutate(grooves_rl_mean = purrr::map(ccdata_avg, .f = function(x){
+  get_grooves_robust_loess_mean(bullet = x, adjust = 0)$groove
+}))
+```
+
+
+```{r calculate_sum_resids_rl_mean, echo = F, warning = F, message = F}
+
+sum_resid_right_rlmean <- function(datafile, which_bullet){
+  data <- datafile$ccdata_w_resid[[which_bullet]]
+  man_groove <- datafile$grooves[[which_bullet]]$groove[2]
+  pred_groove <- datafile$grooves_rl_mean[[which_bullet]][2]
+  data <- data %>% filter(between(y, min(man_groove, pred_groove), max(man_groove, pred_groove)))
+  return(sum(data$resid, na.rm = T))
+}
+
+sum_rresid_right_rlmean <- function(datafile, which_bullet){
+  data <- datafile$ccdata_w_resid[[which_bullet]]
+  man_groove <- datafile$grooves[[which_bullet]]$groove[2]
+  pred_groove <- datafile$grooves_rl_mean[[which_bullet]][2]
+  data <- data %>% filter(between(y, min(man_groove, pred_groove), max(man_groove, pred_groove)))
+  return(sum(data$rlo_resid, na.rm = T))
+}
+
+hamby44$rdiff_resid_sum_rlmean <- 0
+hamby44$rdiff_rresid_sum_rlmean <- 0
+for (i in 1:nrow(hamby44)){
+  hamby44$rdiff_resid_sum_rlmean[i] <- sum_resid_right_rlmean(datafile = hamby44, which_bullet = i)
+  hamby44$rdiff_rresid_sum_rlmean[i] <- sum_rresid_right_rlmean(datafile = hamby44, which_bullet = i)
+}
+
+
+sum_resid_left_rlmean <- function(datafile, which_bullet){
+  data <- datafile$ccdata_w_resid[[which_bullet]]
+  man_groove <- datafile$grooves[[which_bullet]]$groove[1]
+  pred_groove <- datafile$grooves_rl_mean[[which_bullet]][1]
+  data <- data %>% filter(between(y, min(man_groove, pred_groove), max(man_groove, pred_groove)))
+  return(sum(data$resid, na.rm = T))
+}
+
+sum_rresid_left_rlmean <- function(datafile, which_bullet){
+  data <- datafile$ccdata_w_resid[[which_bullet]]
+  man_groove <- datafile$grooves[[which_bullet]]$groove[1]
+  pred_groove <- datafile$grooves_rl_mean[[which_bullet]][1]
+  data <- data %>% filter(between(y, min(man_groove, pred_groove), max(man_groove, pred_groove)))
+  return(sum(data$rlo_resid, na.rm = T))
+}
+
+hamby44$ldiff_resid_sum_rlmean <- 0
+hamby44$ldiff_rresid_sum_rlmean <- 0
+for (i in 1:nrow(hamby44)){
+  hamby44$ldiff_resid_sum_rlmean[i] <- sum_resid_left_rlmean(datafile = hamby44, which_bullet = i)
+  hamby44$ldiff_rresid_sum_rlmean[i] <- sum_rresid_left_rlmean(datafile = hamby44, which_bullet = i)
+}
+
+
+```
+
+
+
+Try raw residual cutoff values with robust linear model! 
+
+```{r}
+plot_resids <- function(i){
+  bullet <- hamby44$ccdata_w_resid[[i]]
+  bullet %>% ggplot() + geom_point(aes(x = y, y = abs(rlo_resid))) + theme_bw() + geom_hline(yintercept = 0, color = "red") + geom_hline(yintercept = 4*median(abs(rlo_resid)), color = "blue")
+}
+```
+
+```{r define-get_grooves_robust_loess_cutoff, echo = F, warning = F, message = F}
+get_grooves_robust_loess_cutoff <- function(bullet, adjust) {
+  robust_loess_fit <- locfit.robust(value_std~y, data = bullet, alpha = 1)
+  bullet$pred <- predict(robust_loess_fit, newdata = bullet)
+  #bullet$pred <- predict(lm0, newdata=bullet)
+
+  bullet$absresid <- with(bullet, abs(value_std-pred))
+  bullet$resid <- with(bullet, value_std-pred)
+  #bullet$absresid_div <- with(bullet, absresid/value)
+  bullet$resid_div <- with(bullet, resid/value_std)
+  #bullet %>% ggplot() + geom_point(aes(x = y, y = resid)) + theme_bw()
+  #bullet %>% ggplot() + geom_point(aes(x = y, y = resid_div)) + theme_bw()
+  cutoff <- 2*median(bullet$absresid, na.rm = T)
+  bullet$resid_cutoff <- with(bullet, absresid > cutoff)
+  groove <- range(filter(bullet, !resid_cutoff)$y) + c(adjust, -adjust)
+  
+  plot <- bullet %>% ggplot(aes(x = y, y = value_std)) + geom_line(size = .5) + theme_bw() +
+    geom_vline(xintercept=groove[1], colour = "blue") +
+    geom_vline(xintercept=groove[2], colour = "blue") 
+  
+  return(list(groove = groove, plot = plot))
+}
+```
+
+
+```{r calculate-get_grooves_robust_loess_cutoff, echo = F, warning = F, message = F}
+hamby44 <- hamby44 %>% mutate(grooves_rl_cutoff = purrr::map(ccdata_avg, .f = function(x){
+  get_grooves_robust_loess_cutoff(bullet = x, adjust = 0)$groove
+}))
+```
+
+
+
+```{r calculate_sum_resids_rlcut, echo = F, warning = F, message = F}
+
+sum_resid_right_rlcut <- function(datafile, which_bullet){
+  data <- datafile$ccdata_w_resid[[which_bullet]]
+  man_groove <- datafile$grooves[[which_bullet]]$groove[2]
+  pred_groove <- datafile$grooves_rl_cutoff[[which_bullet]][2]
+  data <- data %>% filter(between(y, min(man_groove, pred_groove), max(man_groove, pred_groove)))
+  return(sum(data$resid, na.rm = T))
+}
+
+sum_rresid_right_rlcut <- function(datafile, which_bullet){
+  data <- datafile$ccdata_w_resid[[which_bullet]]
+  man_groove <- datafile$grooves[[which_bullet]]$groove[2]
+  pred_groove <- datafile$grooves_rl_cutoff[[which_bullet]][2]
+  data <- data %>% filter(between(y, min(man_groove, pred_groove), max(man_groove, pred_groove)))
+  return(sum(data$rlo_resid, na.rm = T))
+}
+
+hamby44$rdiff_resid_sum_rlcut <- 0
+hamby44$rdiff_rresid_sum_rlcut <- 0
+for (i in 1:nrow(hamby44)){
+  hamby44$rdiff_resid_sum_rlcut[i] <- sum_resid_right_rlcut(datafile = hamby44, which_bullet = i)
+  hamby44$rdiff_rresid_sum_rlcut[i] <- sum_rresid_right_rlcut(datafile = hamby44, which_bullet = i)
+}
+
+
+sum_resid_left_rlcut <- function(datafile, which_bullet){
+  data <- datafile$ccdata_w_resid[[which_bullet]]
+  man_groove <- datafile$grooves[[which_bullet]]$groove[1]
+  pred_groove <- datafile$grooves_rl_cutoff[[which_bullet]][1]
+  data <- data %>% filter(between(y, min(man_groove, pred_groove), max(man_groove, pred_groove)))
+  return(sum(data$resid, na.rm = T))
+}
+
+sum_rresid_left_rlcut <- function(datafile, which_bullet){
+  data <- datafile$ccdata_w_resid[[which_bullet]]
+  man_groove <- datafile$grooves[[which_bullet]]$groove[1]
+  pred_groove <- datafile$grooves_rl_cutoff[[which_bullet]][1]
+  data <- data %>% filter(between(y, min(man_groove, pred_groove), max(man_groove, pred_groove)))
+  return(sum(data$rlo_resid, na.rm = T))
+}
+
+hamby44$ldiff_resid_sum_rlcut <- 0
+hamby44$ldiff_rresid_sum_rlcut <- 0
+for (i in 1:nrow(hamby44)){
+  hamby44$ldiff_resid_sum_rlcut[i] <- sum_resid_left_rlcut(datafile = hamby44, which_bullet = i)
+  hamby44$ldiff_rresid_sum_rlcut[i] <- sum_rresid_left_rlcut(datafile = hamby44, which_bullet = i)
+}
+
+
+```
 
 
 ```{r compare-get-grooves-methods, echo = F, warning = F, message = F}
@@ -734,7 +1003,11 @@ resids_dframe <- data.frame(roll_right_q = abs(hamby44$rdiff_resid_roll), roll_l
                              mad1_right_q = abs(hamby44$rdiff_resid_sum_m1), mad1_left_q = abs(hamby44$ldiff_resid_sum_m1),
                              mad1_right_rlo = abs(hamby44$rdiff_rresid_sum_m1), mad1_left_rlo = abs(hamby44$ldiff_rresid_sum_m1),
                              rl1_right_q = abs(hamby44$rdiff_resid_sum_rl1), rl1_left_q = abs(hamby44$ldiff_resid_sum_rl1),
-                             rl1_right_rlo = abs(hamby44$rdiff_rresid_sum_rl1), rl1_left_rlo = abs(hamby44$ldiff_rresid_sum_rl1)
+                             rl1_right_rlo = abs(hamby44$rdiff_rresid_sum_rl1), rl1_left_rlo = abs(hamby44$ldiff_rresid_sum_rl1),
+                             rlmean_right_q = abs(hamby44$rdiff_resid_sum_rlmean), rlmean_left_q = abs(hamby44$ldiff_resid_sum_rlmean),
+                             rlmean_right_rlo = abs(hamby44$rdiff_rresid_sum_rlmean), rlmean_left_rlo = abs(hamby44$ldiff_rresid_sum_rlmean),
+                             rlcut_right_q = abs(hamby44$rdiff_resid_sum_rlcut), rlcut_left_q = abs(hamby44$ldiff_resid_sum_rlcut),
+                             rlcut_right_rlo = abs(hamby44$rdiff_rresid_sum_rlcut), rlcut_left_rlo = abs(hamby44$ldiff_rresid_sum_rlcut)
                              )
 
 apply(resids_dframe, MARGIN = 2, mean)
@@ -764,21 +1037,77 @@ ResidType = unlist(purrr::map(method, .f = function(x){
 })))
 
 
-resids_dframe %>% mutate(Method = factor(Method, levels = levels(as.factor(Method))[c(5,3,2,1,4)], 
+resids_dframe %>% mutate(Method = factor(Method, levels = levels(as.factor(Method))[c(7,3,2,1,4,6,5)], 
                                          labels = c("Rollapply", "Quadratic", "Robust Linear Model", 
-                                                    "Median Absolute Deviation", "Robust Loess"))) %>% 
+                                                    "Median Absolute Deviation", "Robust Loess", "Robust Loess Mean Resids", "Robust Loess Cutoff"))) %>% 
   ggplot() + geom_boxplot(aes(x = GrooveSide, y = residuals_sum, fill = Method)) + 
   theme_bw() + labs(y = "Sum of Residuals") + facet_wrap(~ResidType)
 
 
 resids_dframe %>% 
-  mutate(Method = factor(Method, levels = levels(as.factor(Method))[c(5,3,2,1,4)], 
-                         labels = c("Rollapply", "Quadratic", "Robust Linear Model", "Median Absolute Deviation", "Robust Loess")))  %>%
+  mutate(Method = factor(Method, levels = levels(as.factor(Method))[c(7,3,2,1,4,6,5)], 
+                         labels = c("Rollapply", "Quadratic", "Robust Linear Model", "Median Absolute Deviation", "Robust Loess", "Robust Loess Mean Resids", "Robust Loess Cutoff")))  %>%
   filter(residuals_sum < 1000) %>% 
   ggplot() + geom_boxplot(aes(x = GrooveSide, y = residuals_sum, fill = Method)) + 
   theme_bw() + labs(y = "Sum of Residuals") + facet_wrap(~ResidType)
+
+
+
 ```
 
+
+
+
+
+
+
+
+```{r}
+
+#hamby44$ccdata_w_resid[[11]] %>% ggplot() + geom_point(aes(x = y, y = value_std)) +
+#  geom_line(aes(x = y, y = pred), colour = "red") + 
+#  geom_line(aes(x = y, y = rlo_pred), colour = "green") + 
+#  theme_bw()
+
+
+plot_b4 <- hamby44$ccdata_w_resid[[4]] %>% ggplot() + geom_point(aes(x = y, y = value_std)) +
+  geom_line(aes(x = y, y = pred), colour = "red") + 
+  geom_line(aes(x = y, y = rlo_pred), colour = "green") + 
+  theme_bw()
+
+plot_b5 <- hamby44$ccdata_w_resid[[5]] %>% ggplot() + geom_point(aes(x = y, y = value_std)) +
+  geom_line(aes(x = y, y = pred), colour = "red") + 
+  geom_line(aes(x = y, y = rlo_pred), colour = "green") + 
+  theme_bw()
+
+plot_b8 <- hamby44$ccdata_w_resid[[8]] %>% ggplot() + geom_point(aes(x = y, y = value_std)) +
+  geom_line(aes(x = y, y = pred), colour = "red") + 
+  geom_line(aes(x = y, y = rlo_pred), colour = "green") + 
+  theme_bw()
+
+plot_b11 <- hamby44$ccdata_w_resid[[11]] %>% ggplot() + geom_point(aes(x = y, y = value_std)) +
+  geom_line(aes(x = y, y = pred), colour = "red") + 
+  geom_line(aes(x = y, y = rlo_pred), colour = "green") + 
+  theme_bw()
+
+
+plot_b6 <- hamby44$ccdata_w_resid[[6]] %>% ggplot() + geom_point(aes(x = y, y = value_std)) +
+  geom_line(aes(x = y, y = pred), colour = "red") + 
+  geom_line(aes(x = y, y = rlo_pred), colour = "green") + 
+  theme_bw()
+plot_b10 <- hamby44$ccdata_w_resid[[10]] %>% ggplot() + geom_point(aes(x = y, y = value_std)) +
+  geom_line(aes(x = y, y = pred), colour = "red") + 
+  geom_line(aes(x = y, y = rlo_pred), colour = "green") + 
+  theme_bw()
+
+
+library(gridExtra)
+
+grid.arrange(plot_b4, plot_b5, plot_b8, plot_b11, ncol = 2)
+
+grid.arrange(plot_b6, plot_b10, ncol =2 )
+
+```
 ### Note: will need to re-define "sum_resid_right", "sum_resid_left"... these are how we are summing up the residuals between manual ID's and predicted grooves. This is a really gross way to do it, also... there must be a better way!  
 
 

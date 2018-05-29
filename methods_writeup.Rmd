@@ -94,12 +94,16 @@ Drawbacks:
 \end{enumerate}  
 
 
-## Method 6: Robust Loess Fit  
-**function name**: `get_grooves_robust_loess`  
+## Method 6: Robust Loess Fit (2*Median Cutoff)  
+
+**function name**: `get_grooves_robust_loess_cutoff`  
 
 Steps:  
 \begin{enumerate}
-\item Fit a robust loess model to the averaged profile of a bullet land.  
+\item Fit a robust loess model (span = 1) to the averaged profile of a bullet land.  
+\item Calculate the 2*median absolute residual from the robust loess model. 
+\item Remove all absolute residuals greater than 2*median absolute residual.  
+\item Find the range of the remaining Y values - these are the grooves!  
 
 \end{enumerate}
 
@@ -108,7 +112,7 @@ Steps:
 
 # Metrics for Comparing Performance of Methods  
 
-## Metric 1:  Sums of Absolute Residuals Between True Groove, Predicted Groove  
+## Metric 1:  Sums of Absolute Residuals Between True Groove, Predicted Groove - Robust Linear Model Fit  
 
 Steps:  
 \begin{enumerate}
@@ -129,3 +133,26 @@ Drawbacks:
 \item Doesn't treat "underpredicting" (not cutting off groove) and "overpredicting" (cutting off extra bullet land) differently - just sums residuals.  
 \item Is dependent on the robust linear model, because it uses the residuals from that model. So when that model is a bad fit, we will get lots of wonky things anyways.  
 \end{enumerate}
+
+## Metric 2:  Sums of Absolute Residuals Between True Groove, Predicted Groove - Robust Loess Model Fit  
+
+Steps: 
+\begin{enumerate}
+\item Identify predicted groove on each side. 
+\item Store the residuals from the robust loess model. 
+\item Extract the range of y values *between* the predicted left groove and manually identified left groove. 
+\item Sum the residuals that occur within that range of y values. 
+\item Repeat steps 3-4 for the right groove.  
+\item Two methods of looking at these: 
+  \begin{enumerate}
+  \item Repeat for different methods, and compare the sums across the same set of lands. 
+  \item Repeat for different methods, and create comparative boxplots (again, across the same set of lands) to visually investigate whether methods are reducing large errors. 
+  \end{enumerate}
+\end{enumerate}
+
+Drawbacks: 
+\begin{enumerate}
+\item Same drawbacks as Metric 1, but could potentially be a better initial fit than the robust linear model.  
+\end{enumerate}
+
+## Metric 3:  Distance from the predicted groove to the manually identified groove  
