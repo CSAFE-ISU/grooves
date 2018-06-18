@@ -75,6 +75,7 @@ Note that we will do all of this with the `value_std` column from `ccdata_avg`, 
 
 
 ```{r calculate-residuals-rlm-rloess, echo = F, warning = F, message = F}
+library(locfit)
 hamby44 <- hamby44 %>% mutate(ccdata_w_resid = purrr::map(ccdata_avg, .f = function(bullet){
   lm0 <- MASS::rlm(value_std~poly(y,2), data=bullet, maxit=100)
   bullet$pred <- predict(lm0, newdata=bullet)
@@ -632,7 +633,7 @@ loess_fit <- fitted(loess(value_std~y, data = bullet_filter, span = 0.9))
 #install.packages("locfit")
 library(locfit)
 
-wts <- ifelse(bullet_filter$y < 100 | bullet_filter$y > 1800, 0, 1)
+#wts <- ifelse(bullet_filter$y < 100 | bullet_filter$y > 1800, 0, 1)
 robust_loess_fit <- locfit.robust(value_std~y, data = bullet_filter, kern = "tcub", alpha = 1)
 r_loess_fit <- predict(robust_loess_fit, newdata = bullet_filter)
 ## this looks like a better "robust" fit, and looks fairly promising at that!  
@@ -900,10 +901,10 @@ for (i in 1:nrow(hamby44)){
 Try raw residual cutoff values with robust linear model! 
 
 ```{r}
-plot_resids <- function(i){
-  bullet <- hamby44$ccdata_w_resid[[i]]
-  bullet %>% ggplot() + geom_point(aes(x = y, y = abs(rlo_resid))) + theme_bw() + geom_hline(yintercept = 0, color = "red") + geom_hline(yintercept = 4*median(abs(rlo_resid)), color = "blue")
-}
+#plot_resids <- function(i){
+#  bullet <- hamby44$ccdata_w_resid[[i]]
+#  bullet %>% ggplot() + geom_point(aes(x = y, y = abs(rlo_resid))) + theme_bw() + geom_hline(yintercept = 0, color = "red") + #geom_hline(yintercept = 4*median(abs(rlo_resid), na.rm = T), color = "blue")
+#}
 ```
 
 ```{r define-get_grooves_robust_loess_cutoff, echo = F, warning = F, message = F}
@@ -992,6 +993,101 @@ for (i in 1:nrow(hamby44)){
 ```
 
 
+
+```{r plots_for_afte, echo = F, warning = F, message = F}
+cbPalette <- c("#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7", "#999999")
+
+plot_resids_grooves <- function(i){
+  bullet <- hamby44$ccdata_w_resid[[i]]
+  left_groove <- hamby44$grooves_rl_cutoff[[i]][1]
+  right_groove <- hamby44$grooves_rl_cutoff[[i]][2]
+  bullet %>% ggplot() + geom_point(aes(x = y, y = rlo_resid)) + 
+  geom_hline(yintercept = 0, color = cbPalette[2]) + 
+  geom_vline(xintercept = left_groove, color = "red") + 
+  geom_vline(xintercept = right_groove, color = "red") + 
+  theme_bw() + labs(x = "Y Value", y = "Residual Value")
+}
+plot_resids_grooves(68)
+
+
+
+highlight_plot <- function(i){
+  bullet <- hamby44$ccdata_w_resid[[i]]
+  ggplot() + geom_point(data = bullet, aes(x = y, y = rlo_resid)) + 
+  geom_vline(xintercept = hamby44$grooves_rl_cutoff[[i]][1], colour = "blue") + 
+  geom_vline(xintercept = hamby44$grooves_rl_cutoff[[i]][2], colour = "blue") + 
+  geom_hline(yintercept = 0, colour = "red") +
+  #geom_vline(xintercept = hamby44$grooves[[20]]$groove[1], colour = "green")  + 
+  #geom_vline(xintercept = hamby44$grooves[[20]]$groove[2], colour = "green") + 
+  labs(x = "Y Values", y = "Height Values", title = "Predicting Groove Presence - Residuals") +
+  geom_rect(aes(ymin = min(bullet$resid, na.rm = T), 
+                ymax = max(bullet$resid, na.rm = T),
+                xmax = max(hamby44$grooves[[i]]$groove[1], hamby44$grooves_rl_cutoff[[i]][1]), 
+                xmin = min(hamby44$grooves[[i]]$groove[1], hamby44$grooves_rl_cutoff[[i]][1])), fill = "yellow", alpha = 0.3) +
+  geom_rect(aes(ymin = min(bullet$resid, na.rm = T), 
+                ymax = max(bullet$resid, na.rm = T),
+                xmax = max(hamby44$grooves[[i]]$groove[2], hamby44$grooves_rl_cutoff[[i]][2]), 
+                xmin = min(hamby44$grooves[[i]]$groove[2], hamby44$grooves_rl_cutoff[[i]][2])), fill = "yellow", alpha = 0.3) + 
+  #geom_line(data = hamby44$ccdata_w_resid[[20]], aes(x = y, y = pred), colour = "red") + 
+  theme_bw()
+}
+highlight_plot(68)
+```
+
+
+
+
+```{r}
+resids_dframe_2 <- data.frame(roll_right_q = abs(hamby44$rdiff_resid_roll), roll_left_q = abs(hamby44$ldiff_resid_sum_roll), 
+                            roll_right_rlo = abs(hamby44$rdiff_rresid_roll), roll_left_rlo = abs(hamby44$ldiff_rresid_sum_roll), 
+                             quad_right_q = abs(hamby44$rdiff_resid_sum), quad_left_q = abs(hamby44$ldiff_resid_sum), 
+                             quad_right_rlo = abs(hamby44$rdiff_rresid_sum), quad_left_rlo = abs(hamby44$ldiff_rresid_sum),
+                             rlcut_right_q = abs(hamby44$rdiff_resid_sum_rlcut), rlcut_left_q = abs(hamby44$ldiff_resid_sum_rlcut),
+                             rlcut_right_rlo = abs(hamby44$rdiff_rresid_sum_rlcut), rlcut_left_rlo = abs(hamby44$ldiff_rresid_sum_rlcut)
+                             )
+
+apply(resids_dframe_2, MARGIN = 2, mean)
+apply(resids_dframe_2, MARGIN = 2, median)
+
+head(resids_dframe_2)
+
+#resids_dframe$method <- factor(resids_dframe$method, levels = rev(levels(resids_dframe$method)))
+resids_dframe_2 <- resids_dframe_2 %>% gather(method, residuals_sum)
+
+#resids_dframe$method <- factor(resids_dframe$method,
+#    levels = c('roll_left', 'quad_left', 'pos_left', 'mad1_left', 'mad2_left', 'roll_right', 'quad_right', 'pos_right', 'mad1_right', 'mad2_right'),ordered = TRUE)
+
+#resids_dframe %>% ggplot() + geom_boxplot(aes(x = method, y = residuals_sum)) + 
+#  theme_bw() + labs(x = "Method and Groove", y = "Residuals") + scale_x_discrete(labels = c("Rollapply, Left", "RLM, Left", "Rollapply, Right", "RLM, Right"))
+
+#resids_dframe  %>% select(-quad_right, -quad_left) %>% gather(method, residuals_sum) %>% filter(residuals_sum < 2000) %>% 
+#  ggplot() + geom_boxplot(aes(x = factor(method), y = residuals_sum)) + theme_bw()
+
+resids_dframe_2 <- resids_dframe_2 %>% mutate(method = as.character(method), Method = unlist(purrr::map(method, .f = function(x){
+  strsplit(x, "_")[[1]][1]
+})), GrooveSide = unlist(purrr::map(method, .f = function(x){
+  strsplit(x, "_")[[1]][2]
+})), 
+ResidType = unlist(purrr::map(method, .f = function(x){
+  strsplit(x, "_")[[1]][3]
+})))
+
+
+resids_dframe_2 %>% filter(ResidType == "rlo") %>% mutate(Method = factor(Method, levels = levels(as.factor(Method))[c(3,1,2)], 
+                                         labels = c("Rollapply", "Robust Linear Model", 
+                                                    "Robust Loess"))) %>% 
+  ggplot() + geom_boxplot(aes(x = GrooveSide, y = residuals_sum, fill = Method)) + 
+  theme_bw() + labs(y = "Sum of Residuals") + scale_fill_manual(values = cbPalette)
+
+
+resids_dframe_2 %>% filter(ResidType == "rlo", residuals_sum < 10000) %>% mutate(Method = factor(Method, levels = levels(as.factor(Method))[c(3,1,2)], 
+                                         labels = c("Rollapply", "Robust Linear Model", 
+                                                    "Robust Loess"))) %>% 
+  ggplot() + geom_boxplot(aes(x = GrooveSide, y = residuals_sum, fill = Method)) + 
+  theme_bw() + labs(y = "Sum of Residuals") + scale_fill_manual(values = cbPalette)
+```
+
+
 ```{r compare-get-grooves-methods, echo = F, warning = F, message = F}
 
 resids_dframe <- data.frame(roll_right_q = abs(hamby44$rdiff_resid_roll), roll_left_q = abs(hamby44$ldiff_resid_sum_roll), 
@@ -1063,6 +1159,10 @@ resids_dframe %>%
 
 
 ```{r}
+
+hamby44 %>% ggplot() + geom_point(aes(x = y, y  ))
+
+
 
 #hamby44$ccdata_w_resid[[11]] %>% ggplot() + geom_point(aes(x = y, y = value_std)) +
 #  geom_line(aes(x = y, y = pred), colour = "red") + 
