@@ -201,4 +201,15 @@ hamby44$is_right_groove <- c(1, 1, 0, 0, 0, #5
 
 ```
 
+### Other notes:  
+
+The `grooves_pred` column gives the grooves predicted by the "rollapply" method. The `grooves` column gives manually ID'd grooves.
+
+One quirk of the data to note: The manual identifications were done using a Shiny app that overlaid the "rollapply" grooves, and were manually moved if the rollapply method misidentified. If the rollapply method was accurate, the location wasn't moved - so for this, there will be a lot of "manual" grooves and "rollapply" grooves that are the exact same value.  
+
+We have been talking about going back through and manually ID'ing without the "rollapply" predictions there to remove that issue, but we haven't done it yet.  
+
+Happy bullet-ing!!   
+
+
 
