@@ -1,0 +1,25 @@
+---
+title: "A Robust Approach to Automatic Edge Detection in 3D Bullet Land Scans"
+author: Kiegan Rice, M.S., Heike Hofmann, Ph.D., Ulrike Genschel, Ph.D. 
+output: 
+  pdf_document: 
+    number_sections: true
+---
+
+\section{Background}  
+
+```{r, echo = F, warning = F, message = F}
+
+```
+
+\section{Data Source}  
+
+\section{Method 1}  
+
+\section{Method 2}  
+
+\section{Results}  
+
+
+\section{Conclusions}  
+
