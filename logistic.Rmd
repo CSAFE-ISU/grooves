@@ -1,0 +1,270 @@
+---
+title: "Logistic Regression"
+output: pdf_document
+---
+
+
+```{r packages-and-data, echo = F, message = F, warning = F}
+#install.packages("tidyr")
+#install.packages("dplyr")
+#install.packages("purrr")
+#install.packages("ggplot2")
+library(tidyr)
+library(dplyr)
+library(purrr)
+library(ggplot2)
+
+#devtools::install_github("CSAFE-ISU/bulletr")
+#library(bulletr)
+
+
+hamby44 <- readRDS("//opt/hamby44/hamby44.rda")
+hamby44[1:6,] # to look at what the first 6 rows look like.  
+```
+
+There are a few changes we want to make to the `hamby44` data before we fit things.  
+
+The first is that there are a few lands that are `NA` values, so we just need to filter those out before we can do anything else. It looks like it only happens in two cases, so we are still left with 208 viable lands.    
+
+```{r rm-empty-lands, message = F, warning = F}
+hamby44 <- hamby44 %>% filter(!is.na(crosscuts))
+```
+
+
+The second is that since `hamby44` has 10 crosscuts for each land, we will collapse those into one by averaging them. Then `hamby44` will have an extra column, `ccdata_avg`, which is a data frame for each land consisting of the columns `y` and `value`, but here `value` is the averaged values. We will also create a `value_std` which is the averaged value standardized down to 0 if the lowest value is not 0. This can be seen below; the 10 crosscuts are plotted as points, in black. The averaged values are plotted as a red line, and the standardized average values are plotted as a green line. While this is just done for the first land in the data set, and there is not much of a difference here, for some it will be a more pronounced difference.  
+
+
+
+
+```{r avg-and-std-values, echo = F, message = F, warning = F}
+
+hamby44 <- hamby44 %>% mutate(ccdata_avg = purrr::map(ccdata, .f = function(dframe){
+  dframe <- dframe %>% group_by(y) %>% summarise(value = mean(value, na.rm = T))
+  dframe <- as.data.frame(dframe)
+  check_min <- min(dframe$value[!is.na(dframe$value)])
+  dframe <- dframe %>% mutate(value_std = value - check_min)
+  return(dframe)
+}))
+
+#hamby44
+
+bullet <- hamby44$ccdata_avg[[1]]
+ggplot() + geom_point(data = bullet, aes(x = y, y = value)) + 
+  geom_line(data = bullet, aes(x = y, y = value), color = "red") + 
+  geom_line(data = bullet, aes(x = y, y = value_std), colour = "green") + 
+  theme_bw()
+```
+
+
+
+We are interested in looking at the residuals from a robust LOESS fit (primarily) as well as a robust linear model fit. There are many instances of a bad linear fit due to a truly non-quadratic bullet land shape with robust linear models, so we want to consider robust LOESS, which appears to do a much better job of both addressing outlier values in the edges and capturing the shape of the bullet land. Thus, we will fit this model and calculate the residuals that occur in order to later use them in assessment. So here, we will calculate the residuals from the robust linear model (`absresid`, `resid`) AND the robust LOESS model (`rlo_absresid`, `rlo_resid`).  
+
+Note that we will do all of this with the `value_std` column from `ccdata_avg`, so we will need to make sure we use `value_std` when we define the function.    
+
+We are also interested in the R^2 value, to see how well the model is fitting the data, so we will calculate that and record it for both the robust linear model and the robust loess.  
+
+This results in the `ccdata_w_resid` column in the `hamby44` dataset, which you should be able to just use as it has all the relevant information.  
+
+
+```{r calculate-residuals-rlm-rloess, echo = F, warning = F, message = F}
+#install.packages("locfit")
+library(locfit)
+hamby44 <- hamby44 %>% mutate(ccdata_w_resid = purrr::map(ccdata_avg, .f = function(bullet){
+  lm0 <- MASS::rlm(value_std~poly(y,2), data=bullet, maxit=100)
+  bullet$pred <- predict(lm0, newdata=bullet)
+
+  bullet$absresid <- with(bullet, abs(value_std-pred))
+  bullet$resid <- with(bullet, value_std-pred)
+  
+  
+  robust_loess_fit <- locfit.robust(value_std~y, data = bullet, alpha = 1, kern = "tcub")
+  bullet$rlo_pred <- predict(robust_loess_fit, newdata = bullet)
+  
+  bullet$rlo_absresid <- with(bullet, abs(value_std-rlo_pred))
+  bullet$rlo_resid <- with(bullet, value_std-rlo_pred)
+  return(bullet)
+}), rlm_r2 = purrr::map_dbl(ccdata_w_resid, .f = function(bullet){
+  r2 <- (cor(bullet$value_std, bullet$pred, use = "complete.obs"))^2
+  return(r2)
+}), rlo_r2 = purrr::map_dbl(ccdata_w_resid, .f = function(bullet){
+  r2 <- (cor(bullet$value_std, bullet$rlo_pred, use = "complete.obs"))^2
+  return(r2)
+})
+)
+
+# to plot any of the individual lands (indexed by i), and what the robust loess predictions look like on that land.  
+
+#bullet_plot <- function(i){
+#  bullet <- hamby44$ccdata_w_resid[[i]]
+#  bullet %>% ggplot() + geom_point(aes(x = y, y = value_std)) + theme_bw() + geom_line(aes(x = y, y = rlo_pred), colour ="green")
+#}
+```
+
+
+
+
+### define whether there is or is not a groove  
+This was just done by hand for the 208 remaining lands. That way you can use the info of whether or not there is a groove on either side!  
+
+
+
+```{r define-is-groove, echo = F, warning = F, message = F}
+
+hamby44$is_left_groove <- c(1, 1, 1, 1, 1, #5
+                            1, 1, 1, 1, 0, #10
+                            1, 1, 1, 1, 1, #15
+                            1, 1, 1, 1, 1, #20
+                            1, 1, 1, 1, 1, #25
+                            1, 1, 1, 1, 1, #30
+                            1, 0, 1, 1, 1, #35
+                            1, 1, 1, 1, 1, #40
+                            1, 1, 1, 1, 1, #45
+                            1, 1, 1, 1, 1, #50
+                            1, 1, 1, 1, 1, #55
+                            1, 1, 0, 1, 1, #60
+                            1, 1, 1, 1, 1, #65
+                            1, 1, 1, 1, 1, #70
+                            1, 1, 1, 1, 1, #75
+                            1, 1, 1, 1, 1, #80
+                            1, 1, 1, 1, 1, #85
+                            1, 1, 1, 1, 1, #90
+                            1, 1, 1, 1, 1, #95
+                            1, 1, 1, 0, 1, #100
+                            1, 1, 1, 1, 1, #105
+                            1, 1, 1, 1, 1, #110
+                            1, 1, 1, 1, 1, #115
+                            1, 1, 1, 1, 1, #120
+                            1, 1, 1, 1, 1, #125
+                            1, 1, 1, 1, 1, #130
+                            1, 1, 1, 1, 1, #135
+                            1, 1, 1, 1, 1, #140
+                            1, 1, 1, 1, 1, #145
+                            1, 1, 1, 1, 1, #150
+                            1, 1, 1, 1, 1, #155
+                            1, 1, 1, 1, 1, #160
+                            1, 1, 1, 1, 1, #165
+                            1, 1, 1, 1, 1, #170
+                            1, 1, 1, 1, 1, #175
+                            1, 1, 1, 1, 1, #180
+                            1, 1, 1, 1, 1, #185
+                            1, 1, 1, 1, 1, #190
+                            1, 1, 1, 1, 1, #195
+                            1, 1, 1, 1, 1, #200
+                            1, 1, 1, 1, 1, #205
+                            1, 1, 1)
+
+hamby44$is_right_groove <- c(1, 1, 0, 0, 0, #5 
+                             1, 0, 0, 0, 1, #10
+                             0, 0, 1, 1, 0, #15
+                             0, 1, 1, 1, 0, #20
+                             0, 0, 0, 1, 0, #25
+                             1, 0, 0, 0, 0, #30
+                             1, 1, 1, 0, 1, #35
+                             0, 1, 1, 1, 0, #40
+                             0, 0, 0, 1, 0, #45
+                             1, 0, 1, 0, 0, #50
+                             1, 0, 0, 1, 0, #55
+                             0, 0, 1, 1, 0, #60
+                             0, 1, 0, 0, 1, #65
+                             1, 0, 1, 1, 1, #70
+                             0, 0, 1, 0, 1, #75
+                             0, 1, 0, 1, 0, #80
+                             0, 1, 0, 1, 1, #85
+                             1, 0, 1, 0, 1, #90
+                             0, 0, 0, 1, 1, #95
+                             1, 0, 1, 1, 1, #100
+                             0, 0, 1, 1, 0, #105
+                             0, 0, 1, 0, 0, #110
+                             0, 1, 1, 1, 0, #115
+                             0, 1, 0, 1, 0, #120
+                             1, 1, 1, 0, 0, #125
+                             0, 1, 1, 1, 1, #130
+                             1, 1, 0, 1, 1, #135
+                             1, 1, 0, 0, 0, #140
+                             0, 0, 0, 0, 0, #145
+                             0, 1, 1, 0, 0, #150
+                             1, 1, 0, 1, 0, #155
+                             0, 1, 0, 0, 0, #160
+                             0, 0, 0, 0, 1, #165
+                             1, 0, 1, 0, 0, #170
+                             1, 1, 0, 0, 0, #175
+                             0, 0, 1, 0, 1, #180
+                             0, 1, 0, 1, 0, #185
+                             1, 1, 1, 1, 0, #190
+                             1, 1, 1, 0, 1, #195
+                             1, 1, 1, 0, 1, #200
+                             0, 1, 0, 1, 0, #205
+                             1, 0, 1)
+
+
+```
+
+
+### Define depth from center, left/right
+
+
+```{r define-depth-and-side, echo = F, warning = F, message = F}
+hamby44 <- hamby44 %>% mutate(ccdata_w_resid = purrr::map(ccdata_w_resid, .f = function(bullet){
+  median <- median(bullet$y)
+  bullet$side <- "right"
+  bullet$side <- ifelse(bullet$y <= median, "left", bullet$side)
+  bullet$depth <- abs(bullet$y - median)
+  return(bullet)
+}))
+#hamby44$ccdata_w_resid[[1]][3000,]
+```
+
+### Define response: whether it is in the groove engraved area or not (using "ground truth").  
+
+```{r define-response, echo = F, warning = F, message = F}
+
+hamby44 <- hamby44 %>% mutate(left_groove = purrr::map_dbl(grooves, .f = function(grooves){
+  left_groove <- grooves$groove[1]
+}),
+right_groove = purrr::map_dbl(grooves, .f = function(grooves){
+  right_groove <- grooves$groove[2]
+}))
+hamby44[1:6,]
+
+calculate_response <- function(dataset){
+  for(i in 1:nrow(dataset)){
+  left_groove <- dataset$left_groove[i]
+  right_groove <- dataset$right_groove[i]
+  dataset$ccdata_w_resid[[i]]$left_groove <- left_groove
+  dataset$ccdata_w_resid[[i]]$right_groove <- right_groove
+  }
+  return(dataset)
+}
+
+#tst <- calculate_response(hamby44[1:5,])
+#head(tst)
+
+hamby44 <- calculate_response(hamby44)
+
+hamby44 <- hamby44 %>% mutate(ccdata_w_resid = purrr::map(ccdata_w_resid, .f = function(bullet){
+  bullet$response <- ifelse(bullet$y <= left_groove | bullet$y >= right_groove, 1, 0)
+  return(bullet)
+}))
+
+
+bullet <- hamby44$ccdata_w_resid[[1]]
+
+lm0 <- lm(response~ rlo_resid + side + depth + side*depth, data = bullet)
+bullet$lm0_pred <- predict(lm0, newdata = bullet)
+
+bullet %>% ggplot() + geom_point(aes(x = y, y = value_std, colour = lm0_pred)) + theme_bw()
+ ```
+
+
+### Other notes:  
+
+The `grooves_pred` column gives the grooves predicted by the "rollapply" method. The `grooves` column gives manually ID'd grooves.
+
+One quirk of the data to note: The manual identifications were done using a Shiny app that overlaid the "rollapply" grooves, and were manually moved if the rollapply method misidentified. If the rollapply method was accurate, the location wasn't moved - so for this, there will be a lot of "manual" grooves and "rollapply" grooves that are the exact same value.  
+
+We have been talking about going back through and manually ID'ing without the "rollapply" predictions there to remove that issue, but we haven't done it yet.  
+
+Happy bullet-ing!!   
+
+
+

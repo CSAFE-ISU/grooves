@@ -8,15 +8,23 @@ output:
 
 \section{Background}  
 
-```{r, echo = F, warning = F, message = F}
-
-```
+Following the 2009 report by the National Research Council on Identifying the Needs of the Forensic Sciences Community (*cite NRC*)
 
 \section{Data Source}  
 
-\section{Method 1}  
+The data used in this project are high resolution 3D scans of bullet land engraved areas (LEAs).  
 
-\section{Method 2}  
+The scanned bullets come from the Hamby 44 set (*cite Hamby study*). They consist of 35 total bullets from a set of 10 consecutively rifled Ruger P85 barrels.  
+
+\section{Methodology}  
+
+Due to the presence of data points that deviate from the overall global structure of the land engraved area's curve, robust methods will need to be applied. Robust methods reduce the influence of these outlying points when attempting to fit a line through the global structure. 
+
+- Write about the lack of true linearity in scans of bullet lands - the physical shape of bullet lands.  
+- Address differences in left groove, right groove due to the way the bullet is shot out of the barrel.  
+- 
+
+
 
 \section{Results}  
 
