@@ -48,11 +48,11 @@ hamby44 <- hamby44 %>% mutate(ccdata_avg = purrr::map(ccdata, .f = function(dfra
 
 #hamby44
 
-bullet <- hamby44$ccdata_avg[[1]]
-ggplot() + geom_point(data = bullet, aes(x = y, y = value)) + 
-  geom_line(data = bullet, aes(x = y, y = value), color = "red") + 
-  geom_line(data = bullet, aes(x = y, y = value_std), colour = "green") + 
-  theme_bw()
+#bullet <- hamby44$ccdata_avg[[1]] ## can be used to visualize the shift down to "baseline" 
+#ggplot() + geom_point(data = bullet, aes(x = y, y = value)) + 
+#  geom_line(data = bullet, aes(x = y, y = value), color = "red") + 
+#  geom_line(data = bullet, aes(x = y, y = value_std), colour = "green") + 
+#  theme_bw()
 ```
 
 
@@ -242,19 +242,168 @@ calculate_response <- function(dataset){
 hamby44 <- calculate_response(hamby44)
 
 hamby44 <- hamby44 %>% mutate(ccdata_w_resid = purrr::map(ccdata_w_resid, .f = function(bullet){
-  bullet$response <- ifelse(bullet$y <= left_groove | bullet$y >= right_groove, 1, 0)
+  bullet$response <- ifelse(bullet$y <= bullet$left_groove | bullet$y >= bullet$right_groove, 1, 0)
   return(bullet)
 }))
 
 
-bullet <- hamby44$ccdata_w_resid[[1]]
+bullet <- hamby44$ccdata_w_resid[[5]]
 
-lm0 <- lm(response~ rlo_resid + side + depth + side*depth, data = bullet)
-bullet$lm0_pred <- predict(lm0, newdata = bullet)
+glm0 <- glm(response~ rlo_resid + side + depth + side*depth, data = bullet, family = binomial(link = "logit"))
+bullet$glm0_pred <- predict(glm0, newdata = bullet, type = "response")
 
-bullet %>% ggplot() + geom_point(aes(x = y, y = value_std, colour = lm0_pred)) + theme_bw()
- ```
+bullet %>% ggplot() + geom_point(aes(x = y, y = value_std, colour = glm0_pred)) + theme_bw()
 
+
+
+```
+
+
+```{r glmnet-stuff, echo = F, message = F, warning = F}
+library(ROCR) # For ROC curves
+library(glmnet) # For regularized GLMs
+
+bullet <- hamby44$ccdata_w_resid[[55]]
+# Classification problem
+bullet.model <- bullet[!is.na(bullet$rlo_resid),]
+X <- model.matrix( ~ rlo_resid + side + depth + side*depth - 1, bullet.model)
+
+# L1 regularized logistic regression
+fit <- cv.glmnet(x = X, y = bullet.model$response, family = 'binomial', type.measure = 'class', alpha = 1)
+
+newbullet <- hamby44$ccdata_w_resid[[3]]
+newbullet.model <- bullet[!is.na(bullet$rlo_resid),]
+newX <- model.matrix(~rlo_resid + side + depth + side*depth - 1, newbullet.model)
+# Predict from model
+preds <- predict(fit, newx = newX, type = 'response')
+
+# ROCR for ROC curve
+# Calculate true positive rate and false positive rate on the prediction object
+perf <- performance(prediction(preds, newbullet.model$response), 'tpr', 'fpr')
+
+plot(perf)
+```
+
+```{r glmnet-fits, echo = F, warning = F, message = F}
+hamby44 <- hamby44 %>% mutate(glmnet_fits = purrr::map(ccdata_w_resid, .f = function(bullet){
+  bullet.model <- bullet[!is.na(bullet$rlo_resid),]
+  X <- model.matrix( ~ rlo_resid + side + depth + side*depth - 1, bullet.model)
+
+  # L1 regularized logistic regression
+  fit <- cv.glmnet(x = X, y = bullet.model$response, family = 'binomial', type.measure = 'class', alpha = 1)
+  return(fit)
+}), matrix_fits = purrr::map(glmnet_fits, .f = function(fits){
+  fits <- as.matrix(coef(fits))
+}))
+
+head(hamby44)
+
+model_avg <- apply(simplify2array(hamby44$matrix_fits), 1, mean)
+
+```
+
+Now, we want to use the averaged logistic regression parameters to fit the model to all of the bullets, and assess its accuracy.  
+
+```{r, echo = F, warning = F, message = F}
+
+## the parameters for the model are stored as "model_avg"
+model_avg
+
+hamby44 <- hamby44 %>% mutate(ccdata_logistic = purrr::map(ccdata_w_resid, .f = function(bullet){
+  ## here is where we take model parameters and do stuff with them! 
+  bullet <- bullet[!is.na(bullet$rlo_resid),]
+  X <- cbind(1, model.matrix(~rlo_resid + side+ depth + side*depth - 1, bullet))
+  ymean <- X%*%model_avg
+  yhat <- exp(ymean)/(1 + exp(ymean))
+  bullet$pred_val <- yhat
+  bullet$pred_class <- ifelse(bullet$pred_val < .5, "LEA", "GEA")
+  return(bullet)
+}))
+
+head(hamby44$ccdata_logistic[[1]])
+
+plot_log_pred <- function(bullet_num){
+  bullet <- hamby44$ccdata_logistic[[bullet_num]]
+  bullet %>% ggplot() + geom_point(aes(x = y, y = rlo_resid, color = pred_class)) + theme_bw()
+}
+
+plot_log_pred(16)
+## It looks like this method is working pretty well with a cutoff of .5 for SOME bullets, but not for all bullets. 
+## Could we possibly just put ALL the bullets together, and fit one model for all of them? Would that be any better?
+plot(fit)
+
+## Alicia's suggestions: Try thinning the middle 50% of the data (grabbing every 3rd point or so), or try something more powerful, like random forest. 
+
+```
+
+
+Now let's try this combining all the data into one large data frame and fitting ONE logistic regression model to it... then we can see if the ROC curves are a little more reasonable.  
+
+cv.glmnet is cross-validated penalized GLM's (aka, doing LASSO regression with 10-fold cross validation). 
+
+```{r, echo = F, warning = F, message = F}
+hamby44 %>% mutate(glmnet_fits = purrr::map(ccdata_w_resid, .f = function(bullet){
+  bullet.model <- bullet[!is.na(bullet$rlo_resid),]
+  X <- model.matrix( ~ rlo_resid + side + depth + side*depth - 1, bullet.model)
+
+  # L1 regularized logistic regression
+  fit <- cv.glmnet(x = X, y = bullet.model$response, family = 'binomial', type.measure = 'class', alpha = 1)
+  return(fit)
+}), matrix_fits = purrr::map(glmnet_fits, .f = function(fits){
+  fits <- as.matrix(coef(fits))
+}))
+
+
+## library(plyr)
+## library(dplyr)
+
+tst.rbf <- rbind.fill(hamby44$ccdata_w_resid)
+tst.rbf2 <- tst.rbf[!is.na(tst.rbf$rlo_resid),]
+X <- model.matrix(~rlo_resid + side + depth + side*depth - 1, tst.rbf2)
+fit <- cv.glmnet(x = X, y = tst.rbf2$response, family = 'binomial', type.measure = 'class', alpha = 1)
+
+
+# Predict from model
+preds <- predict(fit, newx = X, type = 'response')
+
+# ROCR for ROC curve
+# Calculate true positive rate and false positive rate on the prediction object
+perf <- performance(prediction(preds, tst.rbf2$response), 'tpr', 'fpr')
+
+plot(perf)
+
+auc <- performance(prediction(preds, tst.rbf2$response), 'auc')@y.values[[1]]
+
+model_all <- as.matrix(coef(fit))
+
+
+
+hamby44 <- hamby44 %>% mutate(ccdata_logistic2 = purrr::map(ccdata_w_resid, .f = function(bullet){
+  ## here is where we take model parameters and do stuff with them! 
+  bullet <- bullet[!is.na(bullet$rlo_resid),]
+  X <- cbind(1, model.matrix(~rlo_resid + side+ depth + side*depth - 1, bullet))
+  ymean <- X%*%model_all
+  yhat <- exp(ymean)/(1 + exp(ymean))
+  bullet$pred_val <- yhat
+  bullet$pred_class <- ifelse(bullet$pred_val < .25, "LEA", "GEA")
+  return(bullet)
+}))
+
+head(hamby44$ccdata_logistic2[[1]])
+
+plot_log_pred2 <- function(bullet_num){
+  bullet <- hamby44$ccdata_logistic2[[bullet_num]]
+  bullet %>% ggplot() + geom_point(aes(x = y, y = value_std, color = pred_class)) + theme_bw()
+}
+
+plot_log_pred2(16)
+
+plot_log_hist <- function(bullet_num){
+  bullet <- hamby44$ccdata_logistic2[[bullet_num]]
+  bullet %>% ggplot() + geom_histogram(aes(x = pred_val, fill = factor(response))) + theme_bw()
+}
+plot_log_hist(16)
+```
 
 ### Other notes:  
 
