@@ -261,6 +261,7 @@ summary(glmA)
 preds.l <- predict(glmA, newdata = bullet.log, type = 'response')
 
 # ROCR for ROC curve
+library(ROCR)
 # Calculate true positive rate and false positive rate on the prediction object
 perf.l <- performance(prediction(preds.l, bullet.log$response), 'tpr', 'fpr')
 
