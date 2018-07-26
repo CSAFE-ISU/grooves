@@ -3,6 +3,12 @@ title: "Logistic Regression"
 output: pdf_document
 ---
 
+## Introduction  
+
+We are interested in trying a logistic regression approach to predicting which data points are part of the land engraved area (LEA), and which are part of the groove engraved area (GEA) in our 3D bullet land scans.  
+
+This is primarily a two-class classification problem. We will begin with logistic regression, and move to more sophisticated data processing or modeling as needed.  
+
 
 ```{r packages-and-data, echo = F, message = F, warning = F}
 #install.packages("tidyr")
@@ -10,6 +16,7 @@ output: pdf_document
 #install.packages("purrr")
 #install.packages("ggplot2")
 library(tidyr)
+library(plyr)
 library(dplyr)
 library(purrr)
 library(ggplot2)
@@ -17,29 +24,18 @@ library(ggplot2)
 #devtools::install_github("CSAFE-ISU/bulletr")
 #library(bulletr)
 
-
 hamby44 <- readRDS("//opt/hamby44/hamby44.rda")
-hamby44[1:6,] # to look at what the first 6 rows look like.  
+#hamby44[1:6,] # to look at what the first 6 rows look like.  
 ```
 
-There are a few changes we want to make to the `hamby44` data before we fit things.  
-
-The first is that there are a few lands that are `NA` values, so we just need to filter those out before we can do anything else. It looks like it only happens in two cases, so we are still left with 208 viable lands.    
-
-```{r rm-empty-lands, message = F, warning = F}
+```{r rm-empty-lands, echo = F, message = F, warning = F}
 hamby44 <- hamby44 %>% filter(!is.na(crosscuts))
 ```
-
-
-The second is that since `hamby44` has 10 crosscuts for each land, we will collapse those into one by averaging them. Then `hamby44` will have an extra column, `ccdata_avg`, which is a data frame for each land consisting of the columns `y` and `value`, but here `value` is the averaged values. We will also create a `value_std` which is the averaged value standardized down to 0 if the lowest value is not 0. This can be seen below; the 10 crosscuts are plotted as points, in black. The averaged values are plotted as a red line, and the standardized average values are plotted as a green line. While this is just done for the first land in the data set, and there is not much of a difference here, for some it will be a more pronounced difference.  
-
-
-
 
 ```{r avg-and-std-values, echo = F, message = F, warning = F}
 
 hamby44 <- hamby44 %>% mutate(ccdata_avg = purrr::map(ccdata, .f = function(dframe){
-  dframe <- dframe %>% group_by(y) %>% summarise(value = mean(value, na.rm = T))
+  dframe <- dframe %>% group_by(y) %>% dplyr::summarise(value = mean(value, na.rm = T))
   dframe <- as.data.frame(dframe)
   check_min <- min(dframe$value[!is.na(dframe$value)])
   dframe <- dframe %>% mutate(value_std = value - check_min)
@@ -54,17 +50,6 @@ hamby44 <- hamby44 %>% mutate(ccdata_avg = purrr::map(ccdata, .f = function(dfra
 #  geom_line(data = bullet, aes(x = y, y = value_std), colour = "green") + 
 #  theme_bw()
 ```
-
-
-
-We are interested in looking at the residuals from a robust LOESS fit (primarily) as well as a robust linear model fit. There are many instances of a bad linear fit due to a truly non-quadratic bullet land shape with robust linear models, so we want to consider robust LOESS, which appears to do a much better job of both addressing outlier values in the edges and capturing the shape of the bullet land. Thus, we will fit this model and calculate the residuals that occur in order to later use them in assessment. So here, we will calculate the residuals from the robust linear model (`absresid`, `resid`) AND the robust LOESS model (`rlo_absresid`, `rlo_resid`).  
-
-Note that we will do all of this with the `value_std` column from `ccdata_avg`, so we will need to make sure we use `value_std` when we define the function.    
-
-We are also interested in the R^2 value, to see how well the model is fitting the data, so we will calculate that and record it for both the robust linear model and the robust loess.  
-
-This results in the `ccdata_w_resid` column in the `hamby44` dataset, which you should be able to just use as it has all the relevant information.  
-
 
 ```{r calculate-residuals-rlm-rloess, echo = F, warning = F, message = F}
 #install.packages("locfit")
@@ -99,13 +84,6 @@ hamby44 <- hamby44 %>% mutate(ccdata_w_resid = purrr::map(ccdata_avg, .f = funct
 #  bullet %>% ggplot() + geom_point(aes(x = y, y = value_std)) + theme_bw() + geom_line(aes(x = y, y = rlo_pred), colour ="green")
 #}
 ```
-
-
-
-
-### define whether there is or is not a groove  
-This was just done by hand for the 208 remaining lands. That way you can use the info of whether or not there is a groove on either side!  
-
 
 
 ```{r define-is-groove, echo = F, warning = F, message = F}
@@ -200,7 +178,17 @@ hamby44$is_right_groove <- c(1, 1, 0, 0, 0, #5
 ```
 
 
-### Define depth from center, left/right
+## Current features of the data  
+
+Each land has been averaged across ten crosscuts, as well as shifted down so the lowest observed `value` is at 0; this column is referred to as `value_std`.  
+
+For each land, the residuals from both a robust linear model (2nd order) and a robust LOESS model have been saved.  
+
+## Additional feature creation  
+
+We can define two additional columns, `depth` and `side`. `depth` represents the depth of each observed data point from the median observed `y` value. `side` represents whether the data point is to the left of the median or to the right of the median.  
+
+We also need to define a response variable to work with; here, we will take the manually identified `grooves` value from the `hamby44` dataset, and classify anything outside of this range as a response: 1, and anything inside this range a response: 0. This is to indicate that if the response is 1, that data point lies in the groove engraved area.   
 
 
 ```{r define-depth-and-side, echo = F, warning = F, message = F}
@@ -214,8 +202,6 @@ hamby44 <- hamby44 %>% mutate(ccdata_w_resid = purrr::map(ccdata_w_resid, .f = f
 #hamby44$ccdata_w_resid[[1]][3000,]
 ```
 
-### Define response: whether it is in the groove engraved area or not (using "ground truth").  
-
 ```{r define-response, echo = F, warning = F, message = F}
 
 hamby44 <- hamby44 %>% mutate(left_groove = purrr::map_dbl(grooves, .f = function(grooves){
@@ -224,7 +210,7 @@ hamby44 <- hamby44 %>% mutate(left_groove = purrr::map_dbl(grooves, .f = functio
 right_groove = purrr::map_dbl(grooves, .f = function(grooves){
   right_groove <- grooves$groove[2]
 }))
-hamby44[1:6,]
+#hamby44[1:6,]
 
 calculate_response <- function(dataset){
   for(i in 1:nrow(dataset)){
@@ -246,45 +232,89 @@ hamby44 <- hamby44 %>% mutate(ccdata_w_resid = purrr::map(ccdata_w_resid, .f = f
   return(bullet)
 }))
 
-
-bullet <- hamby44$ccdata_w_resid[[5]]
-
-glm0 <- glm(response~ rlo_resid + side + depth + side*depth, data = bullet, family = binomial(link = "logit"))
-bullet$glm0_pred <- predict(glm0, newdata = bullet, type = "response")
-
-bullet %>% ggplot() + geom_point(aes(x = y, y = value_std, colour = glm0_pred)) + theme_bw()
-
-
-
 ```
+
+
+## Modeling  
+
+Now we are going to use glmnet to do a logistic regression.  
+
+```{r logistic-initial, echo = F, message = F, warning = F}
+#library(plyr) ## should have been loaded earlier
+#library(dplyr)
+
+hamby44 <- hamby44 %>% mutate(logistic_fits = purrr::map(ccdata_w_resid, .f = function(bullet){
+  bullet.model <- bullet[!is.na(bullet$rlo_resid),]
+  glm0 <- glm(formula = response~rlo_resid + side + depth + side*depth, family = "binomial", data = bullet.model)
+  bullet.model$pred_val <- predict(glm0, newdata = bullet.model, type = "response")
+  bullet.model$pred_class <- ifelse(bullet.model$pred_val < .5, "LEA", "GEA")
+  return(bullet.model)
+}))
+
+bullet.log <- rbind.fill(hamby44$ccdata_w_resid)
+bullet.log <- bullet.log[!is.na(bullet.log$rlo_resid),]
+glmA <- glm(formula = response~rlo_resid + side + depth + side*depth, family = "binomial", data = bullet.log)
+
+summary(glmA)
+
+
+preds.l <- predict(glmA, newdata = bullet.log, type = 'response')
+
+# ROCR for ROC curve
+# Calculate true positive rate and false positive rate on the prediction object
+perf.l <- performance(prediction(preds.l, bullet.log$response), 'tpr', 'fpr')
+
+plot(perf.l)
+
+auc <- performance(prediction(preds.l, bullet.log$response), 'auc')@y.values[[1]]
+auc
+
+
+glmA_all <- coef(glmA)
+
+hamby44 <- hamby44 %>% mutate(ccdata_log = purrr::map(ccdata_w_resid, .f = function(bullet){
+  ## here is where we take model parameters and do stuff with them! 
+  bullet <- bullet[!is.na(bullet$rlo_resid),]
+  X <- model.matrix(~rlo_resid + side+ depth + side*depth, bullet)
+  ymean <- X%*%glmA_all
+  yhat <- exp(ymean)/(1 + exp(ymean))
+  bullet$pred_val <- yhat
+  bullet$pred_class <- ifelse(bullet$pred_val < .5, "LEA", "GEA")
+  return(bullet)
+}))
+
+#head(hamby44$ccdata_logistic2[[1]])
+
+plot_log_p <- function(bullet_num){
+  bullet <- hamby44$ccdata_log[[bullet_num]]
+  bullet %>% ggplot() + geom_point(aes(x = y, y = value_std, color = pred_class)) + theme_bw()
+}
+
+plp1 <- plot_log_p(1)
+plp4 <- plot_log_p(4)
+plp6 <- plot_log_p(6)
+plp16 <- plot_log_p(16)
+
+library(gridExtra)
+grid.arrange(plp1, plp4, plp6, plp16, nrow = 2, top = "Predictions (cutoff: 0.5) using single logistic model for all data")
+
+
+#cor(as.matrix(bullet.log[,-10]), use = "complete.obs") # nothing too terrible.. 
+```
+
+Traditional logistic regression (using `glm`) returns P-values equivalently 1 when dealing with a single bullet, which suggests we are overfitting with all the parameters included. Thus, we will use `glmnet` to do a ten-fold cross-validation of penalized logistic regression (LASSO).  
+
+However, it is important to note that the model fit to all data simultaneously has values equivalently 0, but seems to do a fairly good job of predicting locations (see above image).  
+
+First, we are going to fit an individual model to each of the bullet LEA's we have in the Hamby44 set, and average the parameter values from each of them (Dr. Hofmann's initial suggestion).  
 
 
 ```{r glmnet-stuff, echo = F, message = F, warning = F}
 library(ROCR) # For ROC curves
 library(glmnet) # For regularized GLMs
-
-bullet <- hamby44$ccdata_w_resid[[55]]
-# Classification problem
-bullet.model <- bullet[!is.na(bullet$rlo_resid),]
-X <- model.matrix( ~ rlo_resid + side + depth + side*depth - 1, bullet.model)
-
-# L1 regularized logistic regression
-fit <- cv.glmnet(x = X, y = bullet.model$response, family = 'binomial', type.measure = 'class', alpha = 1)
-
-newbullet <- hamby44$ccdata_w_resid[[3]]
-newbullet.model <- bullet[!is.na(bullet$rlo_resid),]
-newX <- model.matrix(~rlo_resid + side + depth + side*depth - 1, newbullet.model)
-# Predict from model
-preds <- predict(fit, newx = newX, type = 'response')
-
-# ROCR for ROC curve
-# Calculate true positive rate and false positive rate on the prediction object
-perf <- performance(prediction(preds, newbullet.model$response), 'tpr', 'fpr')
-
-plot(perf)
 ```
 
-```{r glmnet-fits, echo = F, warning = F, message = F}
+```{r glmnet-fits, warning = F, message = F}
 hamby44 <- hamby44 %>% mutate(glmnet_fits = purrr::map(ccdata_w_resid, .f = function(bullet){
   bullet.model <- bullet[!is.na(bullet$rlo_resid),]
   X <- model.matrix( ~ rlo_resid + side + depth + side*depth - 1, bullet.model)
@@ -296,19 +326,16 @@ hamby44 <- hamby44 %>% mutate(glmnet_fits = purrr::map(ccdata_w_resid, .f = func
   fits <- as.matrix(coef(fits))
 }))
 
-head(hamby44)
-
 model_avg <- apply(simplify2array(hamby44$matrix_fits), 1, mean)
+model_avg
 
 ```
 
-Now, we want to use the averaged logistic regression parameters to fit the model to all of the bullets, and assess its accuracy.  
+Now, we want to use the averaged logistic regression parameters to fit the model to all of the bullets. 
+
+Some examples of this are below:  
 
 ```{r, echo = F, warning = F, message = F}
-
-## the parameters for the model are stored as "model_avg"
-model_avg
-
 hamby44 <- hamby44 %>% mutate(ccdata_logistic = purrr::map(ccdata_w_resid, .f = function(bullet){
   ## here is where we take model parameters and do stuff with them! 
   bullet <- bullet[!is.na(bullet$rlo_resid),]
@@ -320,63 +347,41 @@ hamby44 <- hamby44 %>% mutate(ccdata_logistic = purrr::map(ccdata_w_resid, .f = 
   return(bullet)
 }))
 
-head(hamby44$ccdata_logistic[[1]])
+#head(hamby44$ccdata_logistic[[1]])
 
 plot_log_pred <- function(bullet_num){
   bullet <- hamby44$ccdata_logistic[[bullet_num]]
-  bullet %>% ggplot() + geom_point(aes(x = y, y = rlo_resid, color = pred_class)) + theme_bw()
+  bullet %>% ggplot() + geom_point(aes(x = y, y = value_std, color = pred_class)) + theme_bw()
 }
 
-plot_log_pred(16)
+pl1 <- plot_log_pred(1)
+pl4 <- plot_log_pred(4)
+pl6 <- plot_log_pred(6)
+pl16 <- plot_log_pred(16)
+
+library(gridExtra)
+grid.arrange(pl1, pl4, pl6, pl16, nrow = 2, top = "Predictions (cutoff: 0.5) using average of LASSO model parameters")
 ## It looks like this method is working pretty well with a cutoff of .5 for SOME bullets, but not for all bullets. 
 ## Could we possibly just put ALL the bullets together, and fit one model for all of them? Would that be any better?
-plot(fit)
+#plot(fit)
 
 ## Alicia's suggestions: Try thinning the middle 50% of the data (grabbing every 3rd point or so), or try something more powerful, like random forest. 
 
 ```
 
 
+Note that when we fit individual models, the ROC curves are essentially perfect on each bullet.  
+
 Now let's try this combining all the data into one large data frame and fitting ONE logistic regression model to it... then we can see if the ROC curves are a little more reasonable.  
 
-cv.glmnet is cross-validated penalized GLM's (aka, doing LASSO regression with 10-fold cross validation). 
-
 ```{r, echo = F, warning = F, message = F}
-hamby44 %>% mutate(glmnet_fits = purrr::map(ccdata_w_resid, .f = function(bullet){
-  bullet.model <- bullet[!is.na(bullet$rlo_resid),]
-  X <- model.matrix( ~ rlo_resid + side + depth + side*depth - 1, bullet.model)
-
-  # L1 regularized logistic regression
-  fit <- cv.glmnet(x = X, y = bullet.model$response, family = 'binomial', type.measure = 'class', alpha = 1)
-  return(fit)
-}), matrix_fits = purrr::map(glmnet_fits, .f = function(fits){
-  fits <- as.matrix(coef(fits))
-}))
+bullet.model2 <- rbind.fill(hamby44$ccdata_w_resid)
+bullet.model2 <- bullet.model2[!is.na(bullet.model2$rlo_resid),]
 
 
-## library(plyr)
-## library(dplyr)
-
-tst.rbf <- rbind.fill(hamby44$ccdata_w_resid)
-tst.rbf2 <- tst.rbf[!is.na(tst.rbf$rlo_resid),]
-X <- model.matrix(~rlo_resid + side + depth + side*depth - 1, tst.rbf2)
-fit <- cv.glmnet(x = X, y = tst.rbf2$response, family = 'binomial', type.measure = 'class', alpha = 1)
-
-
-# Predict from model
-preds <- predict(fit, newx = X, type = 'response')
-
-# ROCR for ROC curve
-# Calculate true positive rate and false positive rate on the prediction object
-perf <- performance(prediction(preds, tst.rbf2$response), 'tpr', 'fpr')
-
-plot(perf)
-
-auc <- performance(prediction(preds, tst.rbf2$response), 'auc')@y.values[[1]]
-
+X <- model.matrix(~rlo_resid + side + depth + side*depth - 1, bullet.model2)
+fit <- cv.glmnet(x = X, y = bullet.model2$response, family = 'binomial', type.measure = 'class', alpha = 1)
 model_all <- as.matrix(coef(fit))
-
-
 
 hamby44 <- hamby44 %>% mutate(ccdata_logistic2 = purrr::map(ccdata_w_resid, .f = function(bullet){
   ## here is where we take model parameters and do stuff with them! 
@@ -385,7 +390,7 @@ hamby44 <- hamby44 %>% mutate(ccdata_logistic2 = purrr::map(ccdata_w_resid, .f =
   ymean <- X%*%model_all
   yhat <- exp(ymean)/(1 + exp(ymean))
   bullet$pred_val <- yhat
-  bullet$pred_class <- ifelse(bullet$pred_val < .25, "LEA", "GEA")
+  bullet$pred_class <- ifelse(bullet$pred_val < .5, "LEA", "GEA")
   return(bullet)
 }))
 
@@ -396,24 +401,50 @@ plot_log_pred2 <- function(bullet_num){
   bullet %>% ggplot() + geom_point(aes(x = y, y = value_std, color = pred_class)) + theme_bw()
 }
 
-plot_log_pred2(16)
+pl1.2 <- plot_log_pred2(1)
+pl4.2 <- plot_log_pred2(4)
+pl6.2 <- plot_log_pred2(6)
+pl16.2 <- plot_log_pred2(16)
 
-plot_log_hist <- function(bullet_num){
-  bullet <- hamby44$ccdata_logistic2[[bullet_num]]
-  bullet %>% ggplot() + geom_histogram(aes(x = pred_val, fill = factor(response))) + theme_bw()
-}
-plot_log_hist(16)
+library(gridExtra)
+grid.arrange(pl1.2, pl4.2, pl6.2, pl16.2, nrow = 2, top = "Predictions (cutoff: 0.5) using single LASSO model for all data")
 ```
 
-### Other notes:  
 
-The `grooves_pred` column gives the grooves predicted by the "rollapply" method. The `grooves` column gives manually ID'd grooves.
 
-One quirk of the data to note: The manual identifications were done using a Shiny app that overlaid the "rollapply" grooves, and were manually moved if the rollapply method misidentified. If the rollapply method was accurate, the location wasn't moved - so for this, there will be a lot of "manual" grooves and "rollapply" grooves that are the exact same value.  
+We can also look at the ROC curve from when we originally fit the data. 
 
-We have been talking about going back through and manually ID'ing without the "rollapply" predictions there to remove that issue, but we haven't done it yet.  
+```{r, echo = F, message = F, warning = F}
 
-Happy bullet-ing!!   
+# Predict from model
+preds <- predict(fit, newx = X, type = 'response')
+
+# ROCR for ROC curve
+# Calculate true positive rate and false positive rate on the prediction object
+perf <- performance(prediction(preds, bullet.model2$response), 'tpr', 'fpr')
+
+plot(perf)
+
+auc <- performance(prediction(preds, bullet.model2$response), 'auc')@y.values[[1]]
+auc
+```
+
+## Next steps:  
+
+Going to hold out a training/testing set next and try that - current ROC/AUC aren't accurate representations of model performance on a hold-out set.  
+
+*Note: The AUC reported above is most likely so high due to the lack of testing set hold-out AS WELL AS the fact that we are dealing with SO MANY data points - a small smattering of misidentifications - even if they are really important mistakes in our eyes - is still a very small percentage of the overall data points.*  
+
+Additionally, might try thinning out middle 50% of data. We are dealing with an unbalanced response variable; there are way more 0 (LEA) values than 1 (GEA) values.  
+
+Additional features to try:  
+    - Quadratic term for robust LOESS residuals  
+    - Standardizing robust LOESS residuals  
+    - rlo_resid greater than cutoff value?  
+
+If these don't initially work, I am suggesting we try random forest (Alicia suggested BART? seems like it could be overkill) or another two-class classification procedure to attack this. I do think the initial results are promising though!!  
+
+
 
 
 
