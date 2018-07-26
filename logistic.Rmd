@@ -25,7 +25,7 @@ library(ggplot2)
 #library(bulletr)
 
 hamby44 <- readRDS("//opt/hamby44/hamby44.rda")
-#hamby44[1:6,] # to look at what the first 6 rows look like.  
+hamby44[1:6,] # to look at what the first 6 rows look like.  
 ```
 
 ```{r rm-empty-lands, echo = F, message = F, warning = F}
@@ -447,5 +447,26 @@ If these don't initially work, I am suggesting we try random forest (Alicia sugg
 
 
 
+## Plotting time t residuals vs. time t-1 residuals from robust LOESS  
+
+```{r t-v-tmin1, echo = F, warning = F, message = F}
+hamby44 <- hamby44 %>% mutate(ccdata_w_resid = purrr::map(ccdata_w_resid, .f = function(bullet){
+  bullet$rlo_resid_lag1 <- c(0, bullet$rlo_resid[(1:(length(bullet$rlo_resid)-1))])
+  return(bullet)
+}))
+
+resid_compare_plot <- function(bullet_num){
+  bullet <- hamby44$ccdata_w_resid[[bullet_num]]
+  bullet %>% ggplot() + geom_point(aes(x = rlo_resid, y = rlo_resid_lag1, colour = factor(response))) + theme_bw()
+}
+
+
+rcp1 <- resid_compare_plot(1)
+rcp4 <- resid_compare_plot(4)
+rcp6 <- resid_compare_plot(6)
+rcp16 <- resid_compare_plot(16)
+
+grid.arrange(rcp1, rcp4, rcp6, rcp16, nrow = 2, top = "Residuals vs. Lag 1 Residuals")
+```
 
 
