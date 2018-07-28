@@ -1,0 +1,33 @@
+---
+title: "AAFS 2019 Abstract"
+author: "Kiegan Rice, MS, Ulrike Genschel, PhD, Heike Hofmann, PhD"
+output: 
+  pdf_document:
+    fig_caption: true
+bibliography: bibliography.bib
+---
+
+
+## Abstract   
+
+The prevalence of research on the automated comparison of bullet marks has increased in the last several years, particularly following the 2016 PCAST report on the validity of feature-comparison methods in forensic science. The main avenue being pursued in this research area is the use of statistical models applied to high-resolution 3D scans of land engraved areas. An important step in introducing these new automated methods is ensuring accurate data pre-processing techniques.  
+
+One of the most important data pre-processing steps is to identify and remove data from the neighboring groove engraved areas (GEA) that are gathered when a land engraved area (LEA) is scanned. Removal of these data is vital to ensure that the characteristics used in automated comparisons are based solely on information from the land engraved areas. Failure to correctly identify and remove data from groove engraved areas can lead to misidentification of these characteristics.  
+
+Pre-processing techniques based on robust statistical methods showed early promise when developed on the Hamby 44 Set [@Hamby]. However, it is also important to validate methods with a variety of bullet types and calibers to ensure their reliability in a forensic laboratory setting. Validation is also important to fully automate the process and remove the need for human intervention in the data cleaning stage.  
+
+We apply our proposed method for automated groove detection to a variety of 3D bullet scan data sets gathered from several physical test sets given to examiners. *I could use some more detail here. Not sure what the exact plan is!* The resultant processed data is then entered into an automated comparison method developed at the Center for Statistics and Applications in Forensic Evidence (CSAFE) [@Hare1].  These validation tests on the additional test kits demonstrate the reduction of overall error rates in the automated matching process when groove detection and removal is improved.  
+
+## Educational objectives  
+
+Presentation attendees will understand the proposed pre-processing approach we are taking, as well as see outcomes from automated comparison methods from a variety of validation tests on different bullet types.  
+
+## Impact statement  
+Our new groove detection and removal process is more accurate than currently implemented methods, and reduces error rates in the automated comparison process on a variety of bullet types. 
+
+
+## References  
+
+
+
+
