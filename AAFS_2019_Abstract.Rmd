@@ -1,5 +1,5 @@
 ---
-title: "AAFS 2019 Abstract"
+title: "Validation Study on Automated Groove Detection Methods in 3D Bullet Land Scans"
 author: "Kiegan Rice, MS, Ulrike Genschel, PhD, Heike Hofmann, PhD"
 output: 
   pdf_document:
