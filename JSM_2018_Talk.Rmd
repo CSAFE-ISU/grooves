@@ -1,0 +1,159 @@
+---
+title: "Methods for Automatic Groove Identificatoin in 3D Bullet Land Scans"
+author: "Kiegan Rice"
+date: "August 2, 2018"
+output: 
+    rmdshower::shower_presentation:
+      katex: true
+      ratio: 4x3
+---
+
+
+```{r,echo=FALSE, message=FALSE,warning=FALSE}
+knitr::opts_chunk$set(cache=TRUE)
+
+#library(devtools)
+#devtools::install_github("CSAFE-ISU/bulletr")
+library(bulletr)
+library(ggplot2)
+library(knitr)
+```
+
+## Methods for Automatic Groove Identification <br> in 3D Bullet Land Scans { .white }
+
+<br><br><br><br><br><br><br>
+<img src="images/bullet_comparison_2.jpg" class="cover">
+<p class="white">
+Kiegan Rice <br />
+Iowa State University<br />
+August 2nd, 2018
+</p> 
+
+
+## Background: Bullet Lands
+<img src="images/background-logo.png" class="cover" width=1200 height=800>
+
+- When a gun is fired, the bullet is propelled forward through the barrel  
+- As it travels down the barrel, it makes contact with parts of the barrel  
+- Striations result from this contact   
+- Striations are observed on *lands*. Lands are separated by *grooves*.  
+
+<img src="images/barrel.png" width = 250 height = 300> &nbsp;
+ <img src="images/bullet.jpg" width = 300 height = 200> 
+
+
+## Background: Collection of Land Data  
+<img src="images/background-logo.png" class="cover" width=1200 height=800>
+
+- Sensofar Confocal Light Microscope  
+- Hamby set 44 - 35 bullets from 10 consecutively rifled Ruger barrels
+    - Rescanned with CSAFE's microscope  
+    - To use as 'base' set; methods to be tested on several other data sets
+    - Have manual groove identifications for this whole set  
+    - Each pixel: .645 square microns
+    - Each land is 2mm (2000 microns) wide
+- A scan of one bullet (6 individual lands) takes ~1 hour  
+
+
+## Background: Land Surface  
+<img src="images/background-logo.png" class="cover" width=1200 height=800>
+
+```{r, echo = F, warning = F, message = F}
+#bulletr::plot_3d_land(bullet = br411, sample = 2)
+bulletr::plot_3d_land(bullet = br411)
+
+```
+
+## Importance of Groove Removal  
+<img src="images/background-logo.png" class="cover" width=1200 height=800>
+
+- Bullet matching algorithm  
+- Removing the underlying curved structure of land 
+- Looking at remaining residuals 
+    - Deviations from the natural curve of the land  
+    
+<img src="images/fit-and-resid.png" width=700 height=300>
+
+## Importance of Groove Removal  
+<img src="images/background-logo.png" class="cover" width=1200 height=800>
+
+- Error Rates  
+    - Traditional rifling and manual identification of grooves  
+        - Bullet-to-bullet matching error rate is 0.
+    - Polygonal rifling and coated bullets 
+        - Error rate is higher  
+    - **Biggest error source: misidentification of groove locations**  
+
+
+## Shortcomings of Current Methods
+<img src="images/background-logo.png" class="cover" width=1200 height=800>
+
+
+<img src="images/rollapply-mis-id.png" width=600 height=400>
+
+## Robust Linear Models  
+<img src="images/background-logo.png" class="cover" width=1200 height=800>
+
+<img src="images/fits-and-resids.png" width=700 height=450>  
+
+
+## Groove Identification Process  
+<img src="images/background-logo.png" class="cover" width=1200 height=800>
+
+- Once we have the residuals, how do we decide where the cutoffs should be?  
+<img src="images/groove-id-plot.png" width = 600 height = 400>
+
+
+
+
+## Comparing two automated approaches 
+<img src="images/background-logo.png" class="cover" width=1200 height=800>
+
+- We will look at all the residuals in the areas between our predicted grooves and the manually identified grooves  
+- For each land in the data set (208 total), sum up these residuals  
+
+<img src="images/assess-fit-plot.png" width=550 height=300>
+
+## Comparing two automated approaches   
+<img src="images/background-logo.png" class="cover" width=1200 height=800>
+
+- The sums shown previously are calculated for each land and each method 
+- Then, we compare the distributions of those values
+
+<img src="images/zoomed_boxplot_comparisons.png" width = 400 height = 300> &nbsp;
+<img src="images/boxplot-comparisons.png" width = 400 height = 300>
+
+
+
+## Impact for Forensic Analysts
+<img src="images/background-logo.png" class="cover" width=1200 height=800>
+
+
+- Currently: Individual case studies  
+- Collaborations with different police depts. and forensic institutes
+    - Phoenix PD, Los Angeles PD, St. Louis PD, Denver PD  
+    - Story County Sheriff's Office (IA)
+    - Houston Forensic Science Center  
+
+## Impact for Forensic Analysts
+<img src="images/background-logo.png" class="cover" width=1200 height=800>
+
+- Future goals: 
+    - Get algorithm certified 
+        - no certification process in place for admissibility  
+    - Adhere to OSAC's updated standards for 3D measurements (Feb. 9, 2018)  
+    - Support firearms examiners in their job
+    - Address concerns raised by NRC 2009 and PCAST 2016 
+        - removing subjectivity from the assessment 
+        - allow for quantification of error rates
+
+
+## Acknowledgments  
+<img src="images/background-logo.png" class="cover" width=1200 height=800>
+
+- All work was **sponsored** by CSAFE (Center for Statistics and Applications in Forensic Evidence), a NIST Center of Excellence  
+- Work **advised** by Drs. Heike Hofmann and Ulrike Genschel of CSAFE/Iowa State University
+
+
+
+
