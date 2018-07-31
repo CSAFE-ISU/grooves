@@ -12,11 +12,21 @@ bibliography: bibliography.bib
 
 The prevalence of research on the automated comparison of bullet marks has increased in the last several years, particularly following the 2016 PCAST report on the validity of feature-comparison methods in forensic science. The main avenue being pursued in this research area is the use of statistical models applied to high-resolution 3D scans of land engraved areas. An important step in introducing these new automated methods is ensuring accurate data pre-processing techniques.  
 
-One of the most important data pre-processing steps is to identify and remove data from the neighboring groove engraved areas (GEA) that are gathered when a land engraved area (LEA) is scanned. Removal of these data is vital to ensure that the characteristics used in automated comparisons are based solely on information from the land engraved areas. Failure to correctly identify and remove data from groove engraved areas can lead to misidentification of these characteristics.  
+Being able to correctly identify between data from land engraved areas (LEAs) and groove engraved areas (GEAs) turns out to be the single most important step in data pre-processing. Dealing with these areas separately is crucial to ensure good model fits in subsequent processing steps.  Removal of data  from groove engraved areas significantly reduces the amount of noise in the characteristics used in automated comparisons. Failure to correctly identify and remove data from groove engraved areas can lead to misidentification of these characteristics.  
 
-Pre-processing techniques based on robust statistical methods showed early promise when developed on the Hamby 44 Set [@Hamby]. However, it is also important to validate methods with a variety of bullet types and calibers to ensure their reliability in a forensic laboratory setting. Validation is also important to fully automate the process and remove the need for human intervention in the data cleaning stage.  
+Distinguishing between land and groove engraved areas is a problem, at which human vision excels, but it is quite challenging for  automatic procedures due to the nature of the data collected: the bullet curvature presents the main structure in the data, but 
+the abrupt change between land and groove engraved areas introduces a competing structure. This overwhelms standard modelling techniques. 
 
-We apply our proposed method for automated groove detection to a variety of 3D bullet scan data sets gathered from several physical test sets given to examiners. *I could use some more detail here. Not sure what the exact plan is!* The resultant processed data is then entered into an automated comparison method developed at the Center for Statistics and Applications in Forensic Evidence (CSAFE) [@Hare1].  These validation tests on the additional test kits demonstrate the reduction of overall error rates in the automated matching process when groove detection and removal is improved.  
+We have employed pre-processing techniques based on robust statistical methods to distinguish between land and groove engraved areas. 
+Techniques from robust statistical methods allow the algorithm to focus on the main structure and separating out elements from the secondary structure of the groove engraved area.
+
+Results from these techniques showed early promise when applied to the closed-set study of the Hamby Set 44 [@Hamby] bullets. The pre-processing methods are evaluated at different levels: in a first step we compare results from the techniques to manually identified groove locations. A second, and maybe more important, step is to assess the performance of a method in regards to the prediction accuracy of the automated matching algorithm. 
+
+We are using closed-set and open-set studies to evaluate the effectiveness and accuracy of the proposed techniques. Results based on publicly available data from the NIST Ballistics Research Database as well as studies from collaborating forensic laboratories and departments across the United States. This additional validation step tests the proposed method's ability to transfer to different types of bullets and rifling methods and highlights limitations.  
+
+This litany of validation steps ensures a safe use of the proposed technique in fully automating the process and removing the need for human intervention in the data pre-processing.  
+
+The resultant processed data is then entered into an automated comparison method developed at the Center for Statistics and Applications in Forensic Evidence (CSAFE) [@Hare1]. These validation tests on the additional test kits demonstrate the reduction of overall error rates in the automated matching process when groove detection and removal is improved.  
 
 ## Educational objectives  
 
