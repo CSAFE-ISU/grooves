@@ -20,13 +20,11 @@ the abrupt change between land and groove engraved areas introduces a competing 
 We have employed pre-processing techniques based on robust statistical methods to distinguish between land and groove engraved areas. 
 Techniques from robust statistical methods allow the algorithm to focus on the main structure and separating out elements from the secondary structure of the groove engraved area.
 
-Results from these techniques showed early promise when applied to the closed-set study of the Hamby Set 44 [@Hamby] bullets. The pre-processing methods are evaluated at different levels: in a first step we compare results from the techniques to manually identified groove locations. A second, and maybe more important, step is to assess the performance of a method in regards to the prediction accuracy of the automated matching algorithm. 
+Results from these techniques showed early promise when applied to the closed-set study of the Hamby Set 44 [@Hamby] bullets. The pre-processing methods are evaluated at different levels: in a first step we compare results from the techniques to manually identified groove locations. A second, and maybe more important, step is to assess the performance of a method in regards to the prediction accuracy of the automated matching algorithm as described in @Hare1.
 
 We are using closed-set and open-set studies to evaluate the effectiveness and accuracy of the proposed techniques. Results based on publicly available data from the NIST Ballistics Research Database as well as studies from collaborating forensic laboratories and departments across the United States. This additional validation step tests the proposed method's ability to transfer to different types of bullets and rifling methods and highlights limitations.  
 
 This litany of validation steps ensures a safe use of the proposed technique in fully automating the process and removing the need for human intervention in the data pre-processing.  
-
-The resultant processed data is then entered into an automated comparison method developed at the Center for Statistics and Applications in Forensic Evidence (CSAFE) [@Hare1]. These validation tests on the additional test kits demonstrate the reduction of overall error rates in the automated matching process when groove detection and removal is improved.  
 
 ## Educational objectives  
 
