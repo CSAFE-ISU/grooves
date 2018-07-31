@@ -726,6 +726,7 @@ sum_resid_right_rl1 <- function(datafile, which_bullet){
   return(sum(data$resid, na.rm = T))
 }
 
+## name you want the column to be called in the dataframe goes here <- function() 
 sum_rresid_right_rl1 <- function(datafile, which_bullet){
   data <- datafile$ccdata_w_resid[[which_bullet]]
   man_groove <- datafile$grooves[[which_bullet]]$groove[2]

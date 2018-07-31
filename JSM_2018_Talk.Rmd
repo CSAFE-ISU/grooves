@@ -30,13 +30,21 @@ August 2nd, 2018
 </p> 
 
 
+## Background: Statistics Applied to Forensic Science  
+<img src="images/background-logo.png" class="cover" width=1200 height=800>
+
+- Validity of forensic evidence analysis has come under fire in the last decade  
+- 2016 PCAST report on feature-comparison methods  
+- NIST Center of Excellence established in 2016  
+
+
 ## Background: Bullet Lands
 <img src="images/background-logo.png" class="cover" width=1200 height=800>
 
 - When a gun is fired, the bullet is propelled forward through the barrel  
 - As it travels down the barrel, it makes contact with parts of the barrel  
 - Striations result from this contact   
-- Striations are observed on *lands*. Lands are separated by *grooves*.  
+- Striations are observed on land engraved areas (*lands*). Lands are separated by groove engraved areas (*grooves*).  
 
 <img src="images/barrel.png" width = 250 height = 300> &nbsp;
  <img src="images/bullet.jpg" width = 300 height = 200> 
@@ -61,10 +69,10 @@ August 2nd, 2018
 ```{r, echo = F, warning = F, message = F}
 #bulletr::plot_3d_land(bullet = br411, sample = 2)
 bulletr::plot_3d_land(bullet = br411)
-
 ```
 
-## Importance of Groove Removal  
+
+## Background: Importance of Groove Removal  
 <img src="images/background-logo.png" class="cover" width=1200 height=800>
 
 - Bullet matching algorithm  
@@ -74,7 +82,7 @@ bulletr::plot_3d_land(bullet = br411)
     
 <img src="images/fit-and-resid.png" width=700 height=300>
 
-## Importance of Groove Removal  
+## Background: Importance of Groove Removal  
 <img src="images/background-logo.png" class="cover" width=1200 height=800>
 
 - Error Rates  
@@ -91,10 +99,10 @@ bulletr::plot_3d_land(bullet = br411)
 
 <img src="images/rollapply-mis-id.png" width=600 height=400>
 
-## Robust Linear Models  
+## Robust LOESS   
 <img src="images/background-logo.png" class="cover" width=1200 height=800>
 
-<img src="images/fits-and-resids.png" width=700 height=450>  
+<img src="images/loess-fits-and-resids.png" width=700 height=450>  
 
 
 ## Groove Identification Process  
@@ -102,7 +110,6 @@ bulletr::plot_3d_land(bullet = br411)
 
 - Once we have the residuals, how do we decide where the cutoffs should be?  
 <img src="images/groove-id-plot.png" width = 600 height = 400>
-
 
 
 
