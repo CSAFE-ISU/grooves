@@ -492,3 +492,23 @@ plot_lovrlo <- function(datafile, land_num){
 
 plot_lovrlo(hamby44, 6) ## this is a really good example
 ```
+
+
+```{r, echo = F, warning = F, message = F}
+plot_fitresid <- function(datafile, land_num){
+  bullet <- datafile$ccdata_w_resid[[land_num]]
+  bullet$lo_pred <- predict(loess(value_std~y, data = bullet, span = 1), newdata = bullet)
+  bullet$lo_resid <- bullet$value_std - bullet$lo_pred
+  p1 <- bullet %>% ggplot() + geom_point(aes(x = y, y = value_std)) + geom_line(aes(x = y, y = lo_pred), colour = "red", lwd = 1.3) + theme_bw() + labs(x = "Relative Location", y = "Relative Height", title = "Predicted values")
+  p2 <- bullet %>% ggplot() + geom_line(aes(x = y, y = lo_resid)) + geom_hline(yintercept = 0, color = "red", lwd = 1.3) + theme_bw() + labs(x = "Relative Location", y = "Residual Height", title = "Residual values")
+  
+  bullet2 <- bullet %>% filter(y >= left_groove, y <= right_groove)
+  bullet2$lo_pred2 <- predict(loess(value_std~y, data = bullet2, span = 1), newdata = bullet2)
+  bullet2$lo_resid2 <- bullet2$value_std - bullet2$lo_pred2
+  p3 <- bullet2 %>% ggplot() + geom_point(aes(x = y, y = value_std)) + geom_line(aes(x = y, y = lo_pred2), colour = "red", lwd = 1.3) + theme_bw() + labs(x = "Relative Location", y = "Relative Height", title = "Predicted values (Groove Data Removed)")
+  p4 <- bullet2 %>% ggplot() + geom_line(aes(x = y, y = lo_resid2)) + geom_hline(yintercept = 0, color = "red", lwd = 1.3) + theme_bw() + labs(x = "Relative Location", y = "Residual Height", title = "Residual values (Groove Data Removed)")
+  grid.arrange(p3, p4, p1, p2, nrow = 2, top = "LOESS fits with and without groove data")
+}
+
+
+```

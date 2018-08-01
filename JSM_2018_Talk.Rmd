@@ -82,22 +82,13 @@ bulletr::plot_3d_land(bullet = br411)
     
 <img src="images/fit-and-resid.png" width=700 height=300>
 
+
 ## Background: Importance of Groove Removal  
 <img src="images/background-logo.png" class="cover" width=1200 height=800>
 
-- Error Rates  
-    - Traditional rifling and manual identification of grooves  
-        - Bullet-to-bullet matching error rate is 0.
-    - Polygonal rifling and coated bullets 
-        - Error rate is higher  
-    - **Biggest error source: misidentification of groove locations**  
+<img src="images/groove_vs_nogroove.png" width=700 height=500>  
 
 
-## Shortcomings of Current Methods
-<img src="images/background-logo.png" class="cover" width=1200 height=800>
-
-
-<img src="images/rollapply-mis-id.png" width=600 height=400>
 
 ## Robust LOESS   
 <img src="images/background-logo.png" class="cover" width=1200 height=800>
@@ -109,50 +100,43 @@ bulletr::plot_3d_land(bullet = br411)
 <img src="images/background-logo.png" class="cover" width=1200 height=800>
 
 - Once we have the residuals, how do we decide where the cutoffs should be?  
-<img src="images/groove-id-plot.png" width = 600 height = 400>
+- Ad hoc approach: define a cutoff 
+    - 2*MAR (median absolute residual)
+    
+<img src="images/resids-and-groove.png" width = 600 height = 400>
 
 
-
-## Comparing two automated approaches 
+## Comparing approaches 
 <img src="images/background-logo.png" class="cover" width=1200 height=800>
 
+- Difficult to determine a metric for accuracy  
+    - Number incorrectly identified doesn't work  
 - We will look at all the residuals in the areas between our predicted grooves and the manually identified grooves  
 - For each land in the data set (208 total), sum up these residuals  
 
 <img src="images/assess-fit-plot.png" width=550 height=300>
 
-## Comparing two automated approaches   
+## Comparing approaches   
 <img src="images/background-logo.png" class="cover" width=1200 height=800>
 
 - The sums shown previously are calculated for each land and each method 
 - Then, we compare the distributions of those values
 
-<img src="images/zoomed_boxplot_comparisons.png" width = 400 height = 300> &nbsp;
-<img src="images/boxplot-comparisons.png" width = 400 height = 300>
+<img src="images/afte_results.png" width = 400 height = 300> &nbsp;
+<img src="images/afte_results_zoom.png" width = 400 height = 300>
 
 
-
-## Impact for Forensic Analysts
+## Next steps  
 <img src="images/background-logo.png" class="cover" width=1200 height=800>
 
+- Moving away from ad hoc cut-off value  
+- Two-class classification procedures for individual points within the data  
+    - Using residuals as predictor in model  
+    - Unbalanced response 
+    
+    
+<img src="images/logistic-initial-results.png" width = 550 height = 300>
 
-- Currently: Individual case studies  
-- Collaborations with different police depts. and forensic institutes
-    - Phoenix PD, Los Angeles PD, St. Louis PD, Denver PD  
-    - Story County Sheriff's Office (IA)
-    - Houston Forensic Science Center  
-
-## Impact for Forensic Analysts
-<img src="images/background-logo.png" class="cover" width=1200 height=800>
-
-- Future goals: 
-    - Get algorithm certified 
-        - no certification process in place for admissibility  
-    - Adhere to OSAC's updated standards for 3D measurements (Feb. 9, 2018)  
-    - Support firearms examiners in their job
-    - Address concerns raised by NRC 2009 and PCAST 2016 
-        - removing subjectivity from the assessment 
-        - allow for quantification of error rates
 
 
 ## Acknowledgments  
