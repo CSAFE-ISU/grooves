@@ -27,7 +27,7 @@ We are using closed-set and open-set studies to evaluate the effectiveness and a
 
 **Educational objectives**: Presentation attendees will understand the proposed pre-processing approach we are taking, as well as see outcomes from automated comparison methods from a variety of validation tests on different bullet types.  
 
-**Impact statement**: Our new groove detection and removal process is more accurate than currently implemented methods, and reduces error rates in the automated comparison process on a variety of bullet types. 
+**Impact statement**: Our new groove detection and removal process leads to higher accuracy than currently implemented methods, and reduces error rates in the automated comparison process on a variety of bullet types. 
 
 
 ### References  
