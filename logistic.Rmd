@@ -288,7 +288,7 @@ hamby44 <- hamby44 %>% mutate(ccdata_log = purrr::map(ccdata_w_resid, .f = funct
 
 plot_log_p <- function(bullet_num){
   bullet <- hamby44$ccdata_log[[bullet_num]]
-  bullet %>% ggplot() + geom_point(aes(x = y, y = value_std, color = pred_class)) + theme_bw()
+  bullet %>% ggplot() + geom_point(aes(x = y, y = value_std, color = pred_class)) + theme_bw() + labs(x = "Relative Location", y = "Relative Height")
 }
 
 plp1 <- plot_log_p(1)
@@ -510,5 +510,16 @@ plot_fitresid <- function(datafile, land_num){
   grid.arrange(p3, p4, p1, p2, nrow = 2, top = "LOESS fits with and without groove data")
 }
 
+plot_grooveresids <- function(datafile, land_num){
+  bullet <- datafile$ccdata_w_resid[[land_num]]
+  bullet %>% ggplot() + geom_point(aes(x = y, y = rlo_resid)) + geom_hline(yintercept = 0) + geom_vline(aes(xintercept = left_groove[1]), colour = "blue") + geom_vline(aes(xintercept = right_groove[1]), colour = "blue") + theme_bw() + labs(x = "Relative Location", y = "Residual Value", title = "Manually Identified Groove Locations")
+}
 
 ```
+
+
+
+
+
+
+

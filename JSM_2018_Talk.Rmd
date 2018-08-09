@@ -1,5 +1,5 @@
 ---
-title: "Methods for Automatic Groove Identificatoin in 3D Bullet Land Scans"
+title: "Methods for Automatic Groove Identification in 3D Bullet Land Scans"
 author: "Kiegan Rice"
 date: "August 2, 2018"
 output: 
@@ -17,6 +17,7 @@ knitr::opts_chunk$set(cache=TRUE)
 library(bulletr)
 library(ggplot2)
 library(knitr)
+
 ```
 
 ## Methods for Automatic Groove Identification <br> in 3D Bullet Land Scans { .white }
@@ -68,7 +69,11 @@ August 2nd, 2018
 
 ```{r, echo = F, warning = F, message = F}
 #bulletr::plot_3d_land(bullet = br411, sample = 2)
-bulletr::plot_3d_land(bullet = br411)
+br411_fort <- fortify_x3p(br411)
+br411_sample <- sample_x3p(br411_fort, byxy = c(2,2))
+br411_new <- bulletr::unfortify_x3p(br411_sample)
+
+bulletr::plot_3d_land(bullet = br411_new)
 ```
 
 

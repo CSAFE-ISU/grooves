@@ -4,17 +4,47 @@ author: Kiegan Rice, M.S., Heike Hofmann, Ph.D., Ulrike Genschel, Ph.D.
 output: 
   pdf_document: 
     number_sections: true
+    pandoc_args: [
+      "-V", "classoption=twocolumn"
+    ]
+bibliography: bibliography.bib
 ---
 
 \section{Background}  
 
-Following the 2009 report by the National Research Council on Identifying the Needs of the Forensic Sciences Community (*cite NRC*)
+Historically, forensic firearms examiners have analyzed bullet striations through a process of visual feature comparison. Examiners compare striation marks impressed on the lands of a bullet between a bullet fired from a known barrel to a questioned bullet to investigate whether the two bullets were propelled through the same gun barrel.  
+
+These visual analyses, based on the concept of Quantitative Consecutively Matching Striae (QCMS), are one of several feature comparison methods whose scientific foundations were questioned by a 2009 report by the National Research Council on Identifying the Needs of the Forensic Sciences Community [@NRC2009].  
+
+Following that 2009 report, researchers began more intensely assessing the validity of feature comparison methods as well as investigating the feasibility of developing image-analysis algorithms to complete automated, quantitative analyses. The main technological development that has created a pathway for image-analysis techniques is the introduction of high resolution 3D scanning technology to the field of forensic science. 
+
+3D scanning technology not only allows for preservation of current and historical evidence in digital format, it also provides extremely detailed representations of forensically relevant pieces from fired bullets. In recent years, this technology has been applied to the collection of topological images of both bullet lands and breech faces [e.g., @DeKinder1; @DeKinder2; @Bachrach1]. These 3D data have since been used in the development of several methods of varying complexity for automated comparison of land engraved areas (e.g. @Ma1; @Chu1; @Chu2; @Hare1). 
+
+Criticisms of firearms examination in recent years have focused on foundational validity and reliability. This doubly enforces the need for automated algorithms to undergo careful study and validation, including development and validation of data pre-processing methods that ensure the correct data are being used in automated methods.  
+
+The nature of the 3D scanning process for land engraved areas (LEAs) introduces a challenging data pre-processing problem. To guarantee capture of an entire land engraved area, scanning across the object must begin and end in the neighboring groove engraved areas (GEAs). This ensures the maximal amount of land surface area can be utilized in image-analysis methods, which will provide the most reliable feature generation and more robust results. This extraneous data collection, while necessary, dictates the most significant step in data pre-processing: correctly identifying between data from LEAs and GEAs. 
+
+Dealing with these areas separately is crucial to ensure good model fits in subsequent processing steps. Removal of data from groove engraved areas significantly reduces the error due to misidentification of the characteristics used in automated comparisons. 
+
+Distinguishing between land and groove engraved areas is a problem at which human vision excels, but it is quite challenging for automatic procedures due to the nature of the data collected: the bullet curvature presents the main structure in the data, but the abrupt change between land and groove engraved areas introduces a competing structure. This overwhelms standard statistical modeling techniques.  
+
+Pre-processing techniques based on robust statistical methods are employed to distinguish between land and groove engraved areas. Techniques from robust statistical methods allow the algorithm to focus on the main structure and separate out elements from the secondary structure of the groove engraved area.  
 
 \section{Data Source}  
 
-The data used in this project are high resolution 3D scans of bullet land engraved areas (LEAs).  
+The data used in this project are high resolution 3D scans of bullet land engraved areas. The scanned bullets come from Hamby Set 44 [@Hamby]. They consist of 35 total bullets from a set of 10 consecutively rifled Ruger P85 barrels. These LEAs were scanned at Iowa State University's High Resolution Microscopy Facility, and are stored in 3D format as x3p files. **(Add more info about x3p files here??).**  The resultant data are at a resolution of .645 microns per pixel. Each land is approximately 2 millimeters in width, resulting in data structures that can contain up to **this many** individual data points.  
 
-The scanned bullets come from the Hamby 44 set (*cite Hamby study*). They consist of 35 total bullets from a set of 10 consecutively rifled Ruger P85 barrels.  
+![Visualization of 3D data collected through high resolution scanning of a land engraved area. Striations on the surface of the object can be seen by viewing this data from "above", as presented here.](./images/3d_plot_top.png)  
+
+![Alternate view of 3D data collected through high resolution scanning of a land engraved area. The globally curved structure of the bullet, as well as portions of the groove engraved area, can be seen clearly when viewing this data from the "side", as presented here.](./images/3d_plot_side.png)  
+
+
+Image-analysis algorithms, while flexible enough to focus on a variety of patterns in the data, should mainly focus on comparison of striation marks and related characteristics that can be calculated. This addresses two concerns associated with introducing an automated approach. First, it ensures interpretability of characteristics that are calculated from the gathered data. Further, researchers are able to directly compare the visual process examiners use to an automated method which is rooted in the same principles; for example, calculating a data-based QCMS measure as part of the algorithm. **Talk about the vertical/horizontal aspect and that crosscuts are represntative of the striation marks we want to study....**.  
+
+
+
+
+
 
 \section{Methodology}  
 
@@ -28,6 +58,17 @@ Due to the presence of data points that deviate from the overall global structur
 
 \section{Results}  
 
+- Ways to assess it  
+- Do a visual inspection: is this prediction good?  
+- Compare to manually identified location  
+
+Numerical comparison of manually identified locations presents a potentially troubling issue; raw distance metrics can misrepresent the true character of a prediction. For example, take a predicted shoulder location that falls 10 data points away from the manually identified shoulder location. This 10-point difference could be simply noise in the data, the result of missing data points, or simply the miniscule scale of the data. After all, a span of 10 data points represents only 6.45 microns in physical space. Alternatively, a distance of 10 points could actually be 10 points that are part of the groove engraved area, and thus are being incorrectly identified.  
+   
+Thus, a more relevant measure is to investigate the remaining residual values between the predicted and manually identified location. This penalizes predictions that fail to remove values that are part of the shoulder. Residual values from the shoulders will not necessarily be uniformly large, but are expected to be positive with the robust LOESS fits. Given this, even a 10-point difference can quickly add to a large residual sum if we are dealing with all positive values, as opposed to a 10-point difference within the land engraved area that will be balanced out by the presence of both positive and negative residual values.  
+   
+
 
 \section{Conclusions}  
+
+\section{References}  
 
