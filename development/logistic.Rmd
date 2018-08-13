@@ -446,6 +446,55 @@ Additional features to try:
 If these don't initially work, I am suggesting we try random forest (Alicia suggested BART? seems like it could be overkill) or another two-class classification procedure to attack this. I do think the initial results are promising though!!  
 
 
+## Adding a quadratic term  
+
+
+```{r quadratic-term, echo = F, warning = F, message = F}
+
+X <- model.matrix(~rlo_resid + I(rlo_resid^2) + side + depth + side*depth - 1, bullet.model2)
+fit3 <- cv.glmnet(x = X, y = bullet.model2$response, family = 'binomial', type.measure = 'class', alpha = 1)
+model_all2 <- as.matrix(coef(fit3))
+
+hamby44 <- hamby44 %>% mutate(ccdata_logistic3 = purrr::map(ccdata_w_resid, .f = function(bullet){
+  ## here is where we take model parameters and do stuff with them! 
+  bullet <- bullet[!is.na(bullet$rlo_resid),]
+  X <- cbind(1, model.matrix(~rlo_resid + I(rlo_resid^2) + side+ depth + side*depth - 1, bullet))
+  ymean <- X%*%model_all2
+  yhat <- exp(ymean)/(1 + exp(ymean))
+  bullet$pred_val <- yhat
+  bullet$pred_class <- ifelse(bullet$pred_val < .5, "LEA", "GEA")
+  return(bullet)
+}))
+
+head(hamby44$ccdata_logistic3[[1]])
+
+plot_log_pred3 <- function(bullet_num){
+  bullet <- hamby44$ccdata_logistic3[[bullet_num]]
+  bullet %>% ggplot() + geom_point(aes(x = y, y = value_std, color = pred_class)) + theme_bw()
+}
+
+pl1.3 <- plot_log_pred3(1)
+pl4.3 <- plot_log_pred3(4)
+pl6.3 <- plot_log_pred3(6)
+pl16.3 <- plot_log_pred3(16)
+
+library(gridExtra)
+grid.arrange(pl1.3, pl4.3, pl6.3, pl16.3, nrow = 2, top = "Predictions (cutoff: 0.5) using single LASSO model for all data")
+```
+
+```{r}
+
+preds <- predict(fit3, newx = X, type = 'response')
+
+# ROCR for ROC curve
+# Calculate true positive rate and false positive rate on the prediction object
+perf <- performance(prediction(preds, bullet.model2$response), 'tpr', 'fpr')
+
+plot(perf)
+
+auc <- performance(prediction(preds, bullet.model2$response), 'auc')@y.values[[1]]
+auc
+```
 
 ## Plotting time t residuals vs. time t-1 residuals from robust LOESS  
 

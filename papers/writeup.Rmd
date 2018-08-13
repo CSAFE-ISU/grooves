@@ -5,6 +5,8 @@ output:
   pdf_document: 
     number_sections: true
 bibliography: bibliography.bib
+nocite: | 
+  @locfit, @MASS
 ---
 
 \section{Background}  
@@ -90,7 +92,7 @@ While robust LOESS methods are more flexible than robust linear models, a model 
 
 Shoulder location predictions are calculated for each crosscut in the following manner: 
 \begin{enumerate}
-\item Fit a robust LOESS model with a span of 1 to the averaged crosscut. This is fit using the `locfit.robust` function in the `locfit` package in R. **cite MASS and locfit packages!!!**
+\item Fit a robust LOESS model with a span of 1 to the averaged crosscut. This is fit using the `locfit.robust` function in the `locfit` package in R.
 \item Calculate a residual value for each data point on the crosscut.  
 \item Calculate the median absolute residual (MAR) for the crosscut.  
 \item Remove all data points on the crosscut whose absolute residual value is greater than 2*MAR.  
