@@ -189,10 +189,14 @@ get_grooves_quadratic <- function(bullet, adjust) {
 
 ```{r run-get_grooves_quadratic, message = F, warning = F}
 
-hamby44 <- hamby44 %>% mutate(grooves_quad_pred = purrr::map(ccdata_avg, .f = function(x){
+hamby44 <- hamby44 %>% mutate(grooves_pred_quadratic = purrr::map(ccdata_avg, .f = function(x){
   get_grooves_quadratic(bullet = x, adjust = 0)$groove
 }))
 
+grooves_pred_quadratic <- hamby44$grooves_pred_quadratic
+hamby44_eval <- readRDS("../data/hamby44/hamby44_eval.rda")
+hamby44_eval$grooves_pred_quadratic <- grooves_pred_quadratic
+saveRDS(hamby44_eval, "../data/hamby44/hamby44_eval.rda")
 ```
 
 
@@ -934,9 +938,15 @@ get_grooves_robust_loess_cutoff <- function(bullet, adjust) {
 
 
 ```{r calculate-get_grooves_robust_loess_cutoff, echo = F, warning = F, message = F}
-hamby44 <- hamby44 %>% mutate(grooves_rl_cutoff = purrr::map(ccdata_avg, .f = function(x){
+hamby44 <- hamby44 %>% mutate(grooves_pred_rlo = purrr::map(ccdata_avg, .f = function(x){
   get_grooves_robust_loess_cutoff(bullet = x, adjust = 0)$groove
 }))
+
+
+grooves_pred_rlo <- hamby44$grooves_pred_rlo
+hamby44_eval <- readRDS("../data/hamby44/hamby44_eval.rda")
+hamby44_eval$grooves_pred_rlo <- grooves_pred_rlo
+saveRDS(hamby44_eval, "../data/hamby44/hamby44_eval.rda")
 ```
 
 
