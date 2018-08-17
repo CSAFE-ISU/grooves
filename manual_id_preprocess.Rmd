@@ -1,0 +1,213 @@
+---
+title: "Manual groove ID and ccdata_w_resid"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r packages-and-data, echo = F, message = F, warning = F}
+#install.packages("tidyr")
+#install.packages("dplyr")
+#install.packages("purrr")
+#install.packages("ggplot2")
+library(tidyr)
+library(plyr)
+library(dplyr)
+library(purrr)
+library(ggplot2)
+
+#devtools::install_github("CSAFE-ISU/bulletr")
+library(bulletr)
+
+hamby44 <- readRDS("//opt/hamby44/hamby44.rda")
+#hamby44[1:6,] # to look at what the first 6 rows look like.  
+```
+
+```{r ccdata-define, echo = F}
+#ccdata <- hamby44$ccdata
+
+#saveRDS(ccdata, file="data/ccdata.rda")
+```
+
+```{r grooves-define, warning = F}
+#grooves <- ccdata %>% purrr::map(.f = function(x) {
+#  if (is.null(x)) return(NULL) 
+#  get_grooves(bullet = x, groove_cutoff = 600/.645*1.5625, 
+#              smoothfactor = 45/.645*1.5625, adjust = 10/.645*1.5625)
+#  })
+#saveRDS(grooves, file="data/grooves-pred.rda")
+```
+
+```{r manual-groove-id, echo = F}
+## code taken from "01-data-processing.Rmd" from Heike
+
+#library(shiny)
+
+##if (interactive()) {
+#shinyApp(
+#  
+#  ui = fluidPage(
+#    selectInput("k","Investigate kth plot:", selected = 1,
+#                choices=1:length(grooves)),
+#    textOutput("groovelocations"),
+#    actionButton("confirm", "Confirm"),
+#    actionButton("save", "Save"),
+#    plotOutput("groovePlot", click = "plot_click"),
+#    verbatimTextOutput("info")
+#  ),
+#  
+#  server = function(input, output, session) {
+#    output$groovePlot <- renderPlot({
+#      k <- as.numeric(input$k)
+#      p <- grooves[[k]]$plot 
+
+#      p
+#    })
+#    output$groovelocations <- renderText({
+#      paste("Left Groove: ",grooves[[as.numeric(input$k)]]$groove[1], 
+#            " Right Groove: ",grooves[[as.numeric(input$k)]]$groove[2])
+#    })
+#    observeEvent(input$confirm,{
+#      cat(str(input$k))
+#      updateSelectInput(session, "k","Investigate kth plot:", 
+#                        selected = as.numeric(input$k)+1,
+#                        choices=1:length(grooves))
+#    })
+#    observeEvent(input$save,{
+#      saveRDS(grooves, file="data/grooves.rda")
+#      cat("groove data saved\n")
+#    })
+    
+#    observeEvent(input$plot_click,{
+#      k <- as.numeric(input$k)
+#      xloc <- input$plot_click$x
+#      
+#      gr <- grooves[[k]]$groove
+#      if (abs(gr[1]-xloc) < abs(gr[2]-xloc)) {
+#        grooves[[k]]$groove[1] <<- xloc
+#      } else {
+#        grooves[[k]]$groove[2] <<- xloc
+#      }
+#      output$groovePlot <- renderPlot({ 
+#      k <- as.numeric(input$k)
+#      p <- grooves[[k]]$plot + 
+#        geom_vline(xintercept = grooves[[k]]$groove[1], colour="green") +
+#        geom_vline(xintercept = grooves[[k]]$groove[2], colour="green")
+      
+#      p
+#      })
+  
+#    })
+#    output$info <- renderText({
+#    paste0("x=", input$plot_click$x, "\ny=", input$plot_click$y)
+#  })
+
+#  },
+  
+#  options = list(height = 500)
+#)
+##}
+#saveRDS(grooves, file="data/grooves.rda")
+
+```
+
+```{r}
+grooves <- readRDS("./data/hamby44/grooves.rda")
+na_crosscuts <- which(is.na(hamby44$crosscuts)) ## just get rid of these before doing the ShinyApp in the future! 
+grooves <- grooves[-na_crosscuts]
+hamby44_eval <- hamby44[-na_crosscuts,]
+hamby44_eval$grooves <- grooves
+```
+
+
+```{r define-left-and-right-groove, echo = F, warning = F, message = F}
+
+hamby44_eval$left_groove <- 0
+hamby44_eval$right_groove <- 0
+for (i in 1:nrow(hamby44_eval)){
+  hamby44_eval$left_groove[i] <- hamby44_eval$grooves[[i]]$groove[1]
+  hamby44_eval$right_groove[i] <- hamby44_eval$grooves[[i]]$groove[2]
+}
+```
+
+
+
+```{r avg-and-std-values, echo = F, message = F, warning = F}
+
+hamby44_eval <- hamby44_eval %>% mutate(ccdata_avg = purrr::map(ccdata, .f = function(dframe){
+  dframe <- dframe %>% group_by(y) %>% summarise(value = mean(value, na.rm = T))
+  dframe <- as.data.frame(dframe)
+  check_min <- min(dframe$value[!is.na(dframe$value)])
+  dframe <- dframe %>% mutate(value_std = value - check_min)
+  return(dframe)
+}))
+
+```
+
+
+```{r ccdata_w_resid, echo = F, warning = F, message = F}
+library(locfit)
+hamby44_eval <- hamby44_eval %>% mutate(ccdata_w_resid = purrr::map(ccdata_avg, .f = function(bullet){
+  #lm0 <- MASS::rlm(value_std~poly(y,2), data=bullet, maxit=100)
+  #bullet$rlm_pred <- predict(lm0, newdata=bullet)
+
+  #bullet$rlm_absresid <- with(bullet, abs(value_std-pred))
+  #bullet$rlm_resid <- with(bullet, value_std-pred)
+  
+  
+  robust_loess_fit <- locfit.robust(value_std~y, data = bullet, alpha = 1, kern = "tcub")
+  bullet$rlo_pred <- predict(robust_loess_fit, newdata = bullet)
+  
+  bullet$rlo_absresid <- with(bullet, abs(value_std-rlo_pred))
+  bullet$rlo_resid <- with(bullet, value_std-rlo_pred)
+  return(bullet)
+}),# rlm_r2 = purrr::map_dbl(ccdata_w_resid, .f = function(bullet){
+  #r2 <- (cor(bullet$value_std, bullet$pred, use = "complete.obs"))^2
+  #return(r2)
+#}), 
+ rlo_r2 = purrr::map_dbl(ccdata_w_resid, .f = function(bullet){
+  r2 <- (cor(bullet$value_std, bullet$rlo_pred, use = "complete.obs"))^2
+  return(r2)
+})
+)
+
+```
+
+
+```{r scores-rollapply, echo = F}
+
+score_rollapply <- function(dataset){
+  colname <- "grooves_pred"
+  new_colname <- "score_left_rollapply"
+  new_colname2 <- "score_right_rollapply"
+  dataset[,new_colname] <- 0
+  dataset[,new_colname2] <- 0
+  for(i in 1:nrow(dataset)){
+    bullet <- dataset[i,]
+    left_pred <- bullet[,colname][[1]][[1]]$groove[1]
+    left_groove <- as.numeric(bullet[,"left_groove"])
+    dat <- bullet$ccdata_w_resid[[1]]
+    dat <- dat %>% filter(between(y, min(left_pred, left_groove), max(left_pred, left_groove)))
+    dataset[i,new_colname] <- sum(dat$rlo_resid, na.rm = T)
+    
+    right_pred <- bullet[,colname][[1]][[1]]$groove[2]
+    right_groove <- as.numeric(bullet[,"right_groove"])
+    dat2 <- bullet$ccdata_w_resid[[1]]
+    dat2 <- dat2 %>% filter(between(y, min(right_pred, right_groove), max(right_pred, right_groove)))
+    dataset[i, new_colname2] <- sum(dat2$rlo_resid, na.rm = T)
+  }
+  return(dataset)
+}
+
+hamby44_eval <- score_rollapply(hamby44_eval)
+```
+
+
+```{r select-columns, echo = F}
+hamby44_eval <- hamby44_eval %>% select(source, barrel, bullet, land, PARTITION_ID, crosscuts, ccdata, ccdata_w_resid, left_groove, right_groove, grooves_pred, score_left_rollapply, score_right_rollapply)
+
+saveRDS(hamby44_eval, "data/hamby44/hamby44_eval.rda")
+
+```

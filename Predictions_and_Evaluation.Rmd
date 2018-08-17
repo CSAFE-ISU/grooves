@@ -1,0 +1,133 @@
+---
+title: "Evaluating and Saving Predictions"
+output: html_document
+---
+
+This document is intended to streamline the process of collaborating and evaluating groove predictions on the groove identification project.  
+
+I have created a datafile, `hamby44_eval`, to assist us in assessing our predicted groove locations. I have removed the `x3p`, `grooves`, `processed`, and `proc_smooth` columns from hamby44 to reduce the size of the file we are actually working with. This leaves us with the following: 
+
+1. Metadata about the lands: `source`, `barrel`, `bullet`, `land`, `PARTITION_ID`, `crosscuts`.  
+2. The land data at 10 crosscuts for each land in  (`ccdata`).  
+3. The land data averaged across crosscuts (`ccdata_w_resid`). This is most likely what you want to start with for modeling.  
+    - Values shifted down so min value occurs at 0 (`value_std`)
+    - Predictions and residuals from robust LOESS fit (`rlo_pred`, `rlo_resid`, `rlo_absresid`)
+4. Manually identified "ground truth" locations for the grooves: `left_groove`, `right_groove`.  
+5. Rollapply method groove predictions: `grooves_pred`.  
+6. "Scores" for rollapply method predictions: `score_left_rollapply`, `score_right_rollapply`.  
+
+
+The idea here is that we can add new prediction columns as we make them.  
+
+The first important step is in your document that you are using to run code/make predictions, your output should be a list that contains predictions for each land. So the list should have 208 elements (in the Hamby44 set), and each item in the list should have [1] and [2], the predictions for the left and right groove. If you follow the `purrr::map` structure to each land and return a list: `return(list(groove = groove, plot = plot))` (if you don't do the plot part, just do `return(list(groove = groove))`. Just make sure whatever function you are applying to the lands returns a list. 
+
+You can then save your predictions as an added column on the `hamby44_eval` file:  
+
+```{r example-save}
+#grooves_pred_"method" <- hamby44$grooves_pred_"method"
+#hamby44_eval <- readRDS("../data/hamby44/hamby44_eval.rda") ## the "../" at the beginning takes you from a file in the "development" folder of the grooves repository
+#hamby44_eval$grooves_pred_"method" <- grooves_pred_"method"
+#saveRDS(hamby44_eval, "../data/hamby44/hamby44_eval.rda")
+```
+
+If you have trouble getting your results into the right format, let me know and I can help you out!  
+
+
+THEN, we can read it in and run through the following code to get results and save these "scores" for the predictions to the hamby44_eval datafile.  
+
+```{r read-hamby44_eval}
+hamby44_eval <- readRDS("data/hamby44/hamby44_eval.rda")
+```
+
+```{r define-prediction_scores}
+prediction_scores <- function(dataset, method){
+  colname <- paste0("grooves_pred_", method)
+  new_colname <- paste0("score_left_", method)
+  new_colname2 <- paste0("score_right_", method)
+  dataset[,new_colname] <- 0
+  dataset[,new_colname2] <- 0
+  for(i in 1:nrow(dataset)){
+    bullet <- dataset[i,]
+    left_pred <- bullet[,colname][[1]][[1]][1]
+    left_groove <- as.numeric(bullet[,"left_groove"])
+    dat <- bullet$ccdata_w_resid[[1]]
+    dat <- dat %>% filter(between(y, min(left_pred, left_groove), max(left_pred, left_groove)))
+    dataset[i,new_colname] <- sum(dat$rlo_resid, na.rm = T)
+    
+    right_pred <- bullet[,colname][[1]][[1]][2]
+    right_groove <- as.numeric(bullet[,"right_groove"])
+    dat2 <- bullet$ccdata_w_resid[[1]]
+    dat2 <- dat2 %>% filter(between(y, min(right_pred, right_groove), max(right_pred, right_groove)))
+    dataset[i, new_colname2] <- sum(dat2$rlo_resid, na.rm = T)
+  }
+  return(dataset)
+}
+```
+
+```{r run-prediction_scores}
+# These are already in the saved "hamby44_eval.rda" file, so no need to re-run, but as an example of how to do it with a new method! 
+
+#hamby44_eval <- prediction_scores(hamby44_eval, "rlo")
+#hamby44_eval <- prediction_scores(hamby44_eval, "quadratic") 
+
+hamby44_eval <- prediction_scores(hamby44_eval, "logistic")
+```
+
+
+
+
+
+```{r define-plot_scores}
+plot_scores <- function(dataset){
+  plot_df <- hamby44_eval %>% ungroup() %>% 
+    select(dplyr::contains("score")) %>% 
+    gather(method, score) %>% 
+    mutate(GrooveMethod = unlist(purrr::map(method, .f = function(x){
+      strsplit(x, "_")[[1]][3]
+        })), GrooveSide = unlist(purrr::map(method, .f = function(x){
+      strsplit(x, "_")[[1]][2]
+        }))
+    )
+  plot_df %>% 
+    ggplot() + geom_boxplot(aes(x = GrooveSide, y = abs(score), fill = GrooveMethod)) + 
+      theme_bw() + labs(x = "Groove Side", y = "Inaccuracy Score")
+}
+
+plot_scores_zoom <- function(dataset, zoom_cutoff){
+  plot_df <- hamby44_eval %>% ungroup() %>% 
+    select(dplyr::contains("score")) %>% 
+    gather(method, score) %>% 
+    mutate(GrooveMethod = unlist(purrr::map(method, .f = function(x){
+      strsplit(x, "_")[[1]][3]
+        })), GrooveSide = unlist(purrr::map(method, .f = function(x){
+      strsplit(x, "_")[[1]][2]
+        }))
+    ) %>% 
+    filter(score < zoom_cutoff)
+  plot_df %>% 
+    ggplot() + geom_boxplot(aes(x = GrooveSide, y = abs(score), fill = GrooveMethod)) + 
+      theme_bw() + labs(x = "Groove Side", y = "Inaccuracy Score")
+  }
+```
+
+```{r plot_scores}
+plot_scores(hamby44_eval)
+
+plot_scores_zoom(hamby44_eval, 5000)
+```
+
+
+```{r save-hamby44_eval}
+saveRDS(hamby44_eval, "data/hamby44/hamby44_eval.rda")
+```
+
+
+
+
+
+## Metadata .csv for "problem lands"  
+
+```{r prediction-metadata}
+hamby44_mdata <- hamby44_eval %>% ungroup() %>% select(1:4, dplyr::contains("score"))
+write.csv(hamby44_mdata, file = "data/hamby44/hamby44_mdata.csv")
+```
