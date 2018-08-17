@@ -8,13 +8,12 @@ This document is intended to streamline the process of collaborating and evaluat
 I have created a datafile, `hamby44_eval`, to assist us in assessing our predicted groove locations. I have removed the `x3p`, `grooves`, `processed`, and `proc_smooth` columns from hamby44 to reduce the size of the file we are actually working with. This leaves us with the following: 
 
 1. Metadata about the lands: `source`, `barrel`, `bullet`, `land`, `PARTITION_ID`, `crosscuts`.  
-2. The land data at 10 crosscuts for each land in  (`ccdata`).  
-3. The land data averaged across crosscuts (`ccdata_w_resid`). This is most likely what you want to start with for modeling.  
+2. The land data averaged across crosscuts (`ccdata_w_resid`). This is most likely what you want to start with for modeling.  
     - Values shifted down so min value occurs at 0 (`value_std`)
     - Predictions and residuals from robust LOESS fit (`rlo_pred`, `rlo_resid`, `rlo_absresid`)
-4. Manually identified "ground truth" locations for the grooves: `left_groove`, `right_groove`.  
-5. Rollapply method groove predictions: `grooves_pred`.  
-6. "Scores" for rollapply method predictions: `score_left_rollapply`, `score_right_rollapply`.  
+3. Manually identified "ground truth" locations for the grooves: `left_groove`, `right_groove`.  
+4. Rollapply method groove predictions: `grooves_pred`.  
+5. "Scores" for rollapply method predictions: `score_left_rollapply`, `score_right_rollapply`.  
 
 
 The idea here is that we can add new prediction columns as we make them.  
