@@ -376,6 +376,50 @@ Note that when we fit individual models, the ROC curves are essentially perfect 
 Now let's try this combining all the data into one large data frame and fitting ONE logistic regression model to it... then we can see if the ROC curves are a little more reasonable.  
 
 ```{r, echo = F, warning = F, message = F}
+library(plyr)
+bullet.model2 <- rbind.fill(hamby44$ccdata_w_resid)
+bullet.model2 <- bullet.model2[!is.na(bullet.model2$rlo_resid),]
+
+
+X <- model.matrix(~rlo_resid + side + depth + side*depth - 1, bullet.model2)
+fit <- cv.glmnet(x = X, y = bullet.model2$response, family = 'binomial', type.measure = 'class', alpha = 1)
+model_all <- as.matrix(coef(fit))
+
+get_grooves_logistic<- function(bullet, adjust, model_coef){
+  bullet <- bullet[!is.na(bullet$rlo_resid),]
+  X <- cbind(1, model.matrix(~rlo_resid + side+ depth + side*depth - 1, bullet))
+  ymean <- as.vector(X%*%model_coef)
+  yhat <- exp(ymean)/(1 + exp(ymean))
+  bullet$pred_val <- yhat
+  #bullet$pred_class <- ifelse(bullet$pred_val < .5, "LEA", "GEA")
+  groove <- range(filter(bullet, pred_val < .5)$y) #+ c(adjust, -adjust)
+  
+  
+  #groove <- range(filter(bullet, !resid_cutoff)$y) + c(adjust, -adjust)
+  
+  plot <- bullet %>% ggplot(aes(x = y, y = value_std)) + geom_line(size = .5) + theme_bw() +
+    geom_vline(xintercept=groove[1], colour = "blue") +
+    geom_vline(xintercept=groove[2], colour = "blue") 
+  
+  return(list(groove = groove, plot = plot))
+}
+
+
+
+hamby44 <- hamby44 %>% mutate(grooves_pred_logistic = purrr::map(ccdata_w_resid, .f = function(x){
+  get_grooves_logistic(bullet = x, adjust = 0, model_coef = model_all)$groove
+}))
+
+
+grooves_pred_logistic <- hamby44$grooves_pred_logistic
+hamby44_eval <- readRDS("../data/hamby44/hamby44_eval.rda")
+hamby44_eval$grooves_pred_logistic <- grooves_pred_logistic
+saveRDS(hamby44_eval, "../data/hamby44/hamby44_eval.rda")
+
+
+
+
+
 bullet.model2 <- rbind.fill(hamby44$ccdata_w_resid)
 bullet.model2 <- bullet.model2[!is.na(bullet.model2$rlo_resid),]
 
@@ -394,6 +438,8 @@ hamby44 <- hamby44 %>% mutate(ccdata_logistic2 = purrr::map(ccdata_w_resid, .f =
   bullet$pred_class <- ifelse(bullet$pred_val < .5, "LEA", "GEA")
   return(bullet)
 }))
+
+
 
 head(hamby44$ccdata_logistic2[[1]])
 
