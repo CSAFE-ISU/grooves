@@ -27,17 +27,18 @@ hamby44 <- readRDS("//opt/hamby44/hamby44.rda")
 
 ```{r ccdata-define, echo = F}
 #ccdata <- hamby44$ccdata
-
-#saveRDS(ccdata, file="data/ccdata.rda")
+ccdata <- houston$ccdata
+#saveRDS(ccdata, file="data/houston/ccdata.rda")
 ```
 
 ```{r grooves-define, warning = F}
-#grooves <- ccdata %>% purrr::map(.f = function(x) {
-#  if (is.null(x)) return(NULL) 
-#  get_grooves(bullet = x, groove_cutoff = 600/.645*1.5625, 
-#              smoothfactor = 45/.645*1.5625, adjust = 10/.645*1.5625)
-#  })
-#saveRDS(grooves, file="data/grooves-pred.rda")
+library(bulletr)
+grooves <- ccdata %>% purrr::map(.f = function(x) {
+  if (is.null(x)) return(NULL) 
+  get_grooves(bullet = x, groove_cutoff = 600/.645*1.5625, 
+              smoothfactor = 45/.645*1.5625, adjust = 10/.645*1.5625)
+  })
+saveRDS(grooves, file="data/houston/grooves-pred.rda")
 ```
 
 ```{r manual-groove-id, echo = F}

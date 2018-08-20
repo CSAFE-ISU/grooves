@@ -200,7 +200,19 @@ hamby44 <- hamby44 %>% mutate(ccdata_w_resid = purrr::map(ccdata_w_resid, .f = f
   return(bullet)
 }))
 #hamby44$ccdata_w_resid[[1]][3000,]
+
+
+hamby44 <- hamby44 %>% mutate(operator = purrr::map_chr(source, .f = function(bullet){
+  split <- unlist(strsplit(bullet, " - "))
+  namedat <- split[length(split)]
+  operator <- gsub(".{4}$", "", namedat)
+  return(operator)
+}))
+
+hamby44_long <- hamby44 %>% unnest(ccdata_w_resid)
+head(hamby44_long)
 ```
+
 
 ```{r define-response, echo = F, warning = F, message = F}
 
@@ -569,7 +581,7 @@ grid.arrange(rcp1, rcp4, rcp6, rcp16, nrow = 2, top = "Residuals vs. Lag 1 Resid
 
 ## JSM Graphic - LOESS v RLOESS w RESIDS
 
-```{r, echo = F, warning = F, message = F}
+```{r JSM-graphic, echo = F, warning = F, message = F}
 
 plot_lovrlo <- function(datafile, land_num){
   bullet <- datafile$ccdata_w_resid[[land_num]]
@@ -614,7 +626,20 @@ plot_grooveresids <- function(datafile, land_num){
 
 
 
+## Add some additional features  
+
+```{r, echo = F, warning = F, message = F} 
+
+
+
+```
 
 
 
 
+
+## Adding a random component for operator and/or bullet  
+
+```{r, echo = F, warning = F, message = F}
+
+```
