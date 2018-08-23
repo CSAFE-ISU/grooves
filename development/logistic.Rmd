@@ -24,65 +24,7 @@ library(ggplot2)
 #devtools::install_github("CSAFE-ISU/bulletr")
 #library(bulletr)
 
-hamby44 <- readRDS("//opt/hamby44/hamby44.rda")
-hamby44[1:6,] # to look at what the first 6 rows look like.  
-```
-
-```{r rm-empty-lands, echo = F, message = F, warning = F}
-hamby44 <- hamby44 %>% filter(!is.na(crosscuts))
-```
-
-```{r avg-and-std-values, echo = F, message = F, warning = F}
-
-hamby44 <- hamby44 %>% mutate(ccdata_avg = purrr::map(ccdata, .f = function(dframe){
-  dframe <- dframe %>% group_by(y) %>% dplyr::summarise(value = mean(value, na.rm = T))
-  dframe <- as.data.frame(dframe)
-  check_min <- min(dframe$value[!is.na(dframe$value)])
-  dframe <- dframe %>% mutate(value_std = value - check_min)
-  return(dframe)
-}))
-
-#hamby44
-
-#bullet <- hamby44$ccdata_avg[[1]] ## can be used to visualize the shift down to "baseline" 
-#ggplot() + geom_point(data = bullet, aes(x = y, y = value)) + 
-#  geom_line(data = bullet, aes(x = y, y = value), color = "red") + 
-#  geom_line(data = bullet, aes(x = y, y = value_std), colour = "green") + 
-#  theme_bw()
-```
-
-```{r calculate-residuals-rlm-rloess, echo = F, warning = F, message = F}
-#install.packages("locfit")
-library(locfit)
-hamby44 <- hamby44 %>% mutate(ccdata_w_resid = purrr::map(ccdata_avg, .f = function(bullet){
-  lm0 <- MASS::rlm(value_std~poly(y,2), data=bullet, maxit=100)
-  bullet$pred <- predict(lm0, newdata=bullet)
-
-  bullet$absresid <- with(bullet, abs(value_std-pred))
-  bullet$resid <- with(bullet, value_std-pred)
-  
-  
-  robust_loess_fit <- locfit.robust(value_std~y, data = bullet, alpha = 1, kern = "tcub")
-  bullet$rlo_pred <- predict(robust_loess_fit, newdata = bullet)
-  
-  bullet$rlo_absresid <- with(bullet, abs(value_std-rlo_pred))
-  bullet$rlo_resid <- with(bullet, value_std-rlo_pred)
-  return(bullet)
-}), rlm_r2 = purrr::map_dbl(ccdata_w_resid, .f = function(bullet){
-  r2 <- (cor(bullet$value_std, bullet$pred, use = "complete.obs"))^2
-  return(r2)
-}), rlo_r2 = purrr::map_dbl(ccdata_w_resid, .f = function(bullet){
-  r2 <- (cor(bullet$value_std, bullet$rlo_pred, use = "complete.obs"))^2
-  return(r2)
-})
-)
-
-# to plot any of the individual lands (indexed by i), and what the robust loess predictions look like on that land.  
-
-#bullet_plot <- function(i){
-#  bullet <- hamby44$ccdata_w_resid[[i]]
-#  bullet %>% ggplot() + geom_point(aes(x = y, y = value_std)) + theme_bw() + geom_line(aes(x = y, y = rlo_pred), colour ="green")
-#}
+hamby44 <- readRDS("../data/hamby44/hamby44_eval.rda")
 ```
 
 
@@ -202,28 +144,54 @@ hamby44 <- hamby44 %>% mutate(ccdata_w_resid = purrr::map(ccdata_w_resid, .f = f
 #hamby44$ccdata_w_resid[[1]][3000,]
 
 
-hamby44 <- hamby44 %>% mutate(operator = purrr::map_chr(source, .f = function(bullet){
-  split <- unlist(strsplit(bullet, " - "))
-  namedat <- split[length(split)]
-  operator <- gsub(".{4}$", "", namedat)
-  return(operator)
-}))
-
-hamby44_long <- hamby44 %>% unnest(ccdata_w_resid)
-head(hamby44_long)
 ```
 
 
-```{r define-response, echo = F, warning = F, message = F}
 
-hamby44 <- hamby44 %>% mutate(left_groove = purrr::map_dbl(grooves, .f = function(grooves){
-  left_groove <- grooves$groove[1]
-}),
-right_groove = purrr::map_dbl(grooves, .f = function(grooves){
-  right_groove <- grooves$groove[2]
+
+```{r calculate-additional-features}
+hamby44 <- hamby44 %>% mutate(ccdata_w_resid = purrr::map(ccdata_w_resid, .f = function(bullet){
+  ## range20 : range of values in a 20-wide band around each data point. 
+  bullet$range_50 <- rollapply(bullet$rlo_resid, width = 50, FUN = function(x){max(x) - min(x)}, partial = TRUE)
+  
+  ## xint1 and xint2: the predicted locations that the robust LOESS crosses the x-axis.  
+  xint1 <- min(abs(bullet$rlo_pred[(bullet$y < median(bullet$y))]))
+  xint2 <- min(abs(bullet$rlo_pred[(bullet$y > median(bullet$y))]))
+  ind1 <- which(bullet$rlo_pred == xint1 | bullet$rlo_pred == -1*xint1)
+  ind2 <- which(bullet$rlo_pred == xint2 | bullet$rlo_pred == -1*xint2)
+  bullet$xint1 <- bullet$y[ind1]
+  bullet$xint2 <- bullet$y[ind2]
+  
+  ## ind_2mad: whether the data point is above the 2*MAR cutoff previously used as an ad-hoc method. 
+  mar <- median(bullet$rlo_absresid)
+  bullet$ind_2mad <- ifelse(bullet$rlo_absresid > 2*mar, 1, 0)
+  
+  ## numpos_50: how many positive residuals there are in a 50-wide band around each data point. 
+  bullet$numpos_50 <- rollapply(bullet$rlo_resid, width = 50, FUN = function(x){sum(x > 0)}, partial = TRUE)
+  
+  bullet$numNA_50 <- rollapply(bullet$rlo_resid, width = 50, FUN = function(x){sum(is.na(x))}, partial = TRUE)
+  
+  return(bullet)
 }))
-#hamby44[1:6,]
 
+```
+
+```{r standardize-in-bullet, echo = F, warning = F, message = F}
+hamby44 <- hamby44 %>% mutate(ccdata_w_resid = purrr::map(ccdata_w_resid, .f = function(bullet){
+  proxy <- mad(bullet$rlo_resid, na.rm = T)
+  bullet$rlo_resid_std <- bullet$rlo_resid/proxy
+  bullet$range_50_std <- bullet$range_50/proxy
+  
+  yrange <- max(bullet$y) - min(bullet$y)
+  bullet$depth_std <- bullet$depth/yrange
+  bullet$xint1_std <- bullet$xint1/yrange
+  bullet$xint2_std <- bullet$xint2/yrange
+  return(bullet)
+}))
+
+```
+
+```{r define-response, echo = F, warning = F, message = F}
 calculate_response <- function(dataset){
   for(i in 1:nrow(dataset)){
   left_groove <- dataset$left_groove[i]
@@ -247,6 +215,37 @@ hamby44 <- hamby44 %>% mutate(ccdata_w_resid = purrr::map(ccdata_w_resid, .f = f
 ```
 
 
+```{r hamby44_long, echo = F, warning = F, message = F}
+hamby44_long <- hamby44 %>% unnest(ccdata_w_resid) %>% select(-dplyr::contains("score"))
+head(hamby44_long)
+```
+
+```{r logistic-extra-feats, echo = F, warning = F, message = F}
+hamby44_long <- hamby44_long[!is.na(hamby44_long$rlo_resid),]
+glmA <- glm(formula = response~rlo_resid_std + side + depth_std + range_50_std + xint1_std + xint2_std + numNA_50 + side*depth_std, family = "binomial", data = hamby44_long)
+
+hamby44_long$log_preds1 <- predict(glmA, newdata = hamby44_long, type = "response")
+hamby44_long$log_class1 <- ifelse(hamby44_long$log_preds1 <= .5, "LEA", "GEA")
+head(hamby44_long)
+```
+
+
+
+```{r}
+res <- hamby44_long %>% group_by(source, barrel, bullet, land, left_groove, right_groove) %>% nest()
+plot_preds <- function(land_num){
+  bullet <- res$data[[land_num]]
+  bullet %>% ggplot() + geom_point(aes(x = y, y = rlo_resid, colour = factor(log_class1))) + theme_bw() + geom_hline(yintercept = 0)
+}
+
+res <- res %>% mutate(grooves_pred_log2 = purrr::map(data, .f = function(bullet){
+  groove <- range(bullet$y[(bullet$log_class1 == "LEA")], na.rm = T)
+  return(groove)
+}))
+
+head(res)
+
+```
 ## Modeling  
 
 Now we are going to use glmnet to do a logistic regression.  

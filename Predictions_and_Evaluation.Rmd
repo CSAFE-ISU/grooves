@@ -69,7 +69,7 @@ prediction_scores <- function(dataset, method){
 #hamby44_eval <- prediction_scores(hamby44_eval, "rlo")
 #hamby44_eval <- prediction_scores(hamby44_eval, "quadratic") 
 
-hamby44_eval <- prediction_scores(hamby44_eval, "logistic")
+hamby44_eval <- prediction_scores(hamby44_eval, "log2")
 ```
 
 
