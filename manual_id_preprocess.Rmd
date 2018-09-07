@@ -18,10 +18,9 @@ library(dplyr)
 library(purrr)
 library(ggplot2)
 
-#devtools::install_github("CSAFE-ISU/bulletr")
-library(bulletr)
 
 hamby44 <- readRDS("//opt/hamby44/hamby44.rda")
+houston <- readRDS("//opt/houston/barrelf.rds")
 #hamby44[1:6,] # to look at what the first 6 rows look like.  
 ```
 
@@ -32,11 +31,11 @@ ccdata <- houston$ccdata
 ```
 
 ```{r grooves-define, warning = F}
-library(bulletr)
-grooves <- ccdata %>% purrr::map(.f = function(x) {
-  if (is.null(x)) return(NULL) 
-  get_grooves(bullet = x, groove_cutoff = 600/.645*1.5625, 
-              smoothfactor = 45/.645*1.5625, adjust = 10/.645*1.5625)
+#devtools::install_github("bulletxtrctr", username = "heike")
+library(bulletxtrctr)
+grooves <- ccdata %>% purrr::map(.f = function(X) {
+  if (is.null(X)) return(NULL) 
+  get_grooves_rollapply(x = X$x, value = X$value, return_plot = T)
   })
 saveRDS(grooves, file="data/houston/grooves-pred.rda")
 ```
@@ -44,7 +43,7 @@ saveRDS(grooves, file="data/houston/grooves-pred.rda")
 ```{r manual-groove-id, echo = F}
 ## code taken from "01-data-processing.Rmd" from Heike
 
-#library(shiny)
+library(shiny)
 
 ##if (interactive()) {
 #shinyApp(
@@ -58,12 +57,12 @@ saveRDS(grooves, file="data/houston/grooves-pred.rda")
 #    plotOutput("groovePlot", click = "plot_click"),
 #    verbatimTextOutput("info")
 #  ),
-#  
+  
 #  server = function(input, output, session) {
 #    output$groovePlot <- renderPlot({
 #      k <- as.numeric(input$k)
 #      p <- grooves[[k]]$plot 
-
+#
 #      p
 #    })
 #    output$groovelocations <- renderText({
@@ -80,7 +79,7 @@ saveRDS(grooves, file="data/houston/grooves-pred.rda")
 #      saveRDS(grooves, file="data/grooves.rda")
 #      cat("groove data saved\n")
 #    })
-    
+#    
 #    observeEvent(input$plot_click,{
 #      k <- as.numeric(input$k)
 #      xloc <- input$plot_click$x
@@ -96,10 +95,10 @@ saveRDS(grooves, file="data/houston/grooves-pred.rda")
 #      p <- grooves[[k]]$plot + 
 #        geom_vline(xintercept = grooves[[k]]$groove[1], colour="green") +
 #        geom_vline(xintercept = grooves[[k]]$groove[2], colour="green")
-      
+#    
 #      p
 #      })
-  
+#  
 #    })
 #    output$info <- renderText({
 #    paste0("x=", input$plot_click$x, "\ny=", input$plot_click$y)
@@ -109,27 +108,28 @@ saveRDS(grooves, file="data/houston/grooves-pred.rda")
   
 #  options = list(height = 500)
 #)
-##}
-#saveRDS(grooves, file="data/grooves.rda")
+#}
+#saveRDS(grooves, file="data/houston/grooves.rda")
 
 ```
 
 ```{r}
-grooves <- readRDS("./data/hamby44/grooves.rda")
-na_crosscuts <- which(is.na(hamby44$crosscuts)) ## just get rid of these before doing the ShinyApp in the future! 
-grooves <- grooves[-na_crosscuts]
-hamby44_eval <- hamby44[-na_crosscuts,]
-hamby44_eval$grooves <- grooves
+grooves <- readRDS("./data/houston/grooves.rda")
+na_crosscuts <- which(is.na(houston$crosscut)) ## just get rid of these before doing the ShinyApp in the future! 
+#grooves <- grooves[-na_crosscuts]
+#houston_eval <- houston[-na_crosscuts,]
+houston_eval <- houston
+houston_eval$grooves <- grooves
 ```
 
 
 ```{r define-left-and-right-groove, echo = F, warning = F, message = F}
 
-hamby44_eval$left_groove <- 0
-hamby44_eval$right_groove <- 0
-for (i in 1:nrow(hamby44_eval)){
-  hamby44_eval$left_groove[i] <- hamby44_eval$grooves[[i]]$groove[1]
-  hamby44_eval$right_groove[i] <- hamby44_eval$grooves[[i]]$groove[2]
+houston_eval$left_groove <- 0
+houston_eval$right_groove <- 0
+for (i in 1:nrow(houston_eval)){
+  houston_eval$left_groove[i] <- houston_eval$grooves[[i]]$groove[1]
+  houston_eval$right_groove[i] <- houston_eval$grooves[[i]]$groove[2]
 }
 ```
 
@@ -137,8 +137,8 @@ for (i in 1:nrow(hamby44_eval)){
 
 ```{r avg-and-std-values, echo = F, message = F, warning = F}
 
-hamby44_eval <- hamby44_eval %>% mutate(ccdata_avg = purrr::map(ccdata, .f = function(dframe){
-  dframe <- dframe %>% group_by(y) %>% summarise(value = mean(value, na.rm = T))
+houston_eval <- houston_eval %>% mutate(ccdata_avg = purrr::map(ccdata, .f = function(dframe){
+  dframe <- dframe %>% group_by(x) %>% summarise(value = mean(value, na.rm = T))
   dframe <- as.data.frame(dframe)
   check_min <- min(dframe$value[!is.na(dframe$value)])
   dframe <- dframe %>% mutate(value_std = value - check_min)
@@ -150,15 +150,17 @@ hamby44_eval <- hamby44_eval %>% mutate(ccdata_avg = purrr::map(ccdata, .f = fun
 
 ```{r ccdata_w_resid, echo = F, warning = F, message = F}
 library(locfit)
-hamby44_eval <- hamby44_eval %>% mutate(ccdata_w_resid = purrr::map(ccdata_avg, .f = function(bullet){
+houston_eval <- houston_eval %>% mutate(ccdata_w_resid = purrr::map(ccdata_avg, .f = function(bullet){
   #lm0 <- MASS::rlm(value_std~poly(y,2), data=bullet, maxit=100)
   #bullet$rlm_pred <- predict(lm0, newdata=bullet)
 
   #bullet$rlm_absresid <- with(bullet, abs(value_std-pred))
   #bullet$rlm_resid <- with(bullet, value_std-pred)
   
-  
-  robust_loess_fit <- locfit.robust(value_std~y, data = bullet, alpha = 1, kern = "tcub")
+  #browser()
+  lower <- quantile(bullet$x, prob = .25)
+  upper <- quantile(bullet$x, prob = .75)
+  robust_loess_fit <- locfit.robust(value_std~lp(x, nn = 1, iter = 100), data = filter(bullet, between(x, lower, upper)))
   bullet$rlo_pred <- predict(robust_loess_fit, newdata = bullet)
   
   bullet$rlo_absresid <- with(bullet, abs(value_std-rlo_pred))
@@ -179,6 +181,7 @@ hamby44_eval <- hamby44_eval %>% mutate(ccdata_w_resid = purrr::map(ccdata_avg, 
 
 ```{r scores-rollapply, echo = F}
 
+## ignore for now!!! 
 score_rollapply <- function(dataset){
   colname <- "grooves_pred"
   new_colname <- "score_left_rollapply"
@@ -207,8 +210,9 @@ hamby44_eval <- score_rollapply(hamby44_eval)
 
 
 ```{r select-columns, echo = F}
-hamby44_eval <- hamby44_eval %>% select(source, barrel, bullet, land, PARTITION_ID, crosscuts, ccdata, ccdata_w_resid, left_groove, right_groove, grooves_pred, score_left_rollapply, score_right_rollapply)
+houston_eval <- houston_eval %>% select(source, bullet, crosscut, ccdata_w_resid, left_groove, right_groove)
 
-saveRDS(hamby44_eval, "data/hamby44/hamby44_eval.rda")
+saveRDS(houston_eval, "data/houston/houston_eval.rda")
 
 ```
+
