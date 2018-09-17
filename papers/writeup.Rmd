@@ -49,15 +49,15 @@ The final data consists of 2D crosscuts gathered from 3D imaging. The height val
 
 \section{Methodology}  
 
-The nature of the data structure is such that much of the variability found within the data is due to the global structure of the physical object; that is, the curve of a bullet. Since the ultimate goal is to identify where the global data structure changes (where the shoulder location is), methods need to be able to separate out the LEA structure from the GEA structure. This can most effectively be accomplished by fitting a line to the curve of the bullet and analyzing the pattern of deviations from that curve. That is, fitting a statistical model to the curve of the bullet and examining the residual values. 
+The nature of the data structure is such that much of the variability found within the data is due to the global structure of the physical object; that is, the curve of a bullet. Since the goal is to identify where the global data structure changes (where the shoulder location is), methods need to be able to separate out the LEA structure from the GEA structure. This can most effectively be accomplished by fitting a line to the curve of the bullet and analyzing the pattern of deviations from that curve. That is, fitting a statistical model to the curve of the bullet and examining the residual values. 
 
 Due to two competing structures in the data, the ideal statistical model is one which treats the secondary structure of the GEA as outlying data and fits the curve of the LEA alone. We examine two methods for fitting the LEA structure that are based on robust statistical methods. While the two approaches differ in methodology, they are both rooted in the ability to mitigate undue influence caused by outlying data.  
 
 \subsection{Robust Linear Models}  
 
-Simple linear regression models assume a one-to-one relationship between the location of a data point on the X axis and the height value on the Y axis. Due to the curved nature of the bullet, it is natural to apply a quadratic linear model to get a curve rather than a straight line fitted to the data. Linear models are based on minimizing the squared distance between each data point and a fitted line. This means that if there are data points in unusual places, a linear model will fit a line that is pulled towards outlying data in order to minimize the overall sum of squared distances. In this particular data environment, the fitted curve can be easily influenced by GEA data, as is seen in Figure 4.  
+Due to the curved nature of the bullet, a quadratic linear model is a good candidate model. Linear models are based on minimizing the vertical squared distance between each data point and a fitted line. This means that if there are data points in unusual places, a linear model will fit a line that is pulled towards outlying data in order to minimize the overall sum of squared distances. In this particular data environment, the fitted curve can be easily influenced by GEA data, as is seen in Figure 4.  
 
-The robust approach under the linear model framework focuses on minimizing the least absolute deviations. This method of minimization is less influenced by possibly large outlying values present in the GEA data. Due to the overwhelming majority of data being from the LEA structure, minimizing the least absolute deviations will favor fitting the LEA structure and allowing GEA data to have large residual values. This is preferable to the traditional linear model, which corrects for the presence of GEA data by compromising between the two competing structures, and does not fit either structure accrurately. A striking example of the difference in results from these two model frameworks is seen in Figure 4.  
+The robust approach under the linear model framework focuses on minimizing the least absolute deviations. This method of minimization is less influenced by possibly large outlying values present in the GEA data. Due to the overwhelming majority of data being from the LEA structure, minimizing the least absolute deviations will favor fitting the LEA structure and allowing GEA data to have large residual values. This is preferable to the traditional linear model, which corrects for the presence of GEA data by compromising between the two competing structures, and does not fit either structure appropriately. A striking example of the difference in results from these two model frameworks is seen in Figure 4.  
 
 ![Example of a quadratic linear model fit (orange) compared to a robust quadratic linear model fit (blue) to a single crosscut. The robust model is able to more effectively capture the curved structure of the LEA without being influenced by the GEA.](../images/LinearvRLM.png)  
 
@@ -68,11 +68,11 @@ Once a model has been fit for each crosscut, residual values are calculated. The
 
 Shoulder location predictions are calculated for each crosscut in the following manner:  
 \begin{enumerate}
-\item Fit a robust linear model of order 2 (i.e., quadratic) to the averaged crosscut. This is fit using the default methods of the `rlm` function in the `MASS` package in R.  
+\item Fit a robust linear model of order 2 (i.e., quadratic) to the averaged crosscut.   
 \item Calculate a residual value for each data point on the crosscut.  
 \item Calculate the median absolute residual (MAR) for the crosscut.  
 \item Remove all data points on the crosscut whose absolute residual value is greater than 4*MAR.  
-\item Find the range of the remaining Y values - these are the predicted shoulder locations for that crosscut.   
+\item Identify the range of the remaining X values - these are the predicted shoulder locations for that crosscut.   
 \end{enumerate}
 
 ![Residual values resulting from a robust quadratic linear model. Data points that exist in the GEA structure are clearly separated from the LEA structure. ](../images/RLM_resids.png)  
@@ -96,7 +96,7 @@ Shoulder location predictions are calculated for each crosscut in the following 
 \item Calculate a residual value for each data point on the crosscut.  
 \item Calculate the median absolute residual (MAR) for the crosscut.  
 \item Remove all data points on the crosscut whose absolute residual value is greater than 2*MAR.  
-\item Find the range of the remaining Y values - these are the predicted shoulder locations for that crosscut.   
+\item Identify the range of the remaining Y values - these are the predicted shoulder locations for that crosscut.   
 \end{enumerate}
 
 
