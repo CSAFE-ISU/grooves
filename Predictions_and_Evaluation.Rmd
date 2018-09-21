@@ -69,7 +69,8 @@ prediction_scores <- function(dataset, method){
 #hamby44_eval <- prediction_scores(hamby44_eval, "rlo")
 #hamby44_eval <- prediction_scores(hamby44_eval, "quadratic") 
 
-hamby44_eval <- prediction_scores(hamby44_eval, "logistic")
+hamby44_eval <- prediction_scores(hamby44_eval, "logistic4")
+head(hamby44_eval)
 ```
 
 
@@ -77,9 +78,14 @@ hamby44_eval <- prediction_scores(hamby44_eval, "logistic")
 
 
 ```{r define-plot_scores}
-plot_scores <- function(dataset){
-  plot_df <- hamby44_eval %>% ungroup() %>% 
-    select(dplyr::contains("score")) %>% 
+plot_scores <- function(dataset, methods = NULL){
+  colnames <- c()
+  for (i in 1:length(methods)){
+    colnames <- c(colnames, paste0("score_left_", methods[i]))
+    colnames <- c(colnames, paste0("score_right_", methods[i]))
+  }
+  plot_df <- dataset %>% ungroup() %>% 
+    select(colnames) %>%  
     gather(method, score) %>% 
     mutate(GrooveMethod = unlist(purrr::map(method, .f = function(x){
       strsplit(x, "_")[[1]][3]
@@ -92,9 +98,14 @@ plot_scores <- function(dataset){
       theme_bw() + labs(x = "Groove Side", y = "Inaccuracy Score")
 }
 
-plot_scores_zoom <- function(dataset, zoom_cutoff){
-  plot_df <- hamby44_eval %>% ungroup() %>% 
-    select(dplyr::contains("score")) %>% 
+plot_scores_zoom <- function(dataset, zoom_cutoff, methods = NULL){
+  colnames <- c()
+  for (i in 1:length(methods)){
+    colnames <- c(colnames, paste0("score_left_", methods[i]))
+    colnames <- c(colnames, paste0("score_right_", methods[i]))
+  }
+  plot_df <- dataset %>% ungroup() %>% 
+    select(colnames) %>%  
     gather(method, score) %>% 
     mutate(GrooveMethod = unlist(purrr::map(method, .f = function(x){
       strsplit(x, "_")[[1]][3]
@@ -110,9 +121,9 @@ plot_scores_zoom <- function(dataset, zoom_cutoff){
 ```
 
 ```{r plot_scores}
-plot_scores(hamby44_eval)
+plot_scores(hamby44_eval, methods = c("rollapply", "rlo", "logistic", "logistic4"))
 
-plot_scores_zoom(hamby44_eval, 5000)
+plot_scores_zoom(hamby44_eval, zoom_cutoff = 5000, methods = c("rollapply", "rlo", "logistic", "logistic4"))
 ```
 
 
@@ -127,6 +138,9 @@ saveRDS(hamby44_eval, "data/hamby44/hamby44_eval.rda")
 ## Metadata .csv for "problem lands"  
 
 ```{r prediction-metadata}
-hamby44_mdata <- hamby44_eval %>% ungroup() %>% select(1:4, dplyr::contains("score"))
-write.csv(hamby44_mdata, file = "data/hamby44/hamby44_mdata.csv")
+#hamby44_mdata <- hamby44_eval %>% ungroup() %>% select(1:4, dplyr::contains("score"))
+#write.csv(hamby44_mdata, file = "data/hamby44/hamby44_mdata.csv")
+
+hamby44_mdata <- read.csv(file = "data/hamby44/hamby44_mdata.csv")
+
 ```
