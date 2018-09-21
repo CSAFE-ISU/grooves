@@ -18,7 +18,7 @@ I have created a datafile, `hamby44_eval`, to assist us in assessing our predict
 
 The idea here is that we can add new prediction columns as we make them.  
 
-The first important step is in your document that you are using to run code/make predictions, your output should be a list that contains predictions for each land. So the list should have 208 elements (in the Hamby44 set), and each item in the list should have [1] and [2], the predictions for the left and right groove. If you follow the `purrr::map` structure to each land and return a list: `return(list(groove = groove, plot = plot))` (if you don't do the plot part, just do `return(list(groove = groove))`. Just make sure whatever function you are applying to the lands returns a list. 
+The first important step is in your document that you are using to run code/make predictions, your output should be a list that contains predictions for each land. So the list should have 208 elements (in the Hamby44 set), and each item in the list should have [1] and [2], the predictions for the left and right groove. If you follow the `purrr::map` structure to each land and return a list: `return(list(groove = groove, plot = plot))` (if you don't do the plot part, just do `return(list(groove = groove))`. Just make sure whatever function you are applying to the lands returns a list. Then you want to grab the $groove part of the list when you actually apply the function to a bunch of lands. 
 
 You can then save your predictions as an added column on the `hamby44_eval` file:  
 

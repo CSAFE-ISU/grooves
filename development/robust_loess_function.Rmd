@@ -1,0 +1,131 @@
+---
+title: "Redo Robust LOESS"
+output: html_document
+---
+
+## Background  
+
+The goal is to work around some issues we are experiencing with the robust LOESS function. With the Houston data, the striae are deeper than those on the Hamby44 set and thus the robust LOESS does not downweight the correct residuals in the correct manner.  
+
+The initial function used is `locfit.robust` from the `locfit` package in R.  
+
+```{r locfit.robust-function, message = F, warning = F}
+library(locfit)
+locfit.robust
+```
+
+I am going to try several variations on the function:  
+
+1. Instead of downweighting by the highest *absolute* residual, I will downweight by the highest *raw* residual. 
+
+Thus, the procedure will be as follows:  
+
+1. Fit a LOESS with span 1 to the data.  
+2. Calculate the raw residual values.  
+3. Downweight high positive residuals.   
+
+```{r}
+houston_eval <- readRDS("../data/houston/houston_eval.rda")
+hamby44_eval <- readRDS("../data/hamby44/hamby44_eval.rda")
+bullet_houston <- houston_eval$ccdata_w_resid[[1]]
+bullet_hamby44 <- hamby44_eval$ccdata_w_resid[[1]]
+
+model_bh <- loess(value_std~x, data = bullet_houston, span = 1)
+bullet_houston$lo_pred <- predict(model_bh, newdata = bullet_houston)
+bullet_houston$lo_resid <- bullet_houston$value_std - bullet_houston$lo_pred
+#bullet_houston %>% ggplot() + geom_point(aes(x = x, y = value_std)) + geom_line(aes(x = x, y = rlo_pred), colour = "green") + geom_line(aes(x = x, y = lo_pred), colour = "red") + theme_bw()
+
+
+#mar <- median(abs(bullet_houston$lo_resid))
+#bullet_houston %>% ggplot() + geom_point(aes(x = x, y = lo_resid)) + geom_hline(yintercept = 6*mar) + theme_bw()
+
+## New weights: If residual > 0, downweight by bisquare. If residual <= 0, leave alone. 
+#bullet_houston$bisq <- pmax(1 - (bullet_houston$lo_resid/(6*mar))^2, 0)^2
+#bullet_houston$weight <- ifelse(bullet_houston$lo_resid > 0, bullet_houston$bisq, 1)
+
+robust_loess_fit <- function(bullet, iter){
+  n <- nrow(bullet)
+  weights <- rep(1, n)
+  fit <- loess(value_std~x, data = bullet, span = 1)
+  bullet$fit <- predict(fit, newdata = bullet)
+  bullet$resid <- bullet$value_std - bullet$fit
+  i <- 1
+  while(i < iter){
+    mar <- median(abs(bullet$resid), na.rm = T)
+    bullet$bisq <- pmax(1 - (bullet$resid/(6*mar))^2, 0)^2
+    weights <- ifelse(bullet$resid > 0 , bullet$bisq, 1)
+    fit <- loess(value_std~x, data = bullet, span = 1, weights = weights)
+    bullet$fit <- predict(fit, newdata = bullet)
+    bullet$resid <- bullet$value_std - bullet$fit
+    i <- i+1
+  }
+  return(fit)
+}
+rlo_fit <- robust_loess_fit(bullet_houston, 10)
+bullet_houston$tst_pred <- predict(rlo_fit, newdata = bullet_houston)
+bullet_houston$tst_resid <- bullet_houston$value_std - bullet_houston$tst_pred
+bullet_houston %>% ggplot() + geom_point(aes(x = x, y = value_std)) + theme_bw() + geom_line(aes(x = x, y = lo_pred), colour = "red") + geom_line(aes(x = x, y = tst_pred), colour = "blue")
+```
+
+
+
+```{r}
+## write function to try this on different houston bullets
+hamby44_eval <- hamby44_eval %>% mutate(ccdata_w_resid = purrr::map(ccdata_w_resid, .f = function(bullet){
+  bullet$x <- bullet$y
+  return(bullet)
+}))
+fit_and_plot_rlo <- function(datafile, bullet_num, mid_iter = 3, max_iter = 40){
+  bullet <- datafile$ccdata_w_resid[[bullet_num]]
+  #bullet <- houston_eval$ccdata_w_resid[[1]]
+  fit1 <- robust_loess_fit(bullet = bullet, iter = 1)
+  bullet$fit1 <- predict(fit1, newdata = bullet)
+  bullet$resid1 <- bullet$value_std - bullet$fit1
+  
+  #mid_iter = 3
+  fit2 <- robust_loess_fit(bullet = bullet, iter = mid_iter)
+  bullet$fit2 <- predict(fit2, newdata = bullet)
+  bullet$resid2 <- bullet$value_std - bullet$fit2
+  
+  #max_iter = 20
+  fit10 <- robust_loess_fit(bullet = bullet, iter = max_iter)
+  bullet$fit10 <- predict(fit10, newdata = bullet)
+  bullet$resid10 <- bullet$value_std - bullet$fit10
+  
+  
+  p1 <- bullet %>% ggplot() + geom_point(aes(x = x, y = value_std)) + 
+    theme_bw() + 
+    geom_line(aes(x = x, y = fit1, colour = "1", lty = "1"),  lwd = 1.2) + 
+    geom_line(aes(x = x, y = fit2, colour = "3", lty = "3"), lwd = 1.2) + 
+    geom_line(aes(x = x, y = fit10, colour = "40", lty = "40"), lwd = 1.2) + 
+    scale_color_manual(name = "Number of Iterations", values = c(
+    "1" = "red",
+    "3" = 'blue', 
+    "40" = "green")) +
+    scale_linetype_manual(name = "Number of Iterations", values = c(3, 2, 1)) +
+    #geom_line(aes(x = x, y = rlo_pred), lty = 4, colour = "purple", lwd = 1.2) + 
+  labs(title = "new function results")
+  return(p1)
+  
+}
+
+
+plot_old_rlo <- function(datafile, bullet_num){
+  bullet <- datafile$ccdata_w_resid[[bullet_num]]
+  p1 <- bullet %>% ggplot() + geom_point(aes(x = x, y = value_std)) + 
+    theme_bw() +  
+    geom_line(aes(x = x, y = rlo_pred), lty = 4, colour = "purple", lwd = 1.2) + 
+    labs(title = "locfit.robust results")
+  return(p1)
+}
+
+library(gridExtra)
+ex1 <- fit_and_plot_rlo(houston_eval, 11)
+ex2 <- plot_old_rlo(houston_eval, 11)
+ex3 <- fit_and_plot_rlo(houston_eval, 12)
+ex4 <- plot_old_rlo(houston_eval, 12)
+
+grid.arrange(ex2, ex1, ex4, ex3, nrow = 2, top = "Houston Data")
+```
+
+

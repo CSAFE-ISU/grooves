@@ -112,4 +112,9 @@ plot_preds <- function(dataset, bullet_num){
     geom_vline(xintercept = rg, colour = "blue") + 
     theme_bw()
 }
+
 ```
+
+
+
+
