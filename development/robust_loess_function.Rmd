@@ -129,3 +129,21 @@ grid.arrange(ex2, ex1, ex4, ex3, nrow = 2, top = "Houston Data")
 ```
 
 
+
+## Re-run hamby44_eval, houston_eval with new robust loess function
+```{r}
+## function is called robust_loess_fit, takes inputs "bullet" and "iter"
+
+tst <- hamby44_eval %>% mutate(ccdata_w_resid = purrr::map(ccdata_w_resid, .f = function(bullet){
+  bullet$x <- bullet$y
+  rlo_fit <- robust_loess_fit(bullet = bullet, iter = 40)
+  bullet$rlo_pred <- predict(rlo_fit, newdata = bullet)
+  bullet$rlo_absresid <- abs(bullet$value_std - bullet$rlo_pred)
+  bullet$rlo_resid <- (bullet$value_std - bullet$rlo_pred)
+  return(bullet)
+}))
+hamby44_eval <- tst
+
+saveRDS(hamby44_eval, file = "../data/hamby44/hamby44_eval.rda")
+```
+
