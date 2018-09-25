@@ -1,0 +1,211 @@
+---
+title: "logistic_models"
+output: html_document
+---
+
+
+Here we are going to write and test multiple logistic regression models for groove locations.  
+
+# Introductory steps: data cleaning, feature generation.   
+
+```{r packages-and-data, echo = F, message = F, warning = F}
+#install.packages("tidyr")
+#install.packages("dplyr")
+#install.packages("purrr")
+#install.packages("ggplot2")
+library(tidyr)
+library(plyr)
+library(dplyr)
+library(purrr)
+library(ggplot2)
+library(zoo)
+library(glmnet)
+
+#devtools::install_github("CSAFE-ISU/bulletr")
+#library(bulletr)
+
+hamby44 <- readRDS("../data/hamby44/hamby44_eval.rda")
+
+```
+
+
+## Current features of the data  
+
+Each land has been averaged across ten crosscuts, as well as shifted down so the lowest observed `value` is at 0; this column is referred to as `value_std`.  
+
+For each land, the residuals from a robust LOESS model have been saved (this is Kiegan's version of the robust LOESS, not locfit.robust anymore).    
+
+## Additional feature creation  
+
+We can define two additional columns, `depth` and `side`. `depth` represents the depth of each observed data point from the median observed `x` value. `side` represents whether the data point is to the left of the median or to the right of the median.  
+
+```{r define-depth-and-side, echo = F, warning = F, message = F}
+hamby44 <- hamby44 %>% mutate(ccdata_w_resid = purrr::map(ccdata_w_resid, .f = function(bullet){
+  median <- median(bullet$x)
+  bullet$side <- "right"
+  bullet$side <- ifelse(bullet$x <= median, "left", bullet$side)
+  bullet$depth <- abs(bullet$x - median)
+  return(bullet)
+}))
+```
+
+We also need to define a response variable to work with; here, we will take the manually identified `grooves` value from the `hamby44` dataset, and classify anything outside of this range as a response: 1, and anything inside this range a response: 0. This is to indicate that if the response is 1, that data point lies in the groove engraved area.   
+
+```{r define-response, echo = F, warning = F, message = F}
+calculate_response <- function(dataset){
+  for(i in 1:nrow(dataset)){
+  left_groove <- dataset$left_groove[i]
+  right_groove <- dataset$right_groove[i]
+  dataset$ccdata_w_resid[[i]]$left_groove <- left_groove
+  dataset$ccdata_w_resid[[i]]$right_groove <- right_groove
+  }
+  return(dataset)
+}
+
+hamby44 <- calculate_response(hamby44)
+
+hamby44 <- hamby44 %>% mutate(ccdata_w_resid = purrr::map(ccdata_w_resid, .f = function(bullet){
+  bullet$response <- ifelse(bullet$x <= bullet$left_groove | bullet$x >= bullet$right_groove, 1, 0)
+  return(bullet)
+}))
+
+```
+
+
+Additional features that we may find useful:  
+
+1. `range_50`: range of residual values from robust LOESS within a band of 50 points around each `x` value. Calculated using `rollapply`.  
+2. `xint1`: Predicted location the robust LOESS crosses the x-axis (on left side)  
+3. `xint2`: Predicted location the robust LOESS crosses the x-axis (on right side)  
+4. `ind_2mar`: Indicator of whether a residual value is greater than 2*MAR (median absolute residual).  
+5. `numpos_50`: Number of residual values from robust LOESS within a band of 50 points around each `x` value that are positive. Calculated using `rollapply`.  
+6. `numNA_50`: Number of residual values from robust LOESS within a band of 50 points around each `x` value that are NA values. Calculated using `rollapply`.  
+
+
+```{r calculate-additional-features, echo = F, warning = F, message = F}
+hamby44 <- hamby44 %>% mutate(ccdata_w_resid = purrr::map(ccdata_w_resid, .f = function(bullet){
+  ## range20 : range of values in a 20-wide band around each data point. 
+  bullet$range_50 <- rollapply(bullet$rlo_resid, width = 50, FUN = function(x){max(x) - min(x)}, partial = TRUE)
+  
+  ## xint1 and xint2: the predicted locations that the robust LOESS crosses the x-axis.  
+  xint1 <- min(abs(bullet$rlo_pred[(bullet$x < median(bullet$x))]), na.rm = T)
+  xint2 <- min(abs(bullet$rlo_pred[(bullet$x > median(bullet$x))]), na.rm = T)
+  ind1 <- which(bullet$rlo_pred == xint1 | bullet$rlo_pred == -1*xint1)
+  ind2 <- which(bullet$rlo_pred == xint2 | bullet$rlo_pred == -1*xint2)
+  bullet$xint1 <- bullet$x[ind1]
+  bullet$xint2 <- bullet$x[ind2]
+  
+  ## ind_2mar: whether the data point is above the 2*MAR cutoff previously used as an ad-hoc cutoff method. 
+  mar <- median(bullet$rlo_absresid, na.rm = T)
+  bullet$ind_2mar <- ifelse(bullet$rlo_absresid > 2*mar, 1, 0)
+  
+  ## numpos_50: how many positive residuals there are in a 50-wide band around each data point. 
+  bullet$numpos_50 <- rollapply(bullet$rlo_resid, width = 50, FUN = function(x){sum(x > 0)}, partial = TRUE)
+  
+  bullet$numNA_50 <- rollapply(bullet$rlo_resid, width = 50, FUN = function(x){sum(is.na(x))}, partial = TRUE)
+  
+  return(bullet)
+}))
+
+```
+
+
+## Standardizing within land  
+
+Now, we need to make sure to standardize our values so that they transfer to a wide variety of "depth" of engravings on the bullets.  
+There are a couple of things to note about our standardizing practices:  
+
+For variables that are based on `value` or `rlo_resid` (aka, they have to do with vertical height), we want to standardize by some proxy for the depth of striae (variability within land). Thus, we will standardize by dividing by the standard deviation of the residuals in the middle 50\% of the land. This gives a reasonable proxy for how variable the residuals are.  
+
+For variables that are based on the location on the `x` axis, we will standardize by dividing by the range of `x` values in the land. This is for the depth parameter as well as the location of the two places the robust LOESS is predicted to cross the x axis.  
+
+
+```{r standardize-in-land, echo = F, warning = F, message = F}
+hamby44 <- hamby44 %>% mutate(ccdata_w_resid = purrr::map(ccdata_w_resid, .f = function(bullet){
+  #proxy <- mad(bullet$rlo_resid, na.rm = T)
+  lower <- quantile(bullet$x, prob = .25)
+  upper <- quantile(bullet$x, prob = .75)
+  proxy_dat <- bullet %>% filter(x < upper & x > lower)
+  proxy <- sd(proxy_dat$rlo_resid, na.rm = T)
+  bullet$rlo_resid_std <- bullet$rlo_resid/proxy
+  bullet$range_50_std <- bullet$range_50/proxy
+  
+  xrange <- max(bullet$x) - min(bullet$x)
+  bullet$depth_std <- bullet$depth/xrange
+  bullet$xint1_std <- bullet$xint1/xrange
+  bullet$xint2_std <- bullet$xint2/xrange
+  return(bullet)
+}))
+
+```
+
+
+# Model 1: Logistic regression fit with cv.glmnet.  
+
+
+```{r}
+hamby44_model <- rbind.fill(hamby44$ccdata_w_resid)
+hamby44_model <- na.omit(hamby44_model)
+
+
+X <- model.matrix(response~rlo_resid_std + I(rlo_resid_std^2) + side + 
+                    depth_std + side*depth_std + xint1_std + 
+                    xint2_std + range_50 + numNA_50 + ind_2mad + 
+                    numpos_50 - 1, 
+                  hamby44_model)
+
+#library(glmnet)
+fit4 <- cv.glmnet(x = X, y = hamby44_model$response, family = 'binomial', type.measure = 'class', alpha = 1)
+model_all4 <- as.matrix(coef(fit4))
+
+X_tst <- cbind(1, X)
+ymean_tst <- X_tst%*%model_all4
+yhat_tst <- exp(ymean_tst)/(1 + exp(ymean_tst))
+hamby44_model$pred_val <- yhat_tst
+hamby44_model$pred_class <- ifelse(hamby44_model$pred_val < .25, "LEA", "GEA")
+
+hamby44 <- hamby44 %>% mutate(ccdata_logistic4 = purrr::map(ccdata_w_resid, .f = function(bullet){
+  ## here is where we take model parameters and do stuff with them! 
+  bullet <- na.omit(bullet)
+  X <- cbind(1, model.matrix(~rlo_resid_std + I(rlo_resid_std^2) + side + 
+                    depth_std + side*depth_std + xint1_std + 
+                    xint2_std + range_50 + numNA_50 + ind_2mad + 
+                    numpos_50 - 1, 
+                  bullet))
+  ymean <- X%*%model_all4
+  yhat <- exp(ymean)/(1 + exp(ymean))
+  bullet$pred_val <- yhat
+  bullet$pred_class <- ifelse(bullet$pred_val < .25, "LEA", "GEA")
+  return(bullet)
+}))
+
+head(hamby44$ccdata_logistic4[[1]])
+
+hamby44 <- hamby44 %>% mutate(grooves_pred_logistic4 = purrr::map(ccdata_logistic4, .f = function(bullet){
+  #lower <- max(bullet$y[bullet$pred_class == "GEA" & bullet$side == "left"])
+  #lower <- ifelse(is.infinite(lower), min(bullet$y), lower)
+  #upper <- min(bullet$y[bullet$pred_class == "GEA" & bullet$side == "right"])
+  #upper <- ifelse(is.infinite(upper), max(bullet$y), upper)
+  #groove <- c(lower, upper)
+  groove <- range(bullet$y[bullet$pred_class == "LEA"])
+  return(groove)
+}))
+
+plot_log_pred4 <- function(bullet_num){
+  bullet <- hamby44$ccdata_logistic4[[bullet_num]]
+  bullet %>% ggplot() + geom_point(aes(x = y, y = value_std, color = pred_class)) + theme_bw()
+}
+
+grooves_pred_logistic4 <- hamby44$grooves_pred_logistic4
+hamby44_eval <- readRDS("../data/hamby44/hamby44_eval.rda") ## the "../" at the beginning takes you from a file in the "development" folder of the grooves repository
+hamby44_eval$grooves_pred_logistic4 <- grooves_pred_logistic4
+saveRDS(hamby44_eval, "../data/hamby44/hamby44_eval.rda")
+
+#head(hamby44_eval)
+```
+
+
+
+
+
+

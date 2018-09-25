@@ -20,6 +20,7 @@ library(plyr)
 library(dplyr)
 library(purrr)
 library(ggplot2)
+library(zoo)
 
 #devtools::install_github("CSAFE-ISU/bulletr")
 #library(bulletr)
@@ -147,16 +148,14 @@ hamby44 <- hamby44 %>% mutate(ccdata_w_resid = purrr::map(ccdata_w_resid, .f = f
 ```
 
 
-
-
 ```{r calculate-additional-features, echo = F, warning = F, message = F}
 hamby44 <- hamby44 %>% mutate(ccdata_w_resid = purrr::map(ccdata_w_resid, .f = function(bullet){
   ## range20 : range of values in a 20-wide band around each data point. 
   bullet$range_50 <- rollapply(bullet$rlo_resid, width = 50, FUN = function(x){max(x) - min(x)}, partial = TRUE)
   
   ## xint1 and xint2: the predicted locations that the robust LOESS crosses the x-axis.  
-  xint1 <- min(abs(bullet$rlo_pred[(bullet$y < median(bullet$y))]))
-  xint2 <- min(abs(bullet$rlo_pred[(bullet$y > median(bullet$y))]))
+  xint1 <- min(abs(bullet$rlo_pred[(bullet$y < median(bullet$y))]), na.rm = T)
+  xint2 <- min(abs(bullet$rlo_pred[(bullet$y > median(bullet$y))]), na.rm = T)
   ind1 <- which(bullet$rlo_pred == xint1 | bullet$rlo_pred == -1*xint1)
   ind2 <- which(bullet$rlo_pred == xint2 | bullet$rlo_pred == -1*xint2)
   bullet$xint1 <- bullet$y[ind1]
