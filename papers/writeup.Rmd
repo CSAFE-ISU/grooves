@@ -2,10 +2,8 @@
 title: "Automatic Groove Identification in 3D Bullet Land Scans"  
 affiliation: Department of Statistics, Iowa State University and CSAFE (Center for Statistics and Applications in Forensic Evidence)  
 authors:  
-- Nate Garton, M.Sc. 
-- Kiegan Rice, M.Sc.  
-- Ulrike Genschel, Ph.D.    
-- Heike Hofmann, Ph.D.  
+- Nate Garton  
+- Kiegan Rice  
 output:  
   pdf_document:  
     citation_package: natbib  
