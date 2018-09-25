@@ -1,0 +1,690 @@
+---
+title: "Logistic Regression"
+output: pdf_document
+---
+
+## Introduction  
+
+We are interested in trying a logistic regression approach to predicting which data points are part of the land engraved area (LEA), and which are part of the groove engraved area (GEA) in our 3D bullet land scans.  
+
+This is primarily a two-class classification problem. We will begin with logistic regression, and move to more sophisticated data processing or modeling as needed.  
+
+
+```{r packages-and-data, echo = F, message = F, warning = F}
+#install.packages("tidyr")
+#install.packages("dplyr")
+#install.packages("purrr")
+#install.packages("ggplot2")
+library(tidyr)
+library(plyr)
+library(dplyr)
+library(purrr)
+library(ggplot2)
+
+#devtools::install_github("CSAFE-ISU/bulletr")
+#library(bulletr)
+
+hamby44 <- readRDS("../data/hamby44/hamby44_eval.rda")
+```
+
+
+```{r define-is-groove, echo = F, warning = F, message = F}
+
+hamby44$is_left_groove <- c(1, 1, 1, 1, 1, #5
+                            1, 1, 1, 1, 0, #10
+                            1, 1, 1, 1, 1, #15
+                            1, 1, 1, 1, 1, #20
+                            1, 1, 1, 1, 1, #25
+                            1, 1, 1, 1, 1, #30
+                            1, 0, 1, 1, 1, #35
+                            1, 1, 1, 1, 1, #40
+                            1, 1, 1, 1, 1, #45
+                            1, 1, 1, 1, 1, #50
+                            1, 1, 1, 1, 1, #55
+                            1, 1, 0, 1, 1, #60
+                            1, 1, 1, 1, 1, #65
+                            1, 1, 1, 1, 1, #70
+                            1, 1, 1, 1, 1, #75
+                            1, 1, 1, 1, 1, #80
+                            1, 1, 1, 1, 1, #85
+                            1, 1, 1, 1, 1, #90
+                            1, 1, 1, 1, 1, #95
+                            1, 1, 1, 0, 1, #100
+                            1, 1, 1, 1, 1, #105
+                            1, 1, 1, 1, 1, #110
+                            1, 1, 1, 1, 1, #115
+                            1, 1, 1, 1, 1, #120
+                            1, 1, 1, 1, 1, #125
+                            1, 1, 1, 1, 1, #130
+                            1, 1, 1, 1, 1, #135
+                            1, 1, 1, 1, 1, #140
+                            1, 1, 1, 1, 1, #145
+                            1, 1, 1, 1, 1, #150
+                            1, 1, 1, 1, 1, #155
+                            1, 1, 1, 1, 1, #160
+                            1, 1, 1, 1, 1, #165
+                            1, 1, 1, 1, 1, #170
+                            1, 1, 1, 1, 1, #175
+                            1, 1, 1, 1, 1, #180
+                            1, 1, 1, 1, 1, #185
+                            1, 1, 1, 1, 1, #190
+                            1, 1, 1, 1, 1, #195
+                            1, 1, 1, 1, 1, #200
+                            1, 1, 1, 1, 1, #205
+                            1, 1, 1)
+
+hamby44$is_right_groove <- c(1, 1, 0, 0, 0, #5 
+                             1, 0, 0, 0, 1, #10
+                             0, 0, 1, 1, 0, #15
+                             0, 1, 1, 1, 0, #20
+                             0, 0, 0, 1, 0, #25
+                             1, 0, 0, 0, 0, #30
+                             1, 1, 1, 0, 1, #35
+                             0, 1, 1, 1, 0, #40
+                             0, 0, 0, 1, 0, #45
+                             1, 0, 1, 0, 0, #50
+                             1, 0, 0, 1, 0, #55
+                             0, 0, 1, 1, 0, #60
+                             0, 1, 0, 0, 1, #65
+                             1, 0, 1, 1, 1, #70
+                             0, 0, 1, 0, 1, #75
+                             0, 1, 0, 1, 0, #80
+                             0, 1, 0, 1, 1, #85
+                             1, 0, 1, 0, 1, #90
+                             0, 0, 0, 1, 1, #95
+                             1, 0, 1, 1, 1, #100
+                             0, 0, 1, 1, 0, #105
+                             0, 0, 1, 0, 0, #110
+                             0, 1, 1, 1, 0, #115
+                             0, 1, 0, 1, 0, #120
+                             1, 1, 1, 0, 0, #125
+                             0, 1, 1, 1, 1, #130
+                             1, 1, 0, 1, 1, #135
+                             1, 1, 0, 0, 0, #140
+                             0, 0, 0, 0, 0, #145
+                             0, 1, 1, 0, 0, #150
+                             1, 1, 0, 1, 0, #155
+                             0, 1, 0, 0, 0, #160
+                             0, 0, 0, 0, 1, #165
+                             1, 0, 1, 0, 0, #170
+                             1, 1, 0, 0, 0, #175
+                             0, 0, 1, 0, 1, #180
+                             0, 1, 0, 1, 0, #185
+                             1, 1, 1, 1, 0, #190
+                             1, 1, 1, 0, 1, #195
+                             1, 1, 1, 0, 1, #200
+                             0, 1, 0, 1, 0, #205
+                             1, 0, 1)
+
+
+```
+
+
+## Current features of the data  
+
+Each land has been averaged across ten crosscuts, as well as shifted down so the lowest observed `value` is at 0; this column is referred to as `value_std`.  
+
+For each land, the residuals from both a robust linear model (2nd order) and a robust LOESS model have been saved.  
+
+## Additional feature creation  
+
+We can define two additional columns, `depth` and `side`. `depth` represents the depth of each observed data point from the median observed `y` value. `side` represents whether the data point is to the left of the median or to the right of the median.  
+
+We also need to define a response variable to work with; here, we will take the manually identified `grooves` value from the `hamby44` dataset, and classify anything outside of this range as a response: 1, and anything inside this range a response: 0. This is to indicate that if the response is 1, that data point lies in the groove engraved area.   
+
+
+```{r define-depth-and-side, echo = F, warning = F, message = F}
+hamby44 <- hamby44 %>% mutate(ccdata_w_resid = purrr::map(ccdata_w_resid, .f = function(bullet){
+  median <- median(bullet$y)
+  bullet$side <- "right"
+  bullet$side <- ifelse(bullet$y <= median, "left", bullet$side)
+  bullet$depth <- abs(bullet$y - median)
+  return(bullet)
+}))
+#hamby44$ccdata_w_resid[[1]][3000,]
+
+
+```
+
+
+
+
+```{r calculate-additional-features, echo = F, warning = F, message = F}
+hamby44 <- hamby44 %>% mutate(ccdata_w_resid = purrr::map(ccdata_w_resid, .f = function(bullet){
+  ## range20 : range of values in a 20-wide band around each data point. 
+  bullet$range_50 <- rollapply(bullet$rlo_resid, width = 50, FUN = function(x){max(x) - min(x)}, partial = TRUE)
+  
+  ## xint1 and xint2: the predicted locations that the robust LOESS crosses the x-axis.  
+  xint1 <- min(abs(bullet$rlo_pred[(bullet$y < median(bullet$y))]))
+  xint2 <- min(abs(bullet$rlo_pred[(bullet$y > median(bullet$y))]))
+  ind1 <- which(bullet$rlo_pred == xint1 | bullet$rlo_pred == -1*xint1)
+  ind2 <- which(bullet$rlo_pred == xint2 | bullet$rlo_pred == -1*xint2)
+  bullet$xint1 <- bullet$y[ind1]
+  bullet$xint2 <- bullet$y[ind2]
+  
+  ## ind_2mad: whether the data point is above the 2*MAR cutoff previously used as an ad-hoc method. 
+  mar <- median(bullet$rlo_absresid, na.rm = T)
+  bullet$ind_2mad <- ifelse(bullet$rlo_absresid > 2*mar, 1, 0)
+  
+  ## numpos_50: how many positive residuals there are in a 50-wide band around each data point. 
+  bullet$numpos_50 <- rollapply(bullet$rlo_resid, width = 50, FUN = function(x){sum(x > 0)}, partial = TRUE)
+  
+  bullet$numNA_50 <- rollapply(bullet$rlo_resid, width = 50, FUN = function(x){sum(is.na(x))}, partial = TRUE)
+  
+  return(bullet)
+}))
+
+```
+
+```{r standardize-in-bullet, echo = F, warning = F, message = F}
+hamby44 <- hamby44 %>% mutate(ccdata_w_resid = purrr::map(ccdata_w_resid, .f = function(bullet){
+  #proxy <- mad(bullet$rlo_resid, na.rm = T)
+  lower <- quantile(bullet$y, prob = .25)
+  upper <- quantile(bullet$y, prob = .75)
+  proxy_dat <- bullet %>% filter(y < upper & y > lower)
+  proxy <- sd(proxy_dat$rlo_resid, na.rm = T)
+  bullet$rlo_resid_std <- bullet$rlo_resid/proxy
+  bullet$range_50_std <- bullet$range_50/proxy
+  
+  yrange <- max(bullet$y) - min(bullet$y)
+  bullet$depth_std <- bullet$depth/yrange
+  bullet$xint1_std <- bullet$xint1/yrange
+  bullet$xint2_std <- bullet$xint2/yrange
+  return(bullet)
+}))
+
+```
+
+```{r define-response, echo = F, warning = F, message = F}
+calculate_response <- function(dataset){
+  for(i in 1:nrow(dataset)){
+  left_groove <- dataset$left_groove[i]
+  right_groove <- dataset$right_groove[i]
+  dataset$ccdata_w_resid[[i]]$left_groove <- left_groove
+  dataset$ccdata_w_resid[[i]]$right_groove <- right_groove
+  }
+  return(dataset)
+}
+
+#tst <- calculate_response(hamby44[1:5,])
+#head(tst)
+
+hamby44 <- calculate_response(hamby44)
+
+hamby44 <- hamby44 %>% mutate(ccdata_w_resid = purrr::map(ccdata_w_resid, .f = function(bullet){
+  bullet$response <- ifelse(bullet$y <= bullet$left_groove | bullet$y >= bullet$right_groove, 1, 0)
+  return(bullet)
+}))
+
+```
+
+
+didn't run this stuff this time
+```{r hamby44_long, echo = F, warning = F, message = F}
+hamby44_long <- hamby44 %>% unnest(ccdata_w_resid) %>% select(-dplyr::contains("score"))
+head(hamby44_long)
+```
+
+```{r logistic-extra-feats, echo = F, warning = F, message = F}
+hamby44_long <- hamby44_long[!is.na(hamby44_long$rlo_resid),]
+#glmA <- glm(formula = response~rlo_resid_std + side + depth_std + range_50_std + xint1_std + xint2_std + numNA_50 + side*depth_std, family = "binomial", data = hamby44_long)
+
+#hamby44_long$log_preds1 <- predict(glmA, newdata = hamby44_long, type = "response")
+#hamby44_long$log_class1 <- ifelse(hamby44_long$log_preds1 <= .5, "LEA", "GEA")
+#head(hamby44_long)
+```
+
+
+
+```{r}
+#res <- hamby44_long %>% group_by(source, barrel, bullet, land, left_groove, right_groove) %>% nest()
+#plot_preds <- function(land_num){
+#  bullet <- res$data[[land_num]]
+#  bullet %>% ggplot() + geom_point(aes(x = y, y = rlo_resid, colour = factor(log_class1))) + theme_bw() + geom_hline(yintercept = 0)
+#}
+
+#res <- res %>% mutate(grooves_pred_log2 = purrr::map(data, .f = function(bullet){
+#  groove <- range(bullet$y[(bullet$log_class1 == "LEA")], na.rm = T)
+#  return(groove)
+#}))
+
+#head(res)
+
+```
+## Modeling  
+
+Now we are going to use glmnet to do a logistic regression.  
+
+```{r logistic-initial, echo = F, message = F, warning = F}
+#library(plyr) ## should have been loaded earlier
+#library(dplyr)
+
+hamby44 <- hamby44 %>% mutate(logistic_fits = purrr::map(ccdata_w_resid, .f = function(bullet){
+  bullet.model <- bullet[!is.na(bullet$rlo_resid),]
+  glm0 <- glm(formula = response~rlo_resid + side + depth + side*depth, family = "binomial", data = bullet.model)
+  bullet.model$pred_val <- predict(glm0, newdata = bullet.model, type = "response")
+  bullet.model$pred_class <- ifelse(bullet.model$pred_val < .5, "LEA", "GEA")
+  return(bullet.model)
+}))
+
+bullet.log <- rbind.fill(hamby44$ccdata_w_resid)
+bullet.log <- bullet.log[!is.na(bullet.log$rlo_resid),]
+glmA <- glm(formula = response~rlo_resid + side + depth + side*depth, family = "binomial", data = bullet.log)
+
+summary(glmA)
+
+
+preds.l <- predict(glmA, newdata = bullet.log, type = 'response')
+
+# ROCR for ROC curve
+library(ROCR)
+# Calculate true positive rate and false positive rate on the prediction object
+perf.l <- performance(prediction(preds.l, bullet.log$response), 'tpr', 'fpr')
+
+plot(perf.l)
+
+auc <- performance(prediction(preds.l, bullet.log$response), 'auc')@y.values[[1]]
+auc
+
+
+glmA_all <- coef(glmA)
+
+hamby44 <- hamby44 %>% mutate(ccdata_log = purrr::map(ccdata_w_resid, .f = function(bullet){
+  ## here is where we take model parameters and do stuff with them! 
+  bullet <- bullet[!is.na(bullet$rlo_resid),]
+  X <- model.matrix(~rlo_resid + side+ depth + side*depth, bullet)
+  ymean <- X%*%glmA_all
+  yhat <- exp(ymean)/(1 + exp(ymean))
+  bullet$pred_val <- yhat
+  bullet$pred_class <- ifelse(bullet$pred_val < .5, "LEA", "GEA")
+  return(bullet)
+}))
+
+#head(hamby44$ccdata_logistic2[[1]])
+
+plot_log_p <- function(bullet_num){
+  bullet <- hamby44$ccdata_log[[bullet_num]]
+  bullet %>% ggplot() + geom_point(aes(x = y, y = value_std, color = pred_class)) + theme_bw() + labs(x = "Relative Location", y = "Relative Height")
+}
+
+plp1 <- plot_log_p(1)
+plp4 <- plot_log_p(4)
+plp6 <- plot_log_p(6)
+plp16 <- plot_log_p(16)
+
+library(gridExtra)
+grid.arrange(plp1, plp4, plp6, plp16, nrow = 2, top = "Predictions (cutoff: 0.5) using single logistic model for all data")
+
+
+#cor(as.matrix(bullet.log[,-10]), use = "complete.obs") # nothing too terrible.. 
+```
+
+Traditional logistic regression (using `glm`) returns P-values equivalently 1 when dealing with a single bullet, which suggests we are overfitting with all the parameters included. Thus, we will use `glmnet` to do a ten-fold cross-validation of penalized logistic regression (LASSO).  
+
+However, it is important to note that the model fit to all data simultaneously has values equivalently 0, but seems to do a fairly good job of predicting locations (see above image).  
+
+First, we are going to fit an individual model to each of the bullet LEA's we have in the Hamby44 set, and average the parameter values from each of them (Dr. Hofmann's initial suggestion).  
+
+
+```{r glmnet-stuff, echo = F, message = F, warning = F}
+library(ROCR) # For ROC curves
+library(glmnet) # For regularized GLMs
+```
+
+```{r glmnet-fits, warning = F, message = F}
+hamby44 <- hamby44 %>% mutate(glmnet_fits = purrr::map(ccdata_w_resid, .f = function(bullet){
+  bullet.model <- bullet[!is.na(bullet$rlo_resid),]
+  X <- model.matrix( ~ rlo_resid + side + depth + side*depth - 1, bullet.model)
+
+  # L1 regularized logistic regression
+  fit <- cv.glmnet(x = X, y = bullet.model$response, family = 'binomial', type.measure = 'class', alpha = 1)
+  return(fit)
+}), matrix_fits = purrr::map(glmnet_fits, .f = function(fits){
+  fits <- as.matrix(coef(fits))
+}))
+
+model_avg <- apply(simplify2array(hamby44$matrix_fits), 1, mean)
+model_avg
+
+```
+
+Now, we want to use the averaged logistic regression parameters to fit the model to all of the bullets. 
+
+Some examples of this are below:  
+
+```{r, echo = F, warning = F, message = F}
+hamby44 <- hamby44 %>% mutate(ccdata_logistic = purrr::map(ccdata_w_resid, .f = function(bullet){
+  ## here is where we take model parameters and do stuff with them! 
+  bullet <- bullet[!is.na(bullet$rlo_resid),]
+  X <- cbind(1, model.matrix(~rlo_resid + side+ depth + side*depth - 1, bullet))
+  ymean <- X%*%model_avg
+  yhat <- exp(ymean)/(1 + exp(ymean))
+  bullet$pred_val <- yhat
+  bullet$pred_class <- ifelse(bullet$pred_val < .5, "LEA", "GEA")
+  return(bullet)
+}))
+
+#head(hamby44$ccdata_logistic[[1]])
+
+plot_log_pred <- function(bullet_num){
+  bullet <- hamby44$ccdata_logistic[[bullet_num]]
+  bullet %>% ggplot() + geom_point(aes(x = y, y = value_std, color = pred_class)) + theme_bw()
+}
+
+pl1 <- plot_log_pred(1)
+pl4 <- plot_log_pred(4)
+pl6 <- plot_log_pred(6)
+pl16 <- plot_log_pred(16)
+
+library(gridExtra)
+grid.arrange(pl1, pl4, pl6, pl16, nrow = 2, top = "Predictions (cutoff: 0.5) using average of LASSO model parameters")
+## It looks like this method is working pretty well with a cutoff of .5 for SOME bullets, but not for all bullets. 
+## Could we possibly just put ALL the bullets together, and fit one model for all of them? Would that be any better?
+#plot(fit)
+
+## Alicia's suggestions: Try thinning the middle 50% of the data (grabbing every 3rd point or so), or try something more powerful, like random forest. 
+
+```
+
+
+Note that when we fit individual models, the ROC curves are essentially perfect on each bullet.  
+
+Now let's try this combining all the data into one large data frame and fitting ONE logistic regression model to it... then we can see if the ROC curves are a little more reasonable.  
+
+```{r, echo = F, warning = F, message = F}
+library(plyr)
+bullet.model2 <- rbind.fill(hamby44$ccdata_w_resid)
+bullet.model2 <- bullet.model2[!is.na(bullet.model2$rlo_resid),]
+
+
+X <- model.matrix(~rlo_resid + side + depth + side*depth - 1, bullet.model2)
+fit <- cv.glmnet(x = X, y = bullet.model2$response, family = 'binomial', type.measure = 'class', alpha = 1)
+model_all <- as.matrix(coef(fit))
+
+get_grooves_logistic<- function(bullet, adjust, model_coef){
+  bullet <- bullet[!is.na(bullet$rlo_resid),]
+  X <- cbind(1, model.matrix(~rlo_resid + side+ depth + side*depth - 1, bullet))
+  ymean <- as.vector(X%*%model_coef)
+  yhat <- exp(ymean)/(1 + exp(ymean))
+  bullet$pred_val <- yhat
+  #bullet$pred_class <- ifelse(bullet$pred_val < .5, "LEA", "GEA")
+  groove <- range(filter(bullet, pred_val < .5)$y) #+ c(adjust, -adjust)
+  
+  
+  #groove <- range(filter(bullet, !resid_cutoff)$y) + c(adjust, -adjust)
+  
+  plot <- bullet %>% ggplot(aes(x = y, y = value_std)) + geom_line(size = .5) + theme_bw() +
+    geom_vline(xintercept=groove[1], colour = "blue") +
+    geom_vline(xintercept=groove[2], colour = "blue") 
+  
+  return(list(groove = groove, plot = plot))
+}
+
+
+
+hamby44 <- hamby44 %>% mutate(grooves_pred_logistic = purrr::map(ccdata_w_resid, .f = function(x){
+  get_grooves_logistic(bullet = x, adjust = 0, model_coef = model_all)$groove
+}))
+
+
+grooves_pred_logistic <- hamby44$grooves_pred_logistic
+hamby44_eval <- readRDS("../data/hamby44/hamby44_eval.rda")
+hamby44_eval$grooves_pred_logistic <- grooves_pred_logistic
+saveRDS(hamby44_eval, "../data/hamby44/hamby44_eval.rda")
+
+bullet.model2 <- rbind.fill(hamby44$ccdata_w_resid)
+bullet.model2 <- bullet.model2[!is.na(bullet.model2$rlo_resid),]
+
+X <- model.matrix(~rlo_resid + side + depth + side*depth - 1, bullet.model2)
+fit <- cv.glmnet(x = X, y = bullet.model2$response, family = 'binomial', type.measure = 'class', alpha = 1)
+model_all <- as.matrix(coef(fit))
+
+
+hamby44 <- hamby44 %>% mutate(ccdata_logistic2 = purrr::map(ccdata_w_resid, .f = function(bullet){
+  ## here is where we take model parameters and do stuff with them! 
+  bullet <- bullet[!is.na(bullet$rlo_resid),]
+  X <- cbind(1, model.matrix(~rlo_resid + side+ depth + side*depth - 1, bullet))
+  ymean <- X%*%model_all
+  yhat <- exp(ymean)/(1 + exp(ymean))
+  bullet$pred_val <- yhat
+  bullet$pred_class <- ifelse(bullet$pred_val < .5, "LEA", "GEA")
+  return(bullet)
+}))
+
+
+
+head(hamby44$ccdata_logistic2[[1]])
+
+plot_log_pred2 <- function(bullet_num){
+  bullet <- hamby44$ccdata_logistic2[[bullet_num]]
+  bullet %>% ggplot() + geom_point(aes(x = y, y = value_std, color = pred_class)) + theme_bw()
+}
+
+pl1.2 <- plot_log_pred2(1)
+pl4.2 <- plot_log_pred2(4)
+pl6.2 <- plot_log_pred2(6)
+pl16.2 <- plot_log_pred2(16)
+
+library(gridExtra)
+grid.arrange(pl1.2, pl4.2, pl6.2, pl16.2, nrow = 2, top = "Predictions (cutoff: 0.5) using single LASSO model for all data")
+```
+
+
+
+We can also look at the ROC curve from when we originally fit the data. 
+
+```{r, echo = F, message = F, warning = F}
+
+# Predict from model
+preds <- predict(fit, newx = X, type = 'response')
+
+# ROCR for ROC curve
+# Calculate true positive rate and false positive rate on the prediction object
+perf <- performance(prediction(preds, bullet.model2$response), 'tpr', 'fpr')
+
+plot(perf)
+
+auc <- performance(prediction(preds, bullet.model2$response), 'auc')@y.values[[1]]
+auc
+```
+
+## Next steps:  
+
+Going to hold out a training/testing set next and try that - current ROC/AUC aren't accurate representations of model performance on a hold-out set.  
+
+*Note: The AUC reported above is most likely so high due to the lack of testing set hold-out AS WELL AS the fact that we are dealing with SO MANY data points - a small smattering of misidentifications - even if they are really important mistakes in our eyes - is still a very small percentage of the overall data points.*  
+
+Additionally, might try thinning out middle 50% of data. We are dealing with an unbalanced response variable; there are way more 0 (LEA) values than 1 (GEA) values.  
+
+Additional features to try:  
+    - Quadratic term for robust LOESS residuals  
+    - Standardizing robust LOESS residuals  
+    - rlo_resid greater than cutoff value?  
+
+If these don't initially work, I am suggesting we try random forest (Alicia suggested BART? seems like it could be overkill) or another two-class classification procedure to attack this. I do think the initial results are promising though!!  
+
+
+## Adding a quadratic term  
+
+
+```{r quadratic-term, echo = F, warning = F, message = F}
+
+X <- model.matrix(~rlo_resid + I(rlo_resid^2) + side + depth + side*depth - 1, bullet.model2)
+fit3 <- cv.glmnet(x = X, y = bullet.model2$response, family = 'binomial', type.measure = 'class', alpha = 1)
+model_all2 <- as.matrix(coef(fit3))
+
+hamby44 <- hamby44 %>% mutate(ccdata_logistic3 = purrr::map(ccdata_w_resid, .f = function(bullet){
+  ## here is where we take model parameters and do stuff with them! 
+  bullet <- bullet[!is.na(bullet$rlo_resid),]
+  X <- cbind(1, model.matrix(~rlo_resid + I(rlo_resid^2) + side+ depth + side*depth - 1, bullet))
+  ymean <- X%*%model_all2
+  yhat <- exp(ymean)/(1 + exp(ymean))
+  bullet$pred_val <- yhat
+  bullet$pred_class <- ifelse(bullet$pred_val < .5, "LEA", "GEA")
+  return(bullet)
+}))
+
+head(hamby44$ccdata_logistic3[[1]])
+
+plot_log_pred3 <- function(bullet_num){
+  bullet <- hamby44$ccdata_logistic3[[bullet_num]]
+  bullet %>% ggplot() + geom_point(aes(x = y, y = value_std, color = pred_class)) + theme_bw()
+}
+
+pl1.3 <- plot_log_pred3(1)
+pl4.3 <- plot_log_pred3(4)
+pl6.3 <- plot_log_pred3(6)
+pl16.3 <- plot_log_pred3(16)
+
+library(gridExtra)
+grid.arrange(pl1.3, pl4.3, pl6.3, pl16.3, nrow = 2, top = "Predictions (cutoff: 0.5) using single LASSO model for all data")
+```
+
+```{r}
+
+preds <- predict(fit3, newx = X, type = 'response')
+
+# ROCR for ROC curve
+# Calculate true positive rate and false positive rate on the prediction object
+perf <- performance(prediction(preds, bullet.model2$response), 'tpr', 'fpr')
+
+plot(perf)
+
+auc <- performance(prediction(preds, bullet.model2$response), 'auc')@y.values[[1]]
+auc
+```
+
+## Plotting time t residuals vs. time t-1 residuals from robust LOESS  
+
+```{r t-v-tmin1, echo = F, warning = F, message = F}
+hamby44 <- hamby44 %>% mutate(ccdata_w_resid = purrr::map(ccdata_w_resid, .f = function(bullet){
+  bullet$rlo_resid_lag1 <- c(0, bullet$rlo_resid[(1:(length(bullet$rlo_resid)-1))])
+  return(bullet)
+}))
+
+resid_compare_plot <- function(bullet_num){
+  bullet <- hamby44$ccdata_w_resid[[bullet_num]]
+  bullet %>% ggplot() + geom_point(aes(x = rlo_resid, y = rlo_resid_lag1, colour = factor(response))) + theme_bw()
+}
+
+
+rcp1 <- resid_compare_plot(1)
+rcp4 <- resid_compare_plot(4)
+rcp6 <- resid_compare_plot(6)
+rcp16 <- resid_compare_plot(16)
+
+grid.arrange(rcp1, rcp4, rcp6, rcp16, nrow = 2, top = "Residuals vs. Lag 1 Residuals")
+```
+
+
+
+
+## JSM Graphic - LOESS v RLOESS w RESIDS
+
+```{r JSM-graphic, echo = F, warning = F, message = F}
+
+plot_lovrlo <- function(datafile, land_num){
+  bullet <- datafile$ccdata_w_resid[[land_num]]
+  bullet$lo_pred <- predict(loess(value_std~y, data = bullet, span = 1), newdata = bullet)
+  bullet$lo_resid <- bullet$value_std - bullet$lo_pred
+  p1 <- bullet %>% ggplot() + geom_point(aes(x = y, y = value_std)) + geom_line(aes(x = y, y = lo_pred), colour = "red", lwd = 1.3) + theme_bw() + labs(x = "Relative Location", y = "Relative Height", title = "Predicted values from LOESS")
+  p2 <- bullet %>% ggplot() + geom_point(aes(x = y, y = lo_resid)) + geom_hline(yintercept = 0, color = "red", lwd = 1.3) + theme_bw() + labs(x = "Relative Location", y = "Residual Height", title = "Residual values from LOESS")
+  
+  p3 <- bullet %>% ggplot() + geom_point(aes(x = y, y = value_std)) + geom_line(aes(x = y, y = rlo_pred), colour = "red", lwd = 1.3) + theme_bw() + labs(x = "Relative Location", y = "Relative Height", title = "Predicted values from Robust LOESS")
+  
+  p4 <- bullet %>% ggplot() + geom_point(aes(x = y, y = rlo_resid)) + geom_hline(yintercept = 0, color = "red", lwd = 1.3) + theme_bw() + labs(x = "Relative Location", y = "Residual Height", title = "Residual values from Robust LOESS")
+  grid.arrange(p1, p2, p3, p4, nrow = 2)
+}
+
+
+plot_lovrlo(hamby44, 6) ## this is a really good example
+```
+
+
+```{r, echo = F, warning = F, message = F}
+plot_fitresid <- function(datafile, land_num){
+  bullet <- datafile$ccdata_w_resid[[land_num]]
+  bullet$lo_pred <- predict(loess(value_std~y, data = bullet, span = 1), newdata = bullet)
+  bullet$lo_resid <- bullet$value_std - bullet$lo_pred
+  p1 <- bullet %>% ggplot() + geom_point(aes(x = y, y = value_std)) + geom_line(aes(x = y, y = lo_pred), colour = "red", lwd = 1.3) + theme_bw() + labs(x = "Relative Location", y = "Relative Height", title = "Predicted values")
+  p2 <- bullet %>% ggplot() + geom_line(aes(x = y, y = lo_resid)) + geom_hline(yintercept = 0, color = "red", lwd = 1.3) + theme_bw() + labs(x = "Relative Location", y = "Residual Height", title = "Residual values")
+  
+  bullet2 <- bullet %>% filter(y >= left_groove, y <= right_groove)
+  bullet2$lo_pred2 <- predict(loess(value_std~y, data = bullet2, span = 1), newdata = bullet2)
+  bullet2$lo_resid2 <- bullet2$value_std - bullet2$lo_pred2
+  p3 <- bullet2 %>% ggplot() + geom_point(aes(x = y, y = value_std)) + geom_line(aes(x = y, y = lo_pred2), colour = "red", lwd = 1.3) + theme_bw() + labs(x = "Relative Location", y = "Relative Height", title = "Predicted values (Groove Data Removed)")
+  p4 <- bullet2 %>% ggplot() + geom_line(aes(x = y, y = lo_resid2)) + geom_hline(yintercept = 0, color = "red", lwd = 1.3) + theme_bw() + labs(x = "Relative Location", y = "Residual Height", title = "Residual values (Groove Data Removed)")
+  grid.arrange(p3, p4, p1, p2, nrow = 2, top = "LOESS fits with and without groove data")
+}
+
+plot_grooveresids <- function(datafile, land_num){
+  bullet <- datafile$ccdata_w_resid[[land_num]]
+  bullet %>% ggplot() + geom_point(aes(x = y, y = rlo_resid)) + geom_hline(yintercept = 0) + geom_vline(aes(xintercept = left_groove[1]), colour = "blue") + geom_vline(aes(xintercept = right_groove[1]), colour = "blue") + theme_bw() + labs(x = "Relative Location", y = "Residual Value", title = "Manually Identified Groove Locations")
+}
+
+```
+
+
+
+## Model with additional features (created much further above)  
+
+```{r}
+hamby44_model <- rbind.fill(hamby44$ccdata_w_resid)
+hamby44_model <- na.omit(hamby44_model)
+
+
+X <- model.matrix(response~rlo_resid_std + I(rlo_resid_std^2) + side + 
+                    depth_std + side*depth_std + xint1_std + 
+                    xint2_std + range_50 + numNA_50 + ind_2mad + 
+                    numpos_50 - 1, 
+                  hamby44_model)
+
+#library(glmnet)
+fit4 <- cv.glmnet(x = X, y = hamby44_model$response, family = 'binomial', type.measure = 'class', alpha = 1)
+model_all4 <- as.matrix(coef(fit4))
+
+X_tst <- cbind(1, X)
+ymean_tst <- X_tst%*%model_all4
+yhat_tst <- exp(ymean_tst)/(1 + exp(ymean_tst))
+hamby44_model$pred_val <- yhat_tst
+hamby44_model$pred_class <- ifelse(hamby44_model$pred_val < .25, "LEA", "GEA")
+
+hamby44 <- hamby44 %>% mutate(ccdata_logistic4 = purrr::map(ccdata_w_resid, .f = function(bullet){
+  ## here is where we take model parameters and do stuff with them! 
+  bullet <- na.omit(bullet)
+  X <- cbind(1, model.matrix(~rlo_resid_std + I(rlo_resid_std^2) + side + 
+                    depth_std + side*depth_std + xint1_std + 
+                    xint2_std + range_50 + numNA_50 + ind_2mad + 
+                    numpos_50 - 1, 
+                  bullet))
+  ymean <- X%*%model_all4
+  yhat <- exp(ymean)/(1 + exp(ymean))
+  bullet$pred_val <- yhat
+  bullet$pred_class <- ifelse(bullet$pred_val < .25, "LEA", "GEA")
+  return(bullet)
+}))
+
+head(hamby44$ccdata_logistic4[[1]])
+
+hamby44 <- hamby44 %>% mutate(grooves_pred_logistic4 = purrr::map(ccdata_logistic4, .f = function(bullet){
+  #lower <- max(bullet$y[bullet$pred_class == "GEA" & bullet$side == "left"])
+  #lower <- ifelse(is.infinite(lower), min(bullet$y), lower)
+  #upper <- min(bullet$y[bullet$pred_class == "GEA" & bullet$side == "right"])
+  #upper <- ifelse(is.infinite(upper), max(bullet$y), upper)
+  #groove <- c(lower, upper)
+  groove <- range(bullet$y[bullet$pred_class == "LEA"])
+  return(groove)
+}))
+
+plot_log_pred4 <- function(bullet_num){
+  bullet <- hamby44$ccdata_logistic4[[bullet_num]]
+  bullet %>% ggplot() + geom_point(aes(x = y, y = value_std, color = pred_class)) + theme_bw()
+}
+
+grooves_pred_logistic4 <- hamby44$grooves_pred_logistic4
+hamby44_eval <- readRDS("../data/hamby44/hamby44_eval.rda") ## the "../" at the beginning takes you from a file in the "development" folder of the grooves repository
+hamby44_eval$grooves_pred_logistic4 <- grooves_pred_logistic4
+saveRDS(hamby44_eval, "../data/hamby44/hamby44_eval.rda")
+
+#head(hamby44_eval)
+```
