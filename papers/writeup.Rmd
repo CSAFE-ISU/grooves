@@ -1,41 +1,38 @@
 ---
 title: "Automatic Groove Identification in 3D Bullet Land Scans"  
-affiliation: Department of Statistics, Iowa State University and CSAFE (Center for Statistics and Applications in Forensic Evidence)
-authors:
-- degree: Master of Science (M.Sc.)
-  name: Nate Garton,
-- degree: Master of Science (M.Sc.)
-  name: Kiegan Rice, 
-- degree: Doctor of Philosophy (Ph.D.)
-  name: Prof. Ulrike Genschel,
-- degree: Doctor of Philosophy (Ph.D.)
-  name: Prof. Heike Hofmann,
-output: 
-  pdf_document: 
-    citation_package: natbib
-    keep_tex: yes
-    latex_engine: pdflatex
-    template: template.tex
-    number_sections: true
-    fig_caption: yes
-funding: The authors gratefully acknowledge funding from CSAFE through cooperative
-  agreement \# 70NANB15H176 between NIST and Iowa State University.
-keywords:
-- forensic science
-bibliography: bibliography.bib
-biblio-style: jfs
-
+affiliation: Department of Statistics, Iowa State University and CSAFE (Center for Statistics and Applications in Forensic Evidence)  
+authors:  
+- Nate Garton, M.Sc. 
+- Kiegan Rice, M.Sc.  
+- Ulrike Genschel, Ph.D.    
+- Heike Hofmann, Ph.D.  
+output:  
+  pdf_document:  
+    citation_package: natbib  
+    keep_tex: yes  
+    latex_engine: pdflatex  
+    template: template.tex  
+    number_sections: true  
+    fig_caption: yes  
+  html_document: default  
+funding: The authors gratefully acknowledge funding from CSAFE through cooperative agreement \# 70NANB15H176 between NIST and Iowa State University.  
+keywords:  
+- forensic science  
+bibliography: bibliography.bib  
+biblio-style: jfs  
+abstract: Groove identification is hard for many reasons.  
 ---
 
 
 
 ```{r, echo = F, warning = F, message = F}
 #install.packages("tidyverse")
-library(tidyverse)
+#library(tidyverse)
 ```
+
 \section{Background}  
 
-
+Thanks to [@Hamby], we can do stuff. 
 
 \section{Data Source}  
 
@@ -55,10 +52,5 @@ library(tidyverse)
 
 \section{References}  
 
-```{r,echo = F}
-    #pandoc_args: [
-    #  "-V", "classoption=twocolumn"
-    #]
-```
 
 
