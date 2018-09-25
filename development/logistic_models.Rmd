@@ -142,15 +142,15 @@ hamby44 <- hamby44 %>% mutate(ccdata_w_resid = purrr::map(ccdata_w_resid, .f = f
 
 # Model 1: Logistic regression fit with cv.glmnet.  
 
-
-```{r}
+To do still here: Find a cut-off value that minimizes the false positives (this would be falsely identifying something as a groove).  
+```{r logistic-model-1}
 hamby44_model <- rbind.fill(hamby44$ccdata_w_resid)
 hamby44_model <- na.omit(hamby44_model)
 
 
 X <- model.matrix(response~rlo_resid_std + I(rlo_resid_std^2) + side + 
                     depth_std + side*depth_std + xint1_std + 
-                    xint2_std + range_50 + numNA_50 + ind_2mad + 
+                    xint2_std + range_50 + numNA_50 + ind_2mar + 
                     numpos_50 - 1, 
                   hamby44_model)
 
@@ -169,7 +169,7 @@ hamby44 <- hamby44 %>% mutate(ccdata_logistic4 = purrr::map(ccdata_w_resid, .f =
   bullet <- na.omit(bullet)
   X <- cbind(1, model.matrix(~rlo_resid_std + I(rlo_resid_std^2) + side + 
                     depth_std + side*depth_std + xint1_std + 
-                    xint2_std + range_50 + numNA_50 + ind_2mad + 
+                    xint2_std + range_50 + numNA_50 + ind_2mar + 
                     numpos_50 - 1, 
                   bullet))
   ymean <- X%*%model_all4
@@ -207,5 +207,71 @@ saveRDS(hamby44_eval, "../data/hamby44/hamby44_eval.rda")
 
 
 
+# Model 2: All interactions  
 
+
+```{r}
+hamby44_model <- rbind.fill(hamby44$ccdata_w_resid)
+hamby44_model <- na.omit(hamby44_model)
+
+
+X <- model.matrix(response~(rlo_resid_std + I(rlo_resid_std^2) + side + 
+                    depth_std + xint1_std + 
+                    xint2_std + range_50 + numNA_50 + ind_2mar + 
+                    numpos_50)^2 - 1, 
+                  hamby44_model)
+
+#library(glmnet)
+fit5 <- cv.glmnet(x = X, y = hamby44_model$response, family = 'binomial', type.measure = 'class', alpha = 1)
+model_all5 <- as.matrix(coef(fit5))
+
+X_tst <- cbind(1, X)
+ymean_tst <- X_tst%*%model_all5
+yhat_tst <- exp(ymean_tst)/(1 + exp(ymean_tst))
+hamby44_model$pred_val <- yhat_tst
+hamby44_model$pred_class <- ifelse(hamby44_model$pred_val < .25, "LEA", "GEA")  ## need to cross-validate this!!!!!!!!!
+
+hamby44 <- hamby44 %>% mutate(ccdata_logistic5 = purrr::map(ccdata_w_resid, .f = function(bullet){
+  ## here is where we take model parameters and do stuff with them! 
+  bullet <- na.omit(bullet)
+  X <- cbind(1, model.matrix(~(rlo_resid_std + I(rlo_resid_std^2) + side + 
+                    depth_std + xint1_std + 
+                    xint2_std + range_50 + numNA_50 + ind_2mar + 
+                    numpos_50)^2 - 1, 
+                  bullet))
+  ymean <- X%*%model_all5
+  yhat <- exp(ymean)/(1 + exp(ymean))
+  bullet$pred_val <- yhat
+  bullet$pred_class <- ifelse(bullet$pred_val < .25, "LEA", "GEA")
+  return(bullet)
+}))
+
+head(hamby44$ccdata_logistic5[[1]])
+
+hamby44 <- hamby44 %>% mutate(grooves_pred_logistic5 = purrr::map(ccdata_logistic5, .f = function(bullet){
+  #lower <- max(bullet$x[bullet$pred_class == "GEA" & bullet$side == "left"], na.rm = T)
+  #lower <- ifelse(is.infinite(lower), min(bullet$y), lower)
+  #upper <- min(bullet$x[bullet$pred_class == "GEA" & bullet$side == "right"], na.rm = T)
+  #upper <- ifelse(is.infinite(upper), max(bullet$y), upper)
+  #groove <- c(lower, upper)
+  groove <- range(bullet$x[bullet$pred_class == "LEA"])
+  return(groove)
+}))
+
+plot_log_pred5 <- function(bullet_num){
+  bullet <- hamby44$ccdata_logistic5[[bullet_num]]
+  bullet %>% ggplot() + geom_point(aes(x = x, y = value_std, color = pred_class)) + theme_bw()
+}
+
+grooves_pred_logistic5 <- hamby44$grooves_pred_logistic5
+hamby44_eval <- readRDS("../data/hamby44/hamby44_eval.rda") ## the "../" at the beginning takes you from a file in the "development" folder of the grooves repository
+hamby44_eval$grooves_pred_logistic5 <- grooves_pred_logistic5
+#saveRDS(hamby44_eval, "../data/hamby44/hamby44_eval.rda")
+
+```
+
+
+
+
+Idea: add indicator for on either side of the "predicted x intercepts" from robust LOESS - this could be an interesting feature!! 
 
