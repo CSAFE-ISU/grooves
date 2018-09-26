@@ -380,8 +380,8 @@ get_grooves_logistic <- function(x, value, smoothfactor = 15, adjust = 10,
 get_and_plot_grooves <- function(dataset, bullet_num){
   bullet <- dataset$ccdata_w_resid[[bullet_num]]
   grooves <- get_grooves_logistic(x = bullet$x, value = bullet$value)$groove
-  p1 <- bullet %>% ggplot() + geom_point(aes(x = x, y = value_std)) + geom_vline(xintercept = grooves[1], colour = "blue") + geom_vline(xintercept = grooves[2], colour = "blue") + theme_bw() + geom_line(aes(x = x, y = rlo_pred), colour = "green")
-  p2 <- bullet %>% ggplot() + geom_point(aes(x = x, y = rlo_resid)) + geom_vline(xintercept = grooves[1], colour = "blue") + geom_vline(xintercept = grooves[2], colour = "blue") + theme_bw() + geom_hline(yintercept = 0, colour = "green")
+  p1 <- bullet %>% ggplot() + geom_point(aes(x = x, y = value_std)) + geom_vline(xintercept = grooves[1], colour = "blue") + geom_vline(xintercept = grooves[2], colour = "blue") + theme_bw() + geom_line(aes(x = x, y = rlo_pred), colour = "green") + geom_vline(xintercept = median(bullet$x, na.rm = T), colour = "green")
+  p2 <- bullet %>% ggplot() + geom_point(aes(x = x, y = rlo_resid)) + geom_vline(xintercept = grooves[1], colour = "blue") + geom_vline(xintercept = grooves[2], colour = "blue") + theme_bw() + geom_hline(yintercept = 0, colour = "green") + geom_vline(xintercept = median(bullet$x, na.rm = T), colour = "green")
   grid.arrange(p1, p2, ncol = 2)
 }
 ```
