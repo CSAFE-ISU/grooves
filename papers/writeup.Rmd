@@ -1,0 +1,54 @@
+---
+title: "Automatic Groove Identification in 3D Bullet Land Scans"  
+affiliation: Department of Statistics, Iowa State University and CSAFE (Center for Statistics and Applications in Forensic Evidence)  
+authors:  
+- Nate Garton  
+- Kiegan Rice  
+output:  
+  pdf_document:  
+    citation_package: natbib  
+    keep_tex: yes  
+    latex_engine: pdflatex  
+    template: template.tex  
+    number_sections: true  
+    fig_caption: yes  
+  html_document: default  
+funding: The authors gratefully acknowledge funding from CSAFE through cooperative agreement \# 70NANB15H176 between NIST and Iowa State University.  
+keywords:  
+- forensic science  
+bibliography: bibliography.bib  
+biblio-style: jfs  
+abstract: Groove identification is hard for many reasons.  
+---
+
+
+
+```{r, echo = F, warning = F, message = F}
+#install.packages("tidyverse")
+#library(tidyverse)
+```
+
+\section{Background}  
+
+Thanks to [@Hamby], we can do stuff. 
+
+\section{Data Source}  
+
+
+
+\section{Methodology}  
+
+\subsection{Global Structure Removal}  
+
+\subsection{Two-Class Classification}  
+
+\subsection{Bayesian Changepoint Analysis}  
+
+\section{Results}  
+
+\section{Conclusions}  
+
+\section{References}  
+
+
+
