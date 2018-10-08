@@ -43,7 +43,7 @@
 
 %\pdfminorversion=4
 % NOTE: To produce blinded version, replace "0" with "1" below.
-\newcommand{\blind}{0}
+\newcommand{\blind}{$blinded$}
 
 % DON'T change margins - should be 1 inch all around.
 \addtolength{\oddsidemargin}{-.5in}%
@@ -76,14 +76,14 @@
 
 \if0\blind
 {
-  \title{\bf Adaption of the Chumbley Score to matching of bullet striation marks}
+  \title{\bf $title$}
 
   \author{
-        Ganesh Krishnan \thanks{The authors gratefully acknowledge \ldots{}} \\
-    Department of Statistics, Iowa State University\\
-     and \\     Heike Hofmann \\
-    Department of Statistics and CSAFE, Iowa State University\\
-      }
+    $for(authors)$
+    $authors.name$ $if(authors.thanks)$\thanks{$authors.thanks$} $endif$\\
+    $authors.affiliation$\\
+    $sep$ and \\ $endfor$
+  }
   \maketitle
 } \fi
 
@@ -93,44 +93,26 @@
   \bigskip
   \bigskip
   \begin{center}
-    {\LARGE\bf Adaption of the Chumbley Score to matching of bullet striation marks}
+    {\LARGE\bf $title$}
   \end{center}
   \medskip
 } \fi
 
 \bigskip
 \begin{abstract}
-
+$abstract$
 \end{abstract}
 
 \noindent%
-{\it Keywords:} 3 to 6 keywords, that do not appear in the title
+{\it Keywords:} $for(keywords)$$keywords$$sep$, $endfor$
 \vfill
 
 \newpage
 \spacingset{1.45} % DON'T change the spacing!
 
-\section{Background}
-
-Thanks to \cite{Hamby}, we can do stuff. \citet{Hamby}
-
-\section{Data Source}
-
-\section{Methodology}
-
-\subsection{Global Structure Removal}
-
-\subsection{Two-Class Classification}
-
-\subsection{Bayesian Changepoint Analysis}
-
-\section{Results}
-
-\section{Conclusions}
-
-\section{References}
+$body$
 
 \bibliographystyle{jfs-authoryear}
-\bibliography{bibliography}
+\bibliography{$for(bibliography)$$bibliography$$sep$,$endfor$}
 
 \end{document}

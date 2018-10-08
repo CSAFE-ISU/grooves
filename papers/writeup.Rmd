@@ -1,24 +1,26 @@
 ---
-title: "Automatic Groove Identification in 3D Bullet Land Scans"  
-affiliation: Department of Statistics, Iowa State University and CSAFE (Center for Statistics and Applications in Forensic Evidence)  
-authors:  
-- Nate Garton  
-- Kiegan Rice  
-output:  
-  pdf_document:  
-    citation_package: natbib  
-    keep_tex: yes  
-    latex_engine: pdflatex  
-    template: template.tex  
-    number_sections: true  
-    fig_caption: yes  
-  html_document: default  
-funding: The authors gratefully acknowledge funding from CSAFE through cooperative agreement \# 70NANB15H176 between NIST and Iowa State University.  
-keywords:  
-- forensic science  
-bibliography: bibliography.bib  
-biblio-style: jfs  
-abstract: Groove identification is hard for many reasons.  
+title: "Adaption of the Chumbley Score to matching of bullet striation marks"
+authors:
+- affiliation: Department of Statistics, Iowa State University 
+  name: Ganesh Krishnan
+  thanks: The authors gratefully acknowledge ...
+- affiliation: Department of Statistics and CSAFE, Iowa State University 
+  name: Heike Hofmann
+biblio-style: jfs-authoryear
+output:
+  pdf_document:
+    citation_package: natbib
+    fig_caption: yes
+    keep_tex: yes
+    latex_engine: pdflatex
+    template: template1.tex
+  html_document: default
+blinded: 0
+keywords:
+- 3 to 6 keywords
+- that do not appear in the title
+bibliography: bibliography
+abstract: null
 ---
 
 
@@ -30,7 +32,7 @@ abstract: Groove identification is hard for many reasons.
 
 \section{Background}  
 
-Thanks to [@Hamby], we can do stuff. 
+Thanks to \cite{Hamby}, we can do stuff. \citet{Hamby}
 
 \section{Data Source}  
 
