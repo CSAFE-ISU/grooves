@@ -384,4 +384,7 @@ get_and_plot_grooves <- function(dataset, bullet_num){
   p2 <- bullet %>% ggplot() + geom_point(aes(x = x, y = rlo_resid)) + geom_vline(xintercept = grooves[1], colour = "blue") + geom_vline(xintercept = grooves[2], colour = "blue") + theme_bw() + geom_hline(yintercept = 0, colour = "green") + geom_vline(xintercept = median(bullet$x, na.rm = T), colour = "green")
   grid.arrange(p1, p2, ncol = 2)
 }
+
+hamby44[159,] # Barrel 9 Bullet 2 Land 3
+hamby44[188,] # Unknowns Bullet L Land 5
 ```
