@@ -1,11 +1,16 @@
 ---
-title: "Adaption of the Chumbley Score to matching of bullet striation marks"
+title: "Automated Groove Identification in 3D Bullet Land Scans (we'll change the title)"
 authors:
 - affiliation: Department of Statistics, Iowa State University 
-  name: Ganesh Krishnan
+  name: Kiegan Rice
   thanks: The authors gratefully acknowledge ...
+- affiliation: Department of Statistics, Iowa State University
+  name: Nate Garton  
+- affiliation: Department of Statistics and CSAFE, Iowa State University 
+  name: Ulrike Genschel
 - affiliation: Department of Statistics and CSAFE, Iowa State University 
   name: Heike Hofmann
+
 biblio-style: jfs-authoryear
 output:
   pdf_document:
