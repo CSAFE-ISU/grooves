@@ -37,11 +37,14 @@ For each land, the residuals from a robust LOESS model have been saved (this is 
 
 ## Additional feature creation  
 
-We can define two additional columns, `depth` and `side`. `depth` represents the depth of each observed data point from the median observed `x` value. `side` represents whether the data point is to the left of the median or to the right of the median.  
+We can define two additional columns, `depth` and `side`. `depth` represents the depth of each observed data point from the median observed `x` value. Note that the "median" value here is calculated as the closest point to half of the max value, so we can assume each scan starts at "0". There were some issues with Houston Persistence using traditional median values.  `side` represents whether the data point is to the left of the median or to the right of the median.  
 
 ```{r define-depth-and-side, echo = F, warning = F, message = F}
 hamby44 <- hamby44 %>% mutate(ccdata_w_resid = purrr::map(ccdata_w_resid, .f = function(bullet){
-  median <- median(bullet$x)
+  mx <- max(bullet$x, na.rm = T)
+  diff_mx <- mx/2 - bullet$x
+  median <- bullet$x[which.min(abs(tst_mx))]
+  #median <- median(bullet$x)
   bullet$side <- "right"
   bullet$side <- ifelse(bullet$x <= median, "left", bullet$side)
   bullet$depth <- abs(bullet$x - median)
@@ -96,8 +99,8 @@ hamby44 <- hamby44 %>% mutate(ccdata_w_resid = purrr::map(ccdata_w_resid, .f = f
   bullet$xint2 <- bullet$x[ind2]
   
   ## ind_2mar: whether the data point is above the 2*MAR cutoff previously used as an ad-hoc cutoff method. 
-  mar <- median(bullet$rlo_absresid, na.rm = T)
-  bullet$ind_2mar <- ifelse(bullet$rlo_absresid > 2*mar, 1, 0)
+  mad <- mad(bullet$rlo_absresid, na.rm = T)
+  bullet$ind_2mad <- ifelse(bullet$rlo_absresid > 2*mad, 1, 0)
   
   ## numpos_50: how many positive residuals there are in a 50-wide band around each data point. 
   bullet$numpos_50 <- rollapply(bullet$rlo_resid, width = 50, FUN = function(x){sum(x > 0)}, partial = TRUE)
@@ -130,7 +133,7 @@ hamby44 <- hamby44 %>% mutate(ccdata_w_resid = purrr::map(ccdata_w_resid, .f = f
   bullet$rlo_resid_std <- bullet$rlo_resid/proxy
   bullet$range_50_std <- bullet$range_50/proxy
   
-  xrange <- max(bullet$x) - min(bullet$x)
+  xrange <- max(bullet$x) #- min(bullet$x)
   bullet$depth_std <- bullet$depth/xrange
   bullet$xint1_std <- bullet$xint1/xrange
   bullet$xint2_std <- bullet$xint2/xrange
@@ -150,38 +153,38 @@ hamby44_model <- na.omit(hamby44_model)
 
 X <- model.matrix(response~rlo_resid_std + I(rlo_resid_std^2) + side + 
                     depth_std + side*depth_std + xint1_std + 
-                    xint2_std + range_50 + numNA_50 + ind_2mar + 
+                    xint2_std + range_50 + numNA_50 + ind_2mad + 
                     numpos_50 - 1, 
                   hamby44_model)
 
 #library(glmnet)
-fit4 <- cv.glmnet(x = X, y = hamby44_model$response, family = 'binomial', type.measure = 'class', alpha = 1)
-model_all4 <- as.matrix(coef(fit4))
+fit <- cv.glmnet(x = X, y = hamby44_model$response, family = 'binomial', type.measure = 'class', alpha = 1)
+model_all <- as.matrix(coef(fit))
 
 X_tst <- cbind(1, X)
-ymean_tst <- X_tst%*%model_all4
-yhat_tst <- exp(ymean_tst)/(1 + exp(ymean_tst))
+ymean_tst <- X_tst%*%model_all
+yhat_tst <- as.vector(exp(ymean_tst)/(1 + exp(ymean_tst)))
 hamby44_model$pred_val <- yhat_tst
 hamby44_model$pred_class <- ifelse(hamby44_model$pred_val < .25, "LEA", "GEA")
 
-hamby44 <- hamby44 %>% mutate(ccdata_logistic4 = purrr::map(ccdata_w_resid, .f = function(bullet){
+hamby44 <- hamby44 %>% mutate(ccdata_logistic = purrr::map(ccdata_w_resid, .f = function(bullet){
   ## here is where we take model parameters and do stuff with them! 
   bullet <- na.omit(bullet)
   X <- cbind(1, model.matrix(~rlo_resid_std + I(rlo_resid_std^2) + side + 
                     depth_std + side*depth_std + xint1_std + 
-                    xint2_std + range_50 + numNA_50 + ind_2mar + 
+                    xint2_std + range_50 + numNA_50 + ind_2mad + 
                     numpos_50 - 1, 
                   bullet))
-  ymean <- X%*%model_all4
-  yhat <- exp(ymean)/(1 + exp(ymean))
+  ymean <- X%*%model_all
+  yhat <- as.vector(exp(ymean)/(1 + exp(ymean)))
   bullet$pred_val <- yhat
   bullet$pred_class <- ifelse(bullet$pred_val < .25, "LEA", "GEA")
   return(bullet)
 }))
 
-head(hamby44$ccdata_logistic4[[1]])
+head(hamby44$ccdata_logistic[[1]])
 
-hamby44 <- hamby44 %>% mutate(grooves_pred_logistic4 = purrr::map(ccdata_logistic4, .f = function(bullet){
+hamby44 <- hamby44 %>% mutate(grooves_pred_logistic = purrr::map(ccdata_logistic, .f = function(bullet){
   #lower <- max(bullet$y[bullet$pred_class == "GEA" & bullet$side == "left"])
   #lower <- ifelse(is.infinite(lower), min(bullet$y), lower)
   #upper <- min(bullet$y[bullet$pred_class == "GEA" & bullet$side == "right"])
@@ -191,14 +194,14 @@ hamby44 <- hamby44 %>% mutate(grooves_pred_logistic4 = purrr::map(ccdata_logisti
   return(groove)
 }))
 
-plot_log_pred4 <- function(bullet_num){
-  bullet <- hamby44$ccdata_logistic4[[bullet_num]]
+plot_log_pred <- function(bullet_num){
+  bullet <- hamby44$ccdata_logistic[[bullet_num]]
   bullet %>% ggplot() + geom_point(aes(x = y, y = value_std, color = pred_class)) + theme_bw()
 }
 
-grooves_pred_logistic4 <- hamby44$grooves_pred_logistic4
+grooves_pred_logistic <- hamby44$grooves_pred_logistic
 hamby44_eval <- readRDS("../data/hamby44/hamby44_eval.rda") ## the "../" at the beginning takes you from a file in the "development" folder of the grooves repository
-hamby44_eval$grooves_pred_logistic4 <- grooves_pred_logistic4
+hamby44_eval$grooves_pred_logistic <- grooves_pred_logistic
 saveRDS(hamby44_eval, "../data/hamby44/hamby44_eval.rda")
 
 #head(hamby44_eval)
