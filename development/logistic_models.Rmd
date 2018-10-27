@@ -13,6 +13,8 @@ Here we are going to write and test multiple logistic regression models for groo
 #install.packages("dplyr")
 #install.packages("purrr")
 #install.packages("ggplot2")
+#install.packages("caret")
+#install.packages("e1071")
 library(tidyr)
 library(plyr)
 library(dplyr)
@@ -20,6 +22,8 @@ library(purrr)
 library(ggplot2)
 library(zoo)
 library(glmnet)
+library(caret)
+library(e1071)
 
 #devtools::install_github("CSAFE-ISU/bulletr")
 #library(bulletr)
@@ -80,9 +84,10 @@ Additional features that we may find useful:
 1. `range_50`: range of residual values from robust LOESS within a band of 50 points around each `x` value. Calculated using `rollapply`.  
 2. `xint1`: Predicted location the robust LOESS crosses the x-axis (on left side)  
 3. `xint2`: Predicted location the robust LOESS crosses the x-axis (on right side)  
-4. `ind_2mar`: Indicator of whether a residual value is greater than 2*MAR (median absolute residual).  
+4. `ind_2mad`: Indicator of whether a residual value is greater than 2*MAD (median absolute deviation).  
 5. `numpos_50`: Number of residual values from robust LOESS within a band of 50 points around each `x` value that are positive. Calculated using `rollapply`.  
 6. `numNA_50`: Number of residual values from robust LOESS within a band of 50 points around each `x` value that are NA values. Calculated using `rollapply`.  
+7. `ind_edges`: Indicator of whether a data point is to the left of `xint1` or the right of `xint2`. If not, value = 0. 
 
 
 ```{r calculate-additional-features, echo = F, warning = F, message = F}
@@ -98,9 +103,11 @@ hamby44 <- hamby44 %>% mutate(ccdata_w_resid = purrr::map(ccdata_w_resid, .f = f
   bullet$xint1 <- bullet$x[ind1]
   bullet$xint2 <- bullet$x[ind2]
   
+  bullet$ind_edges <- ifelse(bullet$x < bullet$xint1 | bullet$x > bullet$xint2, 1, 0)
+  
   ## ind_2mar: whether the data point is above the 2*MAR cutoff previously used as an ad-hoc cutoff method. 
-  mad <- mad(bullet$rlo_absresid, na.rm = T)
-  bullet$ind_2mad <- ifelse(bullet$rlo_absresid > 2*mad, 1, 0)
+  mad <- mad(bullet$rlo_resid, na.rm = T)
+  bullet$ind_2mad <- ifelse(bullet$rlo_resid > 2*mad, 1, 0)
   
   ## numpos_50: how many positive residuals there are in a 50-wide band around each data point. 
   bullet$numpos_50 <- rollapply(bullet$rlo_resid, width = 50, FUN = function(x){sum(x > 0)}, partial = TRUE)
@@ -153,8 +160,8 @@ hamby44_model <- na.omit(hamby44_model)
 
 X <- model.matrix(response~rlo_resid_std + I(rlo_resid_std^2) + side + 
                     depth_std + side*depth_std + xint1_std + 
-                    xint2_std + range_50 + numNA_50 + ind_2mad + 
-                    numpos_50 - 1, 
+                    xint2_std + range_50_std + numNA_50 + ind_2mad + 
+                    numpos_50 + ind_edges - 1, 
                   hamby44_model)
 
 #library(glmnet)
@@ -165,24 +172,48 @@ X_tst <- cbind(1, X)
 ymean_tst <- X_tst%*%model_all
 yhat_tst <- as.vector(exp(ymean_tst)/(1 + exp(ymean_tst)))
 hamby44_model$pred_val <- yhat_tst
-hamby44_model$pred_class <- ifelse(hamby44_model$pred_val < .25, "LEA", "GEA")
+hamby44_model$pred_class <- ifelse(hamby44_model$pred_val < .1, "LEA", "GEA")
+hamby44_model$pred_resp <- ifelse(hamby44_model$pred_val < .1, 0, 1)
 
+cm <- confusionMatrix(as.factor(hamby44_model$pred_resp), as.factor(hamby44_model$response), positive = "1")
+
+cutoff_df <- data.frame(cutoff_vals = seq(0, 1, by = .01))
+
+cutoff_df <- cutoff_df %>% mutate(sensitivity = purrr::map_dbl(cutoff_vals, .f = function(val){
+  hamby44_model$pred_resp <- ifelse(hamby44_model$pred_val <= val, 0, 1)
+  cm <- confusionMatrix(as.factor(hamby44_model$pred_resp), as.factor(hamby44_model$response), positive = "1")
+  sens <- cm$byClass[[1]]
+  return(sens)
+}), 
+specificity = purrr::map_dbl(cutoff_vals, .f = function(val){
+  hamby44_model$pred_resp <- ifelse(hamby44_model$pred_val < val, 0, 1)
+  cm <- confusionMatrix(as.factor(hamby44_model$pred_resp), as.factor(hamby44_model$response), positive = "1")
+  spec <- cm$byClass[[2]]
+  return(spec)
+})
+)
+
+cutoff_df <- cutoff_df %>% mutate(error_diff = abs(sensitivity - specificity))
+which.min(cutoff_df$error_diff)
+
+cutoff <- .07
 hamby44 <- hamby44 %>% mutate(ccdata_logistic = purrr::map(ccdata_w_resid, .f = function(bullet){
   ## here is where we take model parameters and do stuff with them! 
   bullet <- na.omit(bullet)
   X <- cbind(1, model.matrix(~rlo_resid_std + I(rlo_resid_std^2) + side + 
                     depth_std + side*depth_std + xint1_std + 
-                    xint2_std + range_50 + numNA_50 + ind_2mad + 
-                    numpos_50 - 1, 
+                    xint2_std + range_50_std + numNA_50 + ind_2mad + 
+                    numpos_50 + ind_edges - 1, 
                   bullet))
   ymean <- X%*%model_all
   yhat <- as.vector(exp(ymean)/(1 + exp(ymean)))
   bullet$pred_val <- yhat
-  bullet$pred_class <- ifelse(bullet$pred_val < .25, "LEA", "GEA")
+  bullet$pred_class <- ifelse(bullet$pred_val < cutoff, "LEA", "GEA")
   return(bullet)
 }))
 
 head(hamby44$ccdata_logistic[[1]])
+
 
 hamby44 <- hamby44 %>% mutate(grooves_pred_logistic = purrr::map(ccdata_logistic, .f = function(bullet){
   #lower <- max(bullet$y[bullet$pred_class == "GEA" & bullet$side == "left"])
@@ -220,38 +251,62 @@ hamby44_model <- na.omit(hamby44_model)
 
 X <- model.matrix(response~(rlo_resid_std + I(rlo_resid_std^2) + side + 
                     depth_std + xint1_std + 
-                    xint2_std + range_50 + numNA_50 + ind_2mar + 
-                    numpos_50)^2 - 1, 
+                    xint2_std + range_50 + numNA_50 + ind_2mad + 
+                    numpos_50 + ind_edges)^2 - 1, 
                   hamby44_model)
 
 #library(glmnet)
-fit5 <- cv.glmnet(x = X, y = hamby44_model$response, family = 'binomial', type.measure = 'class', alpha = 1)
-model_all5 <- as.matrix(coef(fit5))
+fit_interactions <- cv.glmnet(x = X, y = hamby44_model$response, family = 'binomial', type.measure = 'class', alpha = 1)
+model_interactions <- as.matrix(coef(fit_interactions))
 
 X_tst <- cbind(1, X)
-ymean_tst <- X_tst%*%model_all5
+ymean_tst <- X_tst%*%model_interactions
 yhat_tst <- exp(ymean_tst)/(1 + exp(ymean_tst))
 hamby44_model$pred_val <- yhat_tst
-hamby44_model$pred_class <- ifelse(hamby44_model$pred_val < .25, "LEA", "GEA")  ## need to cross-validate this!!!!!!!!!
 
-hamby44 <- hamby44 %>% mutate(ccdata_logistic5 = purrr::map(ccdata_w_resid, .f = function(bullet){
+cutoff_df <- data.frame(cutoff_vals = seq(0, 1, by = .01))
+
+cutoff_df <- cutoff_df %>% mutate(sensitivity = purrr::map_dbl(cutoff_vals, .f = function(val){
+  hamby44_model$pred_resp <- ifelse(hamby44_model$pred_val <= val, 0, 1)
+  cm <- confusionMatrix(as.factor(hamby44_model$pred_resp), as.factor(hamby44_model$response), positive = "1")
+  sens <- cm$byClass[[1]]
+  return(sens)
+}), 
+specificity = purrr::map_dbl(cutoff_vals, .f = function(val){
+  hamby44_model$pred_resp <- ifelse(hamby44_model$pred_val < val, 0, 1)
+  cm <- confusionMatrix(as.factor(hamby44_model$pred_resp), as.factor(hamby44_model$response), positive = "1")
+  spec <- cm$byClass[[2]]
+  return(spec)
+})
+)
+
+cutoff_df %>% ggplot() + theme_bw() + geom_line(aes(x = cutoff_vals, y = sensitivity), colour = "green") + geom_line(aes(x = cutoff_vals, y = specificity))
+cutoff_df <- cutoff_df %>% mutate(error_diff = abs(sensitivity - specificity))
+which.min(cutoff_df$error_diff)
+cutoff_df[7,]
+
+
+
+hamby44_model$pred_class <- ifelse(hamby44_model$pred_val < .06, "LEA", "GEA")  ## this is the equal error rate cutoff
+
+hamby44 <- hamby44 %>% mutate(ccdata_logisticfull = purrr::map(ccdata_w_resid, .f = function(bullet){
   ## here is where we take model parameters and do stuff with them! 
   bullet <- na.omit(bullet)
   X <- cbind(1, model.matrix(~(rlo_resid_std + I(rlo_resid_std^2) + side + 
                     depth_std + xint1_std + 
-                    xint2_std + range_50 + numNA_50 + ind_2mar + 
-                    numpos_50)^2 - 1, 
+                    xint2_std + range_50 + numNA_50 + ind_2mad + 
+                    numpos_50 + ind_edges)^2 - 1, 
                   bullet))
-  ymean <- X%*%model_all5
+  ymean <- X%*%model_interactions
   yhat <- exp(ymean)/(1 + exp(ymean))
   bullet$pred_val <- yhat
-  bullet$pred_class <- ifelse(bullet$pred_val < .25, "LEA", "GEA")
+  bullet$pred_class <- ifelse(bullet$pred_val < .06, "LEA", "GEA")
   return(bullet)
 }))
 
-head(hamby44$ccdata_logistic5[[1]])
+head(hamby44$ccdata_logisticfull[[1]])
 
-hamby44 <- hamby44 %>% mutate(grooves_pred_logistic5 = purrr::map(ccdata_logistic5, .f = function(bullet){
+hamby44 <- hamby44 %>% mutate(grooves_pred_logisticfull = purrr::map(ccdata_logisticfull, .f = function(bullet){
   #lower <- max(bullet$x[bullet$pred_class == "GEA" & bullet$side == "left"], na.rm = T)
   #lower <- ifelse(is.infinite(lower), min(bullet$y), lower)
   #upper <- min(bullet$x[bullet$pred_class == "GEA" & bullet$side == "right"], na.rm = T)
@@ -261,14 +316,14 @@ hamby44 <- hamby44 %>% mutate(grooves_pred_logistic5 = purrr::map(ccdata_logisti
   return(groove)
 }))
 
-plot_log_pred5 <- function(bullet_num){
-  bullet <- hamby44$ccdata_logistic5[[bullet_num]]
+plot_log_predfull <- function(bullet_num){
+  bullet <- hamby44$ccdata_logisticfull[[bullet_num]]
   bullet %>% ggplot() + geom_point(aes(x = x, y = value_std, color = pred_class)) + theme_bw()
 }
 
-grooves_pred_logistic5 <- hamby44$grooves_pred_logistic5
+grooves_pred_logisticfull <- hamby44$grooves_pred_logisticfull
 hamby44_eval <- readRDS("../data/hamby44/hamby44_eval.rda") ## the "../" at the beginning takes you from a file in the "development" folder of the grooves repository
-hamby44_eval$grooves_pred_logistic5 <- grooves_pred_logistic5
+hamby44_eval$grooves_pred_logisticfull <- grooves_pred_logisticfull
 #saveRDS(hamby44_eval, "../data/hamby44/hamby44_eval.rda")
 
 ```
