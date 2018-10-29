@@ -170,7 +170,8 @@ This model is fit as follows: (add more formulaic language here\ldots{})
 \tightlist
 \item
   Fit a LOESS model (span = 1) to an entire crosscut to predict y using
-  values of x.\\
+  values of x. Assign weights of 1 to each data point for this fitting
+  procedure.\\
 \item
   Obtain predicted values of y from the model fit in step 1.\\
 \item
@@ -182,7 +183,7 @@ This model is fit as follows: (add more formulaic language here\ldots{})
 \item
   Assign weights to each data point according to its residual value. If
   the residual value is positive, assign the bisquare downweight. If the
-  residual is negative, leave the weight at 1.\\
+  residual is zero or negative, leave the weight at 1.\\
 \item
   Repeat steps 1-5 with updated weights at each iteration for \(k\)
   iterations, with 20 iterations as the default.\\
