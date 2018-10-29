@@ -129,6 +129,13 @@ houston_eval <- houston_eval %>% mutate(grooves_pred_logistic = purrr::map(ccdat
   return(grooves)
 }))
 
+
+grooves_pred_logistic <- houston_eval$grooves_pred_logistic
+houston_eval <- readRDS("../data/houston/houston_eval.rda") ## the "../" at the beginning takes you from a file in the "development" folder of the grooves repository
+houston_eval$grooves_pred_logistic <- grooves_pred_logistic
+saveRDS(houston_eval, "../data/houston/houston_eval.rda")
+
+
 plot_preds <- function(dataset, bullet_num){
   lg <- dataset$grooves_pred_logistic[[bullet_num]][1]
   rg <- dataset$grooves_pred_logistic[[bullet_num]][2]
@@ -152,6 +159,11 @@ hamby44_eval <- hamby44_eval %>% mutate(grooves_pred_logistic = purrr::map(ccdat
   grooves <- get_grooves_logistic(x = bullet$x, value = bullet$value, return_plot = F)$groove
   return(grooves)
 }))
+
+grooves_pred_logistic <- hamby44$grooves_pred_logistic
+hamby44_eval <- readRDS("../data/hamby44/hamby44_eval.rda") ## the "../" at the beginning takes you from a file in the "development" folder of the grooves repository
+hamby44_eval$grooves_pred_logistic <- grooves_pred_logistic
+saveRDS(hamby44_eval, "../data/hamby44/hamby44_eval.rda")
 
 ```
 
