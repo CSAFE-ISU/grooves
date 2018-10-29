@@ -57,9 +57,16 @@ To avoid the potential risks arising from using a quadratic linear model, we ins
 
 However, since LOESS is still rooted in traditional regression techniques, it is unable to adequately identify and address the separation between GEA and LEA data structures. To address this, we implement a robust version of LOESS which iteratively downweights unusual data points and re-fits a LOESS model to each land. This robust LOESS is an adapted version of the robust LOESS proposed by \cite{Cleveland1}.
 
-This model is fit as follows: 
+This model is fit as follows: (add more formulaic language here...)
 
-
+1. Fit a LOESS model (span = 1) to an entire crosscut to predict y using values of x.  
+2. Obtain predicted values of y from the model fit in step 1.  
+3. Calculate residual values using the predicted y values.  
+4. Calculate bisquare weights for each residual value using the following formula:  
+$$max(1 - (residual/(6*mar))^2, 0)^2$$
+5. Assign weights to each data point according to its residual value. If the residual value is positive, assign the bisquare downweight. If the residual is negative, leave the weight at 1.  
+6. Repeat steps 1-5 with updated weights at each iteration for $k$ iterations, with 20 iterations as the default.  
+7. After $k$ iterations of updating the weight vector, fit a LOESS model (span = 1) and obtained predicted and residual values.  
 
 
 The subsequent prediction methods for shoulder location are based on the residuals calculated from the fit to the global structure of each land. One method uses penalized two-class classification techniques to classify each data point into "LEA" or "GEA", while the second uses Bayesian changepoint analysis to predict the data points at which the shoulders begin on either side. 

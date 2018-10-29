@@ -163,7 +163,33 @@ unusual data points and re-fits a LOESS model to each land. This robust
 LOESS is an adapted version of the robust LOESS proposed by
 \cite{Cleveland1}.
 
-This model is fit as follows:
+This model is fit as follows: (add more formulaic language here\ldots{})
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  Fit a LOESS model (span = 1) to an entire crosscut to predict y using
+  values of x.\\
+\item
+  Obtain predicted values of y from the model fit in step 1.\\
+\item
+  Calculate residual values using the predicted y values.\\
+\item
+  Calculate bisquare weights for each residual value using the following
+  formula:\\
+  \[max(1 - (residual/(6*mar))^2, 0)^2\]
+\item
+  Assign weights to each data point according to its residual value. If
+  the residual value is positive, assign the bisquare downweight. If the
+  residual is negative, leave the weight at 1.\\
+\item
+  Repeat steps 1-5 with updated weights at each iteration for \(k\)
+  iterations, with 20 iterations as the default.\\
+\item
+  After \(k\) iterations of updating the weight vector, fit a LOESS
+  model (span = 1) and obtained predicted and residual values.
+\end{enumerate}
 
 The subsequent prediction methods for shoulder location are based on the
 residuals calculated from the fit to the global structure of each land.
