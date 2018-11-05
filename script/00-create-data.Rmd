@@ -1,0 +1,31 @@
+---
+title: "Untitled"
+output: html_document
+---
+
+```{r}
+#devtools::install_github("heike/bulletxtrctr") ## Latest commit 1b387df 
+#devtools::install_github("nategarton13/bulletcp") ## Latest commit 6f949ac
+
+library(bulletxtrctr)
+library(tidyr)
+library(purrr)
+library(dplyr)
+```
+
+```{r}
+hamby44 <- readRDS("//opt/hamby44/hamby44.rda")
+hamby44 <- hamby44 %>% filter(!is.na(crosscuts))
+```
+
+```{r}
+hamby44 <- hamby44 %>% select(-c(x3p, processed, proc_smooth))
+```
+
+```{r}
+tst <- hamby44 %>% mutate(grooves_rollapply = purrr::map(ccdata, .f = function(land){
+  get_grooves_rollapply(x = land$x, value = land$value, return_plot = F)
+}))
+
+head(hamby44)
+```
