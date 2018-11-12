@@ -8,7 +8,7 @@ output: html_document
 ```{r}
 get_grooves_logistic <- function(x, value, smoothfactor = 15, adjust = 10, pred_cutoff = 0.07,
                                   groove_cutoff = 400, return_plot = F) {
-
+  
   land <- data.frame(x = x, value = value)
   original_land <- land
 
@@ -48,7 +48,7 @@ get_grooves_logistic <- function(x, value, smoothfactor = 15, adjust = 10, pred_
   
     mx <- max(land$x, na.rm = T)
     diff_mx <- mx/2 - land$x
-    median <- land$x[which.min(abs(tst_mx))]
+    median <- land$x[which.min(abs(diff_mx))]
     #median <- median(land$x) # some of the houston data appears to have a shifted x
     land$side <- "right"
     land$side <- ifelse(land$x <= median, "left", land$side)
@@ -218,7 +218,7 @@ get_grooves_logisticfull <- function(x, value, smoothfactor = 15, adjust = 10, p
   
     mx <- max(land$x, na.rm = T)
     diff_mx <- mx/2 - land$x
-    median <- land$x[which.min(abs(tst_mx))]
+    median <- land$x[which.min(abs(diff_mx))]
     #median <- median(land$x) # some of the houston data appears to have a shifted x
     land$side <- "right"
     land$side <- ifelse(land$x <= median, "left", land$side)

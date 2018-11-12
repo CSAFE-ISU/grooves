@@ -11,21 +11,41 @@ library(bulletxtrctr)
 library(tidyr)
 library(purrr)
 library(dplyr)
+library(ggplot2)
 ```
 
 ```{r}
-hamby44 <- readRDS("//opt/hamby44/hamby44.rda")
-hamby44 <- hamby44 %>% filter(!is.na(crosscuts))
+hamby44 <- readRDS("../data/hamby44/hamby44_eval.rda")
+#hamby44 <- hamby44 %>% filter(!is.na(crosscuts))
 ```
 
 ```{r}
-hamby44 <- hamby44 %>% select(-c(x3p, processed, proc_smooth))
+hamby44 <- hamby44 %>% select(c(source, barrel, bullet, land, PARTITION_ID, crosscuts, ccdata_w_resid, left_groove, right_groove))
+head(hamby44)
+
+hamby44 <- hamby44 %>% mutate(ccdata = purrr::map(ccdata_w_resid, .f = function(land){
+  new_land <- data.frame(x = land$x, value = land$value)
+  return(new_land)
+}))
 ```
 
 ```{r}
-tst <- hamby44 %>% mutate(grooves_rollapply = purrr::map(ccdata, .f = function(land){
-  get_grooves_rollapply(x = land$x, value = land$value, return_plot = F)
+hamby44 <- hamby44 %>% mutate(grooves_rollapply = purrr::map(ccdata, .f = function(land){
+  bulletxtrctr::get_grooves_rollapply(x = land$x, value = land$value, return_plot = F)
 }))
 
-head(hamby44)
+hamby44 <- hamby44 %>% mutate(grooves_lassobasic = purrr::map(ccdata, .f = function(land){
+  bulletxtrctr::get_grooves_lasso(x = land$x, value = land$value, lasso_method = "basic", return_plot = F)
+  }))
+
+hamby44 <- hamby44 %>% mutate(grooves_lassofull = purrr::map(ccdata, .f = function(land){
+  bulletxtrctr::get_grooves_lasso(x = land$x, value = land$value, lasso_method = "full", return_plot = F)
+  }))
+
+tst <- hamby44[1:3,] %>% mutate(grooves_bcp = purrr::map(ccdata, .f = function(land){
+  bulletcp::get_grooves_bcp(x = land$x, value = land$value, adjust = 10)
+  }))
+
+
+head(tst)
 ```
