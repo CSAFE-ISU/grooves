@@ -4,8 +4,8 @@ output: html_document
 ---
 
 ```{r}
-#devtools::install_github("heike/bulletxtrctr") ## Latest commit 1b387df 
-#devtools::install_github("nategarton13/bulletcp") ## Latest commit 6f949ac
+devtools::install_github("heike/bulletxtrctr") ## Latest commit f8c089e
+#devtools::install_github("nategarton13/bulletcp") ## Latest commit c4e3e38
 
 library(bulletxtrctr)
 library(tidyr)
@@ -31,21 +31,28 @@ hamby44 <- hamby44 %>% mutate(ccdata = purrr::map(ccdata_w_resid, .f = function(
 
 ```{r}
 hamby44 <- hamby44 %>% mutate(grooves_rollapply = purrr::map(ccdata, .f = function(land){
-  bulletxtrctr::get_grooves_rollapply(x = land$x, value = land$value, return_plot = F)
+  bulletxtrctr::cc_locate_grooves(method = "rollapply", ccdata = land, return_plot = F)
+  #bulletxtrctr::get_grooves_rollapply(x = land$x, value = land$value, return_plot = F)
 }))
 
 hamby44 <- hamby44 %>% mutate(grooves_lassobasic = purrr::map(ccdata, .f = function(land){
-  bulletxtrctr::get_grooves_lasso(x = land$x, value = land$value, lasso_method = "basic", return_plot = F)
+  bulletxtrctr::cc_locate_grooves(method = "lassobasic", ccdata = land, return_plot = F, pred_cutoff = 0.3)
+  #bulletxtrctr::get_grooves_lasso(x = land$x, value = land$value, lasso_method = "basic", return_plot = F)
   }))
 
 hamby44 <- hamby44 %>% mutate(grooves_lassofull = purrr::map(ccdata, .f = function(land){
-  bulletxtrctr::get_grooves_lasso(x = land$x, value = land$value, lasso_method = "full", return_plot = F)
+  bulletxtrctr::cc_locate_grooves(method = "lassofull", ccdata = land, return_plot = F, pred_cutoff = 0.34)
+  #bulletxtrctr::get_grooves_lasso(x = land$x, value = land$value, lasso_method = "full", return_plot = F)
   }))
 
-tst <- hamby44[1:3,] %>% mutate(grooves_bcp = purrr::map(ccdata, .f = function(land){
-  bulletcp::get_grooves_bcp(x = land$x, value = land$value, adjust = 10)
+hamby44 <- hamby44 %>% mutate(grooves_bcp = purrr::map(ccdata, .f = function(land){
+  bulletxtrctr::cc_locate_grooves(method = "bcp", ccdata = land, return_plot = F)
+  #bulletcp::get_grooves_bcp(x = land$x, value = land$value, adjust = 10)
   }))
 
+head(hamby44)
+```
 
-head(tst)
+```{r}
+
 ```

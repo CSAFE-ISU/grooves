@@ -47,7 +47,7 @@ We can define two additional columns, `depth` and `side`. `depth` represents the
 hamby44 <- hamby44 %>% mutate(ccdata_w_resid = purrr::map(ccdata_w_resid, .f = function(bullet){
   mx <- max(bullet$x, na.rm = T)
   diff_mx <- mx/2 - bullet$x
-  median <- bullet$x[which.min(abs(tst_mx))]
+  median <- bullet$x[which.min(abs(diff_mx))]
   #median <- median(bullet$x)
   bullet$side <- "right"
   bullet$side <- ifelse(bullet$x <= median, "left", bullet$side)
@@ -184,17 +184,20 @@ cutoff_df <- cutoff_df %>% mutate(sensitivity = purrr::map_dbl(cutoff_vals, .f =
   cm <- confusionMatrix(as.factor(hamby44_model$pred_resp), as.factor(hamby44_model$response), positive = "1")
   sens <- cm$byClass[[1]]
   return(sens)
-}), 
+}),
 specificity = purrr::map_dbl(cutoff_vals, .f = function(val){
   hamby44_model$pred_resp <- ifelse(hamby44_model$pred_val < val, 0, 1)
   cm <- confusionMatrix(as.factor(hamby44_model$pred_resp), as.factor(hamby44_model$response), positive = "1")
   spec <- cm$byClass[[2]]
   return(spec)
-})
+}), 
+sens_adjusted = 1 - (1 - sensitivity)*(sum(hamby44_model$response)/length(hamby44_model$response)),
+spec_adjusted = 1 - (1 - specificity)*(1 - (sum(hamby44_model$response)/length(hamby44_model$response)))
 )
 
-cutoff_df <- cutoff_df %>% mutate(error_diff = abs(sensitivity - specificity))
+cutoff_df <- cutoff_df %>% mutate(error_diff = abs(sensitivity - specificity), error_diff_adj = abs(sens_adjusted - spec_adjusted))
 which.min(cutoff_df$error_diff)
+which.min(cutoff_df$error_diff_adj) ### 0.3
 
 cutoff <- .07
 hamby44 <- hamby44 %>% mutate(ccdata_logistic = purrr::map(ccdata_w_resid, .f = function(bullet){
@@ -277,13 +280,15 @@ specificity = purrr::map_dbl(cutoff_vals, .f = function(val){
   cm <- confusionMatrix(as.factor(hamby44_model$pred_resp), as.factor(hamby44_model$response), positive = "1")
   spec <- cm$byClass[[2]]
   return(spec)
-})
+}), 
+sens_adjusted = 1 - (1 - sensitivity)*(sum(hamby44_model$response)/length(hamby44_model$response)),
+spec_adjusted = 1 - (1 - specificity)*(1 - (sum(hamby44_model$response)/length(hamby44_model$response)))
 )
 
-cutoff_df %>% ggplot() + theme_bw() + geom_line(aes(x = cutoff_vals, y = sensitivity), colour = "green") + geom_line(aes(x = cutoff_vals, y = specificity))
-cutoff_df <- cutoff_df %>% mutate(error_diff = abs(sensitivity - specificity))
-which.min(cutoff_df$error_diff)
-cutoff_df[7,]
+cutoff_df %>% ggplot() + theme_bw() + geom_line(aes(x = cutoff_vals, y = sens_adjusted), colour = "blue") + geom_line(aes(x = cutoff_vals, y = spec_adjusted), colour = "green")
+cutoff_df <- cutoff_df %>% mutate(error_diff = abs(sensitivity - specificity), error_diff_adj = abs(sens_adjusted - spec_adjusted))
+which.min(cutoff_df$error_diff_adj)
+cutoff_df[35,]
 
 
 
