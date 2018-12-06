@@ -14,6 +14,9 @@ library(dplyr)
 library(ggplot2)
 ```
 
+
+# HAMBY44
+
 ```{r}
 hamby44 <- readRDS("../data/hamby44/hamby44_eval.rda")
 #hamby44 <- hamby44 %>% filter(!is.na(crosscuts))
@@ -50,9 +53,78 @@ hamby44 <- hamby44 %>% mutate(grooves_bcp = purrr::map(ccdata, .f = function(lan
   #bulletcp::get_grooves_bcp(x = land$x, value = land$value, adjust = 10)
   }))
 
-head(hamby44)
+#head(hamby44)
 ```
 
 ```{r}
+hamby44_paper <- hamby44
+head(hamby44_paper)
 
+saveRDS(hamby44_paper, file = "../data/hamby44/hamby44_paper.rda")
+```
+
+# PHOENIX 
+```{r}
+phoenix <- readRDS("/opt/phoenix/phoenix.rds")
+
+head(phoenix)
+
+phoenix <- phoenix %>% mutate(ccdata = purrr::map(ccdata, .f = function(df){
+  df_new <- df %>% group_by(x) %>% dplyr::summarise(value = mean(value, na.rm = T))
+  return(df_new)
+}))
+
+```
+
+
+```{r}
+phoenix <- phoenix %>% mutate(grooves_rollapply = purrr::map(ccdata, .f = function(land){
+  bulletxtrctr::cc_locate_grooves(method = "rollapply", ccdata = land, return_plot = F)
+  #bulletxtrctr::get_grooves_rollapply(x = land$x, value = land$value, return_plot = F)
+}))
+
+phoenix <- phoenix %>% mutate(grooves_lassobasic = purrr::map(ccdata, .f = function(land){
+  bulletxtrctr::cc_locate_grooves(method = "lassobasic", ccdata = land, return_plot = F, pred_cutoff = 0.3)
+  #bulletxtrctr::get_grooves_lasso(x = land$x, value = land$value, lasso_method = "basic", return_plot = F)
+  }))
+
+phoenix <- phoenix %>% mutate(grooves_lassofull = purrr::map(ccdata, .f = function(land){
+  bulletxtrctr::cc_locate_grooves(method = "lassofull", ccdata = land, return_plot = F, pred_cutoff = 0.34)
+  #bulletxtrctr::get_grooves_lasso(x = land$x, value = land$value, lasso_method = "full", return_plot = F)
+  }))
+
+phoenix <- phoenix %>% mutate(grooves_bcp = purrr::map(ccdata, .f = function(land){
+  bulletxtrctr::cc_locate_grooves(method = "bcp", ccdata = land, return_plot = F)
+  #bulletcp::get_grooves_bcp(x = land$x, value = land$value, adjust = 10)
+  }))
+```
+
+
+
+```{r}
+
+plot_grooves_lassofull <- function(datafile, bullet_num){
+  bullet <- datafile$ccdata[[bullet_num]]
+  
+  ggplot() + geom_point(aes(x = bullet$x, y = bullet$value)) + theme_bw() + 
+    geom_vline(aes(xintercept = datafile$grooves_lassofull[[bullet_num]]$groove[1])) + 
+    geom_vline(aes(xintercept = datafile$grooves_lassofull[[bullet_num]]$groove[2]))
+}
+
+#saveRDS(phoenix_paper, file = "../data/phoenix/phoenix_paper.rda")
+```
+
+
+
+# HOUSTON-TEST
+
+```{r}
+houston <- readRDS("/opt/houston-test/houston.rds")
+
+head(houston)
+```
+
+
+```{r}
+#saveRDS(houston-test_paper, file = "../data/houston-test/houston-test_paper.rda")
 ```
