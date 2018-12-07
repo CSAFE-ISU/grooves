@@ -4,7 +4,7 @@ output: html_document
 ---
 
 ```{r}
-devtools::install_github("heike/bulletxtrctr") ## Latest commit f8c089e
+devtools::install_github("heike/bulletxtrctr") ## Latest commit d6b41e2
 #devtools::install_github("nategarton13/bulletcp") ## Latest commit c4e3e38
 
 library(bulletxtrctr)

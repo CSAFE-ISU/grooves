@@ -1,0 +1,14 @@
+---
+title: "Groove Predictions: Impact on Bullet-Matching Algorithm"
+output: html_document
+---
+
+# Hamby44  
+
+## Rollapply Grooves  
+
+```{r}
+bullets <- readRDS("../data/hamby44/hamby44_paper.rda")
+
+
+```

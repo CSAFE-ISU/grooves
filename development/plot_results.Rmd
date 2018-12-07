@@ -127,3 +127,37 @@ dataset <- hamby44_plot
 
 
 ```
+
+
+```{r}
+plot_preds <- function(dataset, bullet_num){
+  bullet <- dataset$ccdata[[bullet_num]]
+  rollapply_left <- dataset$grooves_rollapply[[bullet_num]]$groove[1]
+  rollapply_right <- dataset$grooves_rollapply[[bullet_num]]$groove[2]
+  
+  lassofull_left <- dataset$grooves_lassofull[[bullet_num]]$groove[1]
+  lassofull_right <- dataset$grooves_lassofull[[bullet_num]]$groove[2]
+  
+  bcp_left <- dataset$grooves_bcp[[bullet_num]]$groove[1]
+  bcp_right <- dataset$grooves_bcp[[bullet_num]]$groove[2]
+  
+  left <- dataset$left_groove[[bullet_num]]
+  right <- dataset$right_groove[[bullet_num]]
+  
+  bullet %>% ggplot() + theme_bw() + 
+    geom_point(aes(x = x, y = value), size = 0.5) + 
+    
+    geom_vline(aes(xintercept = left), lty = 1, colour = "gray31", lwd = 1.3) + 
+    geom_vline(aes(xintercept = right), lty = 1, colour = "gray31", lwd = 1.3) + 
+    
+    geom_vline(aes(xintercept = rollapply_left), lty = 2, lwd = 1.1, colour = "#E69F00") + 
+    geom_vline(aes(xintercept = rollapply_right), lty = 2, lwd = 1.1, colour = "#E69F00") + 
+    
+    geom_vline(aes(xintercept = lassofull_left), lty = 3, lwd = 1.1, colour = "#009E73") + 
+    geom_vline(aes(xintercept = lassofull_right), lty = 3, lwd = 1.1, colour = "#009E73") + 
+    
+    geom_vline(aes(xintercept = bcp_left), lty = 4, lwd = 1.1, colour = "#56B4E9") + 
+    geom_vline(aes(xintercept = bcp_right), lty = 4, lwd = 1.1, colour = "#56B4E9")
+    
+}
+```
