@@ -4,8 +4,8 @@ output: html_document
 ---
 
 ```{r}
-devtools::install_github("heike/bulletxtrctr") ## Latest commit d6b41e2
-#devtools::install_github("nategarton13/bulletcp") ## Latest commit c4e3e38
+devtools::install_github("heike/bulletxtrctr", force = T) ## Latest commit d6b41e2
+#devtools::install_github("nategarton13/bulletcp") ## Latest commit d1e3cea - updates on 12/7/2018 from Nate
 
 library(bulletxtrctr)
 library(tidyr)
@@ -27,7 +27,7 @@ hamby44 <- hamby44 %>% select(c(source, barrel, bullet, land, PARTITION_ID, cros
 head(hamby44)
 
 hamby44 <- hamby44 %>% mutate(ccdata = purrr::map(ccdata_w_resid, .f = function(land){
-  new_land <- data.frame(x = land$x, value = land$value)
+  new_land <- data.frame(x = land$x, value = land$value, y = 0)
   return(new_land)
 }))
 ```
@@ -69,8 +69,11 @@ phoenix <- readRDS("/opt/phoenix/phoenix.rds")
 
 head(phoenix)
 
+phoenix <- phoenix %>% select(-x3p)
+
 phoenix <- phoenix %>% mutate(ccdata = purrr::map(ccdata, .f = function(df){
   df_new <- df %>% group_by(x) %>% dplyr::summarise(value = mean(value, na.rm = T))
+  df_new <- as.data.frame(df_new)
   return(df_new)
 }))
 
@@ -102,16 +105,11 @@ phoenix <- phoenix %>% mutate(grooves_bcp = purrr::map(ccdata, .f = function(lan
 
 
 ```{r}
+phoenix_paper <- phoenix
 
-plot_grooves_lassofull <- function(datafile, bullet_num){
-  bullet <- datafile$ccdata[[bullet_num]]
-  
-  ggplot() + geom_point(aes(x = bullet$x, y = bullet$value)) + theme_bw() + 
-    geom_vline(aes(xintercept = datafile$grooves_lassofull[[bullet_num]]$groove[1])) + 
-    geom_vline(aes(xintercept = datafile$grooves_lassofull[[bullet_num]]$groove[2]))
-}
+head(phoenix_paper)
 
-#saveRDS(phoenix_paper, file = "../data/phoenix/phoenix_paper.rda")
+saveRDS(phoenix_paper, file = "../data/phoenix/phoenix_paper.rda")
 ```
 
 
@@ -122,9 +120,47 @@ plot_grooves_lassofull <- function(datafile, bullet_num){
 houston <- readRDS("/opt/houston-test/houston.rds")
 
 head(houston)
+
+houston <- houston %>% select(-x3p)
+
+houston <- houston %>% mutate(ccdata = purrr::map(ccdata, .f = function(df){
+  df_new <- df %>% group_by(x) %>% dplyr::summarise(value = mean(value, na.rm = T))
+  df_new <- as.data.frame(df_new)
+  return(df_new)
+}))
+
+
+head(houston)
 ```
 
 
 ```{r}
-#saveRDS(houston-test_paper, file = "../data/houston-test/houston-test_paper.rda")
+houston <- houston %>% mutate(grooves_rollapply = purrr::map(ccdata, .f = function(land){
+  bulletxtrctr::cc_locate_grooves(method = "rollapply", ccdata = land, return_plot = F)
+  #bulletxtrctr::get_grooves_rollapply(x = land$x, value = land$value, return_plot = F)
+}))
+
+houston <- houston %>% mutate(grooves_lassobasic = purrr::map(ccdata, .f = function(land){
+  bulletxtrctr::cc_locate_grooves(method = "lassobasic", ccdata = land, return_plot = F, pred_cutoff = 0.3)
+  #bulletxtrctr::get_grooves_lasso(x = land$x, value = land$value, lasso_method = "basic", return_plot = F)
+  }))
+
+houston <- houston %>% mutate(grooves_lassofull = purrr::map(ccdata, .f = function(land){
+  bulletxtrctr::cc_locate_grooves(method = "lassofull", ccdata = land, return_plot = F, pred_cutoff = 0.34)
+  #bulletxtrctr::get_grooves_lasso(x = land$x, value = land$value, lasso_method = "full", return_plot = F)
+  }))
+
+houston <- houston %>% mutate(grooves_bcp = purrr::map(ccdata, .f = function(land){
+  bulletxtrctr::cc_locate_grooves(method = "bcp", ccdata = land, return_plot = F)
+  #bulletcp::get_grooves_bcp(x = land$x, value = land$value, adjust = 10)
+  }))
+```
+
+
+```{r}
+
+houstontest_paper <- houston
+head(houstontest_paper)
+
+saveRDS(houstontest_paper, file = "../data/houston-test/houstontest_paper.rda")
 ```

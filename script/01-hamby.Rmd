@@ -8,7 +8,270 @@ output: html_document
 ## Rollapply Grooves  
 
 ```{r}
+library(dplyr)
+library(bulletxtrctr)
+library(x3ptools)
+library(randomForest)
+library(ggplot2)
+library(readr)
+
+
 bullets <- readRDS("../data/hamby44/hamby44_paper.rda")
+
+## PUT A DUMMY "Y" = 0 into CCDATA
+```
+
+Extract Features   
+
+```{r}
+
+bullets <- bullets %>% mutate(
+  sigs = purrr::map2(
+    .x = ccdata, .y = grooves_rollapply, 
+    .f = function(x, y) {
+      cc_get_signature(
+        ccdata = x, grooves = y, span1 = 0.75, span2 = 0.03)
+    })
+)
+head(bullets)
+```
+
+
+Align signatures and extract features   
+
+
+```{r}
+bullets$bulletland <- paste0(bullets$bullet,"-", bullets$land)
+bullets$barrelbulletland <- paste0(bullets$barrel, "-", bullets$bullet, "-", bullets$land)
+lands <- unique(bullets$barrelbulletland)
+comparisons <- data.frame(
+  expand.grid(land1 = lands, land2 = lands), stringsAsFactors = FALSE)
+
+comparisons <- comparisons %>% mutate(
+  aligned = purrr::map2(.x = land1, .y = land2, .f = function(xx, yy) {
+    land1 <- bullets$sigs[bullets$barrelbulletland == xx][[1]]
+    land2 <- bullets$sigs[bullets$barrelbulletland == yy][[1]]
+    land1$bullet <- "first-land"
+    land2$bullet <- "second-land"
+    
+    sig_align(land1$sig, land2$sig)
+  })
+)
+
+
+```
+
+Aligned signatures of two matching lands:
+
+```{r}
+subset(comparisons, land1=="2-4" & land2 =="1-2")$aligned[[1]]$lands %>% 
+  tidyr::gather(sigs, value, sig1, sig2) %>% 
+  ggplot(aes(x = x, y = value, colour = sigs)) + 
+    geom_line() +
+  theme_bw() +
+  scale_color_brewer(palette = "Dark2")
+
+
+```
+
+
+Some features are based on aligned signatures:
+
+```{r}
+comparisons <- comparisons %>% mutate(
+  ccf0 = aligned %>% 
+    purrr::map_dbl(.f = function(x) extract_feature_ccf(x$lands)),
+  lag0 = aligned %>% 
+    purrr::map_dbl(.f = function(x) extract_feature_lag(x$lands)),
+  D0 = aligned %>% 
+    purrr::map_dbl(.f = function(x) extract_feature_D(x$lands)),
+  length0 = aligned %>% 
+    purrr::map_dbl(.f = function(x) extract_feature_length(x$lands)),
+  overlap0 = aligned %>% 
+    purrr::map_dbl(.f = function(x) extract_feature_overlap(x$lands))
+)
+head(comparisons)
+```
+
+
+Other features need an evaluation of striation marks between two aligned signatures:  
+
+```{r}
+comparisons <- comparisons %>% mutate(
+  striae = aligned %>% purrr::map(.f = sig_cms_max, span = 75) 
+)
+comparisons <- comparisons %>% mutate(
+  cms_per_mm = purrr::map2(striae, aligned, .f = function(s, a) {
+    extract_feature_cms_per_mm(s$lines, a$lands, resolution=1.5625)
+  }),
+  matches0 = striae %>% purrr::map_dbl(.f = function(s) {
+    bulletxtrctr:::extract_helper_feature_n_striae(s$lines, type = "peak", match = TRUE)
+  }),
+  mismatches0 = striae %>% purrr::map_dbl(.f = function(s) {
+    bulletxtrctr:::extract_helper_feature_n_striae(s$lines, type = "peak", match = FALSE)
+  })
+  
+)
+
+comparisons <- comparisons %>% mutate(
+  bulletA = gsub("([1-2])-([1-6])","\\1",land1),
+  bulletB = gsub("([1-2])-([1-6])","\\1",land2),
+  landA = gsub("([1-2])-([1-6])","\\2",land1),
+  landB = gsub("([1-2])-([1-6])","\\2",land2)
+)
+```
+
+
+Extract Features
+
+
+```{r}
+comparisons <- comparisons %>% mutate(
+  features = purrr::map2(.x = aligned, .y = striae, .f = extract_features_all, resolution = 0.645)
+)
+
+comparisons <- comparisons %>% mutate(
+  legacy_features = purrr::map(striae, extract_features_all_legacy, resolution = 0.645)
+)
+
+comparisons <- comparisons %>% tidyr::unnest(legacy_features) 
+# scale features before using them in the random forest, legacy features can be used out of the box
+
+
+# quick visualization:
+comparisons %>% 
+  ggplot(aes(x = landA, y = landB, fill = ccf)) +
+  geom_tile() +
+  scale_fill_gradient2(low = "grey80", high = "darkorange", 
+                       midpoint = 0.5) +
+  facet_grid(bulletB~bulletA, labeller = "label_both") +
+  xlab("Land A") +
+  ylab("Land B") +
+  theme(aspect.ratio = 1)
+
+```
+
+
+Get Score predictions for each land to land comparison
+
+```{r}
+comparisons$rfscore <- predict(bulletxtrctr::rtrees, newdata = comparisons, type = "prob")[,2]
+
+head(comparisons)
+
+saveRDS(comparisons, "../data/hamby44/comparisons_rollapply.rda")
+
+comparisons_viz <- comparisons
+comparisons_viz <- comparisons_viz %>% select(-c(landA, landB)) %>% separate(bulletA, c("barrelA", "bulletA", "landA"), "-") %>% separate(bulletB, c("barrelB", "bulletB", "landB"),"-")
+
+head(comparisons_viz)
+
+
+subset(comparisons_viz, land1 == "Barrel 1-Bullet 1-Land 6" & land2 == "Barrel 1-Bullet 2-Land 4")$aligned[[1]]$lands %>% 
+  tidyr::gather(sigs, value, sig1, sig2) %>% 
+  ggplot(aes(x = x, y = value, colour = sigs)) + 
+    geom_line() +
+  theme_bw() +
+  scale_color_brewer(palette = "Dark2")
+
+comparisons_viz %>% 
+  filter(barrelA == "Barrel 10" & barrelB == "Barrel 10") %>%
+  filter(bulletA == "Bullet 1" & bulletB == "Bullet 2") %>% 
+  ggplot(aes(x = landA, y = landB, fill = rfscore)) +
+  geom_tile() +
+  scale_fill_gradient2(low = "grey80", high = "darkorange", 
+                       midpoint = .5) +
+  facet_grid(bulletB~bulletA, labeller = "label_both") +
+  xlab("Land A") +
+  ylab("Land B") +
+  theme(aspect.ratio = 1) 
+```
+
+
+## Lassobasic Grooves  
+
+```{r}
+bullets_lb <- readRDS("../data/hamby44/hamby44_paper.rda")
+bullets_lb <- bullets_lb %>% mutate(
+  sigs = purrr::map2(
+    .x = ccdata, .y = grooves_lassobasic, 
+    .f = function(x, y) {
+      cc_get_signature(
+        ccdata = x, grooves = y, span1 = 0.75, span2 = 0.03)
+    })
+)
+head(bullets_lb)
+
+
+bullets_lb$bulletland <- paste0(bullets_lb$bullet,"-", bullets_lb$land)
+bullets_lb$barrelbulletland <- paste0(bullets_lb$barrel, "-", bullets_lb$bullet, "-", bullets_lb$land)
+lands_lb <- unique(bullets_lb$barrelbulletland)
+comparisons_lb <- data.frame(
+  expand.grid(land1 = lands_lb, land2 = lands_lb), stringsAsFactors = FALSE)
+
+comparisons_lb <- comparisons_lb %>% mutate(
+  aligned = purrr::map2(.x = land1, .y = land2, .f = function(xx, yy) {
+    land1 <- bullets_lb$sigs[bullets_lb$barrelbulletland == xx][[1]]
+    land2 <- bullets_lb$sigs[bullets_lb$barrelbulletland == yy][[1]]
+    land1$bullet <- "first-land"
+    land2$bullet <- "second-land"
+    
+    sig_align(land1$sig, land2$sig)
+  })
+)
+
+
+comparisons_lb <- comparisons_lb %>% mutate(
+  ccf0 = aligned %>% 
+    purrr::map_dbl(.f = function(x) extract_feature_ccf(x$lands)),
+  lag0 = aligned %>% 
+    purrr::map_dbl(.f = function(x) extract_feature_lag(x$lands)),
+  D0 = aligned %>% 
+    purrr::map_dbl(.f = function(x) extract_feature_D(x$lands)),
+  length0 = aligned %>% 
+    purrr::map_dbl(.f = function(x) extract_feature_length(x$lands)),
+  overlap0 = aligned %>% 
+    purrr::map_dbl(.f = function(x) extract_feature_overlap(x$lands))
+)
+
+omparisons_lb <- comparisons_lb %>% mutate(
+  striae = aligned %>% purrr::map(.f = sig_cms_max, span = 75) 
+)
+comparisons_lb <- comparisons_lb %>% mutate(
+  cms_per_mm = purrr::map2(striae, aligned, .f = function(s, a) {
+    extract_feature_cms_per_mm(s$lines, a$lands, resolution=1.5625)
+  }),
+  matches0 = striae %>% purrr::map_dbl(.f = function(s) {
+    bulletxtrctr:::extract_helper_feature_n_striae(s$lines, type = "peak", match = TRUE)
+  }),
+  mismatches0 = striae %>% purrr::map_dbl(.f = function(s) {
+    bulletxtrctr:::extract_helper_feature_n_striae(s$lines, type = "peak", match = FALSE)
+  })
+  
+)
+
+comparisons_lb <- comparisons_lb %>% mutate(
+  bulletA = gsub("([1-2])-([1-6])","\\1",land1),
+  bulletB = gsub("([1-2])-([1-6])","\\1",land2),
+  landA = gsub("([1-2])-([1-6])","\\2",land1),
+  landB = gsub("([1-2])-([1-6])","\\2",land2)
+)
+
+comparisons_lb <- comparisons_lb %>% mutate(
+  features = purrr::map2(.x = aligned, .y = striae, .f = extract_features_all, resolution = 0.645)
+)
+
+comparisons_lb <- comparisons_lb %>% mutate(
+  legacy_features = purrr::map(striae, extract_features_all_legacy, resolution = 0.645)
+)
+
+comparisons_lb <- comparisons_lb %>% tidyr::unnest(legacy_features) 
+# scale features before using them in the random forest, legacy features can be used out of the box
+comparisons_lb$rfscore <- predict(bulletxtrctr::rtrees, newdata = comparisons_lb, type = "prob")[,2]
+
+head(comparisons_lb)
+
+saveRDS(comparisons_lb, "../data/hamby44/comparisons_lassobasic.rda")
 
 
 ```
