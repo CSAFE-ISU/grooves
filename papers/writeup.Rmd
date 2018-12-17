@@ -78,23 +78,23 @@ The subsequent prediction methods for shoulder location are based on the residua
 \subsection{Bayesian Changepoint Analysis}
 The idea behind the changepoint approach is that within either the left GEA, right GEA, or the LEA, the global structure is consistent and can either be described by a line with zero slope, a line with positive slope for the right GEA, or a line with negative slope for the left GEA. Finding the points where the GEAs and LEA meet is treated as a problem of model selection. That is, the best fitting statistical model, in terms of the magnitude of the likelihood, should be the one which assumes that the points at which the global structure changes align with where the GEAs and LEA meet. These points of global structural change are what we will call changepoints. Thus, our model will be defined in a piecewise fashion. In practice there are also complex additional patterns which may exist for a number of reasons, but this large scale structural assumption remains generally reasonable. The complex smaller scale patterns can be thought of as the dependence in the data after accounting for the global structure. Because of the nature of the model which we consider, it becomes necessary for computational reasons to perform a couple of additional data preprocessing steps. Specifically, we will scale the residuals from the robust LOESS procedure, and we will impute missing values. In the next section, we describe the model that we will use to identify changepoints, after which we will describe the estimation procedure which we use. Details of the additional data preprocessing steps can be found in the appendix.
 
-\subsection{Bayesian Model Formulation}
+\subsubsection{Bayesian Model Formulation}
 Before introducing the model, we introduce some notation. First, let $\{Y(x_i): i = 1,2, ..., n\}$ denote the set of random variables representing the residuals from the robust LOESS procedure at the values $x_i$. For simplicity, also assume that $x_1 < x_2 < ... < x_n$. Also, let $c_l$ be the value of the left changepoint and $c_r$ be the value of the right changepoint. Here, the left changepoint is where the left GEA meets the LEA, and the right changepoint is where the right GEA meets the LEA. Also, denote the median centered $x$ values as $x'_i = x_i - \tilde{x}$ where $\tilde{x}$ is the median $x$ value. As mentioned in the previous paragraph, the complex small scale patterns, such as the striae, will be modeled through a covariance structure on the data that will be allowed to differ between each GEA and between the GEAs and LEA. We will construct the covariance matrices from the exponential covariance function $K(x, x';\sigma, \ell) = \sigma^2 e^{-\frac{|x - x'|}{\ell}} = cov(Y(x), Y(x'))$. The differences in covariance matrices for the GEAs and LEA will be reflected in the parameters $\sigma$ and $\ell$. The data model that we consider is then, 
 
 \begin{align}
-(Y(x_1), Y(x_2), ..., Y(x_{k_1})) &\sim N(\beta_{01}\mathbb{1} + \beta_{11} x'_{1:k_1}, \Sigma_1(\sigma_1, \ell_1)) \\
+(Y(x_1), Y(x_2), ..., Y(x_{k_1})) &\sim N(\beta_{01}\mathbbm{1} + \beta_{11} x'_{1:k_1}, \Sigma_1(\sigma_1, \ell_1)) \\
 (Y(x_{k_1 + 1}), Y(x_{k_1 + 2}), ..., Y(x_{k_2})) &\sim N(0, \Sigma_2(\sigma_2, \ell_2)) \\ 
-(Y(x_{k_2 + 1}), Y(x_{k_2 + 2}), ..., Y(x_n)) &\sim N(\beta_{02}\mathbb{1} + \beta_{12} x'_{k_2 + 1:n}, \Sigma_3(\sigma_3, \ell_3)),
+(Y(x_{k_2 + 1}), Y(x_{k_2 + 2}), ..., Y(x_n)) &\sim N(\beta_{02}\mathbbm{1} + \beta_{12} x'_{k_2 + 1:n}, \Sigma_3(\sigma_3, \ell_3)),
 \end{align}
 
-where $x_{k_1} < c_l \leq x_{k_1 + 1}$ and $x_{k_2} < c_r \leq x_{k_2 + 1}$  Here, $x_{1:k}$ denotes the column vector $(x_1, x_2, ..., x_k)^\top$, and $\mathbb{1}$ denotes the vector of ones. Indpendence is assumed between each of these three distributions for simplicity. 
+where $x_{k_1} < c_l \leq x_{k_1 + 1}$ and $x_{k_2} < c_r \leq x_{k_2 + 1}$  Here, $x_{1:k}$ denotes the column vector $(x_1, x_2, ..., x_k)^\top$, and $\mathbbm{1}$ denotes the vector of ones. Indpendence is assumed between each of these three distributions for simplicity. 
 
 Thus the parameters that need to be estimated include the four mean parameters in the GEAs, the six covariance parameters (two for each of the three areas), and the two changepoint parameters, $c_l$ and $c_r$. 
 
 The above model encapsulates the essence of the approach. However, there are a few difficulties. The first difficulty is that there are not always two GEAs in a particular land. There may be one GEA, or the land may only consist of the LEA. Thus, the above model is actually conditional on there being two GEAs in the data. We also define models for when there is one GEA on the left, one GEA on the right, or no GEAs. The models are defined in an essentially identical way. Conditional on there being only one GEA, the left GEA model is defined as, 
 
 \begin{align}
-(Y(x_1), Y(x_2), ..., Y(x_{k})) &\sim N(\beta_{0}\mathbb{1} + \beta_{1} x'_{1:k}, \Sigma_1(\sigma_1, \ell_1)) \\
+(Y(x_1), Y(x_2), ..., Y(x_{k})) &\sim N(\beta_{0}\mathbbm{1} + \beta_{1} x'_{1:k}, \Sigma_1(\sigma_1, \ell_1)) \\
 (Y(x_{k + 1}), Y(x_{k + 2}), ..., Y(x_{n})) &\sim N(0, \Sigma_2(\sigma_2, \ell_2)),
 \end{align}
 
@@ -102,7 +102,7 @@ and the right GEA model is defined as,
 
 \begin{align}
 (Y(x_{1}), Y(x_{2}), ..., Y(x_{k})) &\sim N(0, \Sigma_1(\sigma_1, \ell_1)) \\ 
-(Y(x_{k + 1}), Y(x_{k + 2}), ..., Y(x_n)) &\sim N(\beta_{0}\mathbb{1} + \beta_{1} x'_{k + 1:n} \Sigma_2(\sigma_2, \ell_2)).
+(Y(x_{k + 1}), Y(x_{k + 2}), ..., Y(x_n)) &\sim N(\beta_{0}\mathbbm{1} + \beta_{1} x'_{k + 1:n} \Sigma_2(\sigma_2, \ell_2)).
 \end{align}
 
 Finally, conditional on there being no GEAs in the data, the model is simply 
