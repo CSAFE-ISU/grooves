@@ -76,11 +76,16 @@
 
 \if0\blind
 {
-  \title{\bf Adaption of the Chumbley Score to matching of bullet striation marks}
+  \title{\bf Automated Groove Identification in 3D Bullet Land Scans (we'll change
+the title)}
 
   \author{
-        Ganesh Krishnan \thanks{The authors gratefully acknowledge \ldots{}} \\
+        Kiegan Rice \thanks{The authors gratefully acknowledge \ldots{}} \\
     Department of Statistics, Iowa State University\\
+     and \\     Nate Garton \\
+    Department of Statistics, Iowa State University\\
+     and \\     Ulrike Genschel \\
+    Department of Statistics and CSAFE, Iowa State University\\
      and \\     Heike Hofmann \\
     Department of Statistics and CSAFE, Iowa State University\\
       }
@@ -93,7 +98,8 @@
   \bigskip
   \bigskip
   \begin{center}
-    {\LARGE\bf Adaption of the Chumbley Score to matching of bullet striation marks}
+    {\LARGE\bf Automated Groove Identification in 3D Bullet Land Scans (we'll change
+the title)}
   \end{center}
   \medskip
 } \fi
@@ -118,7 +124,80 @@ Thanks to \cite{Hamby}, we can do stuff. \citet{Hamby}
 
 \section{Methodology}
 
+We first need to remove the global structure of the bullet land.
+
 \subsection{Global Structure Removal}
+
+The non-traditional data structure necessitates employing
+non-traditional methods to model and remove the global structure. The
+data are made up of two competing structures: the LEA data, of which we
+would like to model the global structure, and the GEA data, which we
+would like to consider as outlying data. Traditional statistical
+modeling techniques minimize the least squared vertical distance from
+each data point to a fit line; this results in undue influence by GEA
+points, which pull any fit lines towards their unusual points.
+
+While bullets are traditionally circular, it is unwise to use a rigidly
+quadratic model to fit the global structure. We cannot assume that fired
+bullets will retain a neatly circular shape, especially at the level of
+detail scans are captured. The significant amount of physical pressure
+that acts upon bullets as they are fired through a barrel also can lead
+to some warping or slight deformations \emph{(find a citation from JFS
+or AFTE about warping/deformation of bullets?)}. Finally, the placement
+of the land relative to the plane of reference when a 3D scan is being
+captured can vary slightly, meaning that the 2D crosscuts can be
+slightly tilted or rotated. This will not translate into a clean
+quadratic-shaped(?) crosscut.
+
+To avoid the potential risks arising from using a quadratic linear
+model, we instead use a locally weighted regression (LOESS) which fits
+linear regression models on small pieces of the data and combines
+predictions to result in a non-parametric predicted fit of the data
+structure.
+
+However, since LOESS is still rooted in traditional regression
+techniques, it is unable to adequately identify and address the
+separation between GEA and LEA data structures. To address this, we
+implement a robust version of LOESS which iteratively downweights
+unusual data points and re-fits a LOESS model to each land. This robust
+LOESS is an adapted version of the robust LOESS proposed by
+\cite{Cleveland1}.
+
+This model is fit as follows: (add more formulaic language here\ldots{})
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  Fit a LOESS model (span = 1) to an entire crosscut to predict y using
+  values of x. Assign weights of 1 to each data point for this fitting
+  procedure.\\
+\item
+  Obtain predicted values of y from the model fit in step 1.\\
+\item
+  Calculate residual values using the predicted y values.\\
+\item
+  Calculate bisquare weights for each residual value using the following
+  formula:\\
+  \[max(1 - (residual/(6*mar))^2, 0)^2\]
+\item
+  Assign weights to each data point according to its residual value. If
+  the residual value is positive, assign the bisquare downweight. If the
+  residual is zero or negative, leave the weight at 1.\\
+\item
+  Repeat steps 1-5 with updated weights at each iteration for \(k\)
+  iterations, with 20 iterations as the default.\\
+\item
+  After \(k\) iterations of updating the weight vector, fit a LOESS
+  model (span = 1) and obtained predicted and residual values.
+\end{enumerate}
+
+The subsequent prediction methods for shoulder location are based on the
+residuals calculated from the fit to the global structure of each land.
+One method uses penalized two-class classification techniques to
+classify each data point into ``LEA'' or ``GEA'', while the second uses
+Bayesian changepoint analysis to predict the data points at which the
+shoulders begin on either side.
 
 \subsection{Two-Class Classification}
 
