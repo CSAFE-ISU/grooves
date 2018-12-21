@@ -1,4 +1,4 @@
-\begin{thebibliography}{2}
+\begin{thebibliography}{4}
 
 \bibitem[{Hamby et~al.(2009)Hamby, James E. and David J. Brundage and James W.
   Thorpe}]{Hamby}
@@ -13,5 +13,18 @@ Cleveland WS.
 \newblock Robust Locally Weighted Regression and Smoothing Scatterplots.
 \newblock Journal of the American Statistical Association
   1979;74(368):829--836.
+
+\bibitem[{Stephens(1994)David A. Stephens}]{stephens1994}
+Stephens DA.
+\newblock Bayesian Retrospective Multiple-Changepoint Identification.
+\newblock Journal of the Royal Statistical Society Series C (Applied
+  Statistics)  1994;43(1):159--178.
+\newblock \url{https://www.jstor.org/stable/2986119}.
+
+\bibitem[{Gelman et~al.(2013)Andrew Gelman and John B. Carlin and Hal S. Stern
+  and David B. Dunson and Aki Vehtari and Donald B. Rubin}]{gelman2013}
+Gelman A, Carlin JB, Stern HS, Dunson DB, Vehtari A, Rubin DB.
+\newblock {Bayesian Data Analysis}.
+\newblock Chapman and Hall; 2013.
 
 \end{thebibliography}
