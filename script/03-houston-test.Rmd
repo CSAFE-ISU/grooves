@@ -1,0 +1,418 @@
+---
+title: "03-houston-test"
+output: html_document
+---
+
+# Phoenix  
+
+```{r}
+library(dplyr)
+library(bulletxtrctr)
+library(x3ptools)
+library(randomForest)
+library(ggplot2)
+library(readr)
+library(furrr)
+
+
+hbullets <- readRDS("../data/houston-test/houstontest_paper.rda")
+
+
+## PUT A DUMMY "Y" = 0 into CCDATA 
+## ALSO, get "barrel, bullet, land" columns! 
+hbullets <- hbullets %>% mutate(ccdata = purrr::map(ccdata, .f = function(dat){
+  dat$y <- 0
+  return(dat)
+}))
+
+hbullets <- hbullets %>% 
+  mutate(source = as.character(source)) %>%
+  mutate(source = purrr::map(source, .f = function(col){
+    split1<- strsplit(col, "//")[[1]][2]
+    split2 <- strsplit(split1, "-")[[1]]
+    b
+    return(bbl2)
+  })) %>% 
+  separate(source, c("barrel", "bullet", "land"), sep = "/") %>% 
+  mutate(land = ifelse(is.na(land), bullet, land)) %>% 
+  mutate(bullet = ifelse(bullet == land, "B1", bullet))
+
+head(hbullets)
+```
+
+
+## Rollapply  
+
+```{r}
+hbullets_roll <- hbullets
+hbullets_roll <- hbullets_roll %>% mutate(
+  sigs = purrr::map2(
+    .x = ccdata, .y = grooves_rollapply, 
+    .f = function(x, y) {
+      cc_get_signature(
+        ccdata = x, grooves = y, span1 = 0.75, span2 = 0.03)
+    })
+)
+#head(hbullets_roll)
+
+
+hbullets_roll$bulletland <- paste0(hbullets_roll$bullet,"-", hbullets_roll$land)
+hbullets_roll$barrelbulletland <- paste0(hbullets_roll$barrel, "-", hbullets_roll$bullet, "-", hbullets_roll$land)
+hlands_roll <- unique(hbullets_roll$barrelbulletland)
+hcomparisons_rollapply <- data.frame(
+  expand.grid(land1 = hlands_roll, land2 = hlands_roll), stringsAsFactors = FALSE)
+
+######
+hcomparisons_rollapply <- hcomparisons_rollapply %>% mutate(
+  aligned = purrr::map2(.x = land1, .y = land2, .f = function(xx, yy) {
+    land1 <- hbullets_roll$sigs[hbullets_roll$barrelbulletland == xx][[1]]
+    land2 <- hbullets_roll$sigs[hbullets_roll$barrelbulletland == yy][[1]]
+    land1$bullet <- "first-land"
+    land2$bullet <- "second-land"
+    
+    sig_align(land1$sig, land2$sig)
+  })
+)
+
+#head(hcomparisons_rollapply)
+
+hcomparisons_rollapply <- hcomparisons_rollapply %>% mutate(
+  ccf0 = aligned %>% 
+    purrr::map_dbl(.f = function(x) extract_feature_ccf(x$lands)),
+  lag0 = aligned %>% 
+    purrr::map_dbl(.f = function(x) extract_feature_lag(x$lands)),
+  D0 = aligned %>% 
+    purrr::map_dbl(.f = function(x) extract_feature_D(x$lands)),
+  length0 = aligned %>% 
+    purrr::map_dbl(.f = function(x) extract_feature_length(x$lands)),
+  overlap0 = aligned %>% 
+    purrr::map_dbl(.f = function(x) extract_feature_overlap(x$lands))
+)
+
+hcomparisons_rollapply <- hcomparisons_rollapply %>% mutate(
+  striae = aligned %>% purrr::map(.f = sig_cms_max, span = 75) 
+)
+hcomparisons_rollapply <- hcomparisons_rollapply %>% mutate(
+  cms_per_mm = purrr::map2(striae, aligned, .f = function(s, a) {
+    extract_feature_cms_per_mm(s$lines, a$lands, resolution=0.645)
+  }),
+  matches0 = striae %>% purrr::map_dbl(.f = function(s) {
+    bulletxtrctr:::extract_helper_feature_n_striae(s$lines, type = "peak", match = TRUE)
+  }),
+  mismatches0 = striae %>% purrr::map_dbl(.f = function(s) {
+    bulletxtrctr:::extract_helper_feature_n_striae(s$lines, type = "peak", match = FALSE)
+  })
+  
+)
+
+hcomparisons_rollapply <- hcomparisons_rollapply %>% mutate(
+  bulletA = gsub("([1-2])-([1-6])","\\1",land1),
+  bulletB = gsub("([1-2])-([1-6])","\\1",land2),
+  landA = gsub("([1-2])-([1-6])","\\2",land1),
+  landB = gsub("([1-2])-([1-6])","\\2",land2)
+)
+
+hcomparisons_rollapply <- hcomparisons_rollapply %>% mutate(
+  features = purrr::map2(.x = aligned, .y = striae, .f = extract_features_all, resolution = 0.645)
+)
+
+hcomparisons_rollapply <- hcomparisons_rollapply %>% mutate(
+  legacy_features = purrr::map(striae, extract_features_all_legacy, resolution = 0.645)
+)
+
+hcomparisons_rollapply <- hcomparisons_rollapply %>% tidyr::unnest(legacy_features) 
+# scale features before using them in the random forest, legacy features can be used out of the box
+hcomparisons_rollapply$rfscore <- predict(bulletxtrctr::rtrees, newdata = hcomparisons_rollapply, type = "prob")[,2]
+
+head(hcomparisons_rollapply)
+
+saveRDS(hcomparisons_rollapply, "../data/phoenix/comparisons_rollapply.rda")
+rfscores_roll_p <- hcomparisons_rollapply %>% select(land1, land2, rfscore)
+saveRDS(rfscores_roll_p, "../data/phoenix/rfscores_roll.rda")
+
+```
+
+
+
+## Lassobasic  
+
+
+```{r}
+hbullets_lb <- hbullets
+hbullets_lb <- hbullets_lb %>% mutate(
+  sigs = purrr::map2(
+    .x = ccdata, .y = grooves_lassobasic, 
+    .f = function(x, y) {
+      cc_get_signature(
+        ccdata = x, grooves = y, span1 = 0.75, span2 = 0.03)
+    })
+)
+#head(hbullets_lb)
+
+
+hbullets_lb$bulletland <- paste0(hbullets_lb$bullet,"-", hbullets_lb$land)
+hbullets_lb$barrelbulletland <- paste0(hbullets_lb$barrel, "-", hbullets_lb$bullet, "-", hbullets_lb$land)
+hlands_lb <- unique(hbullets_lb$barrelbulletland)
+hcomparisons_lb <- data.frame(
+  expand.grid(land1 = hlands_lb, land2 = hlands_lb), stringsAsFactors = FALSE)
+
+######
+hcomparisons_lb <- hcomparisons_lb %>% mutate(
+  aligned = purrr::map2(.x = land1, .y = land2, .f = function(xx, yy) {
+    land1 <- hbullets_lb$sigs[hbullets_lb$barrelbulletland == xx][[1]]
+    land2 <- hbullets_lb$sigs[hbullets_lb$barrelbulletland == yy][[1]]
+    land1$bullet <- "first-land"
+    land2$bullet <- "second-land"
+    
+    sig_align(land1$sig, land2$sig)
+  })
+)
+
+#head(hcomparisons_lb)
+
+hcomparisons_lb <- hcomparisons_lb %>% mutate(
+  ccf0 = aligned %>% 
+    purrr::map_dbl(.f = function(x) extract_feature_ccf(x$lands)),
+  lag0 = aligned %>% 
+    purrr::map_dbl(.f = function(x) extract_feature_lag(x$lands)),
+  D0 = aligned %>% 
+    purrr::map_dbl(.f = function(x) extract_feature_D(x$lands)),
+  length0 = aligned %>% 
+    purrr::map_dbl(.f = function(x) extract_feature_length(x$lands)),
+  overlap0 = aligned %>% 
+    purrr::map_dbl(.f = function(x) extract_feature_overlap(x$lands))
+)
+
+hcomparisons_lb <- hcomparisons_lb %>% mutate(
+  striae = aligned %>% purrr::map(.f = sig_cms_max, span = 75) 
+)
+hcomparisons_lb <- hcomparisons_lb %>% mutate(
+  cms_per_mm = purrr::map2(striae, aligned, .f = function(s, a) {
+    extract_feature_cms_per_mm(s$lines, a$lands, resolution=0.645)
+  }),
+  matches0 = striae %>% purrr::map_dbl(.f = function(s) {
+    bulletxtrctr:::extract_helper_feature_n_striae(s$lines, type = "peak", match = TRUE)
+  }),
+  mismatches0 = striae %>% purrr::map_dbl(.f = function(s) {
+    bulletxtrctr:::extract_helper_feature_n_striae(s$lines, type = "peak", match = FALSE)
+  })
+  
+)
+
+hcomparisons_lb <- hcomparisons_lb %>% mutate(
+  bulletA = gsub("([1-2])-([1-6])","\\1",land1),
+  bulletB = gsub("([1-2])-([1-6])","\\1",land2),
+  landA = gsub("([1-2])-([1-6])","\\2",land1),
+  landB = gsub("([1-2])-([1-6])","\\2",land2)
+)
+
+hcomparisons_lb <- hcomparisons_lb %>% mutate(
+  features = purrr::map2(.x = aligned, .y = striae, .f = extract_features_all, resolution = 0.645)
+)
+
+hcomparisons_lb <- hcomparisons_lb %>% mutate(
+  legacy_features = purrr::map(striae, extract_features_all_legacy, resolution = 0.645)
+)
+
+hcomparisons_lb <- hcomparisons_lb %>% tidyr::unnest(legacy_features) 
+# scale features before using them in the random forest, legacy features can be used out of the box
+hcomparisons_lb$rfscore <- predict(bulletxtrctr::rtrees, newdata = hcomparisons_lb, type = "prob")[,2]
+
+head(hcomparisons_lb)
+
+saveRDS(hcomparisons_lb, "../data/phoenix/comparisons_lb.rda")
+rfscores_lb_p <- hcomparisons_lb %>% select(land1, land2, rfscore)
+saveRDS(rfscores_lb_p, "../data/phoenix/rfscores_lb.rda")
+
+```
+
+
+
+## Lassofull  
+
+
+
+```{r}
+hbullets_lf <- hbullets
+hbullets_lf <- hbullets_lf %>% mutate(
+  sigs = purrr::map2(
+    .x = ccdata, .y = grooves_lassofull, 
+    .f = function(x, y) {
+      cc_get_signature(
+        ccdata = x, grooves = y, span1 = 0.75, span2 = 0.03)
+    })
+)
+#head(hbullets_lf)
+
+
+hbullets_lf$bulletland <- paste0(hbullets_lf$bullet,"-", hbullets_lf$land)
+hbullets_lf$barrelbulletland <- paste0(hbullets_lf$barrel, "-", hbullets_lf$bullet, "-", hbullets_lf$land)
+hlands_lf <- unique(hbullets_lf$barrelbulletland)
+hcomparisons_lf <- data.frame(
+  expand.grid(land1 = hlands_lf, land2 = hlands_lf), stringsAsFactors = FALSE)
+
+######
+hcomparisons_lf <- hcomparisons_lf %>% mutate(
+  aligned = purrr::map2(.x = land1, .y = land2, .f = function(xx, yy) {
+    land1 <- hbullets_lf$sigs[hbullets_lf$barrelbulletland == xx][[1]]
+    land2 <- hbullets_lf$sigs[hbullets_lf$barrelbulletland == yy][[1]]
+    land1$bullet <- "first-land"
+    land2$bullet <- "second-land"
+    
+    sig_align(land1$sig, land2$sig)
+  })
+)
+
+#head(hcomparisons_lf)
+
+hcomparisons_lf <- hcomparisons_lf %>% mutate(
+  ccf0 = aligned %>% 
+    purrr::map_dbl(.f = function(x) extract_feature_ccf(x$lands)),
+  lag0 = aligned %>% 
+    purrr::map_dbl(.f = function(x) extract_feature_lag(x$lands)),
+  D0 = aligned %>% 
+    purrr::map_dbl(.f = function(x) extract_feature_D(x$lands)),
+  length0 = aligned %>% 
+    purrr::map_dbl(.f = function(x) extract_feature_length(x$lands)),
+  overlap0 = aligned %>% 
+    purrr::map_dbl(.f = function(x) extract_feature_overlap(x$lands))
+)
+
+hcomparisons_lf <- hcomparisons_lf %>% mutate(
+  striae = aligned %>% purrr::map(.f = sig_cms_max, span = 75) 
+)
+hcomparisons_lf <- hcomparisons_lf %>% mutate(
+  cms_per_mm = purrr::map2(striae, aligned, .f = function(s, a) {
+    extract_feature_cms_per_mm(s$lines, a$lands, resolution=0.645)
+  }),
+  matches0 = striae %>% purrr::map_dbl(.f = function(s) {
+    bulletxtrctr:::extract_helper_feature_n_striae(s$lines, type = "peak", match = TRUE)
+  }),
+  mismatches0 = striae %>% purrr::map_dbl(.f = function(s) {
+    bulletxtrctr:::extract_helper_feature_n_striae(s$lines, type = "peak", match = FALSE)
+  })
+  
+)
+
+hcomparisons_lf <- hcomparisons_lf %>% mutate(
+  bulletA = gsub("([1-2])-([1-6])","\\1",land1),
+  bulletB = gsub("([1-2])-([1-6])","\\1",land2),
+  landA = gsub("([1-2])-([1-6])","\\2",land1),
+  landB = gsub("([1-2])-([1-6])","\\2",land2)
+)
+
+hcomparisons_lf <- hcomparisons_lf %>% mutate(
+  features = purrr::map2(.x = aligned, .y = striae, .f = extract_features_all, resolution = 0.645)
+)
+
+hcomparisons_lf <- hcomparisons_lf %>% mutate(
+  legacy_features = purrr::map(striae, extract_features_all_legacy, resolution = 0.645)
+)
+
+hcomparisons_lf <- hcomparisons_lf %>% tidyr::unnest(legacy_features) 
+# scale features before using them in the random forest, legacy features can be used out of the box
+hcomparisons_lf$rfscore <- predict(bulletxtrctr::rtrees, newdata = hcomparisons_lf, type = "prob")[,2]
+
+head(hcomparisons_lf)
+
+saveRDS(hcomparisons_lf, "../data/phoenix/comparisons_lf.rda")
+rfscores_lf_p <- hcomparisons_lf %>% select(land1, land2, rfscore)
+saveRDS(rfscores_lf_p, "../data/phoenix/rfscores_lf.rda")
+
+```
+
+
+
+
+## Bayesian Changepoint  
+
+
+
+```{r}
+hbullets_bcp <- hbullets
+hbullets_bcp <- hbullets_bcp %>% mutate(
+  sigs = purrr::map2(
+    .x = ccdata, .y = grooves_bcp, 
+    .f = function(x, y) {
+      cc_get_signature(
+        ccdata = x, grooves = y, span1 = 0.75, span2 = 0.03)
+    })
+)
+#head(hbullets_lf)
+
+
+hbullets_bcp$bulletland <- paste0(hbullets_bcp$bullet,"-", hbullets_bcp$land)
+hbullets_bcp$barrelbulletland <- paste0(hbullets_bcp$barrel, "-", hbullets_bcp$bullet, "-", hbullets_bcp$land)
+hlands_bcp <- unique(hbullets_bcp$barrelbulletland)
+hcomparisons_bcp <- data.frame(
+  expand.grid(land1 = hlands_bcp, land2 = hlands_bcp), stringsAsFactors = FALSE)
+
+######
+hcomparisons_bcp <- hcomparisons_bcp %>% mutate(
+  aligned = purrr::map2(.x = land1, .y = land2, .f = function(xx, yy) {
+    land1 <- hbullets_bcp$sigs[hbullets_bcp$barrelbulletland == xx][[1]]
+    land2 <- hbullets_bcp$sigs[hbullets_bcp$barrelbulletland == yy][[1]]
+    land1$bullet <- "first-land"
+    land2$bullet <- "second-land"
+    
+    sig_align(land1$sig, land2$sig)
+  })
+)
+
+#head(hcomparisons_bcp)
+
+hcomparisons_bcp <- hcomparisons_bcp %>% mutate(
+  ccf0 = aligned %>% 
+    purrr::map_dbl(.f = function(x) extract_feature_ccf(x$lands)),
+  lag0 = aligned %>% 
+    purrr::map_dbl(.f = function(x) extract_feature_lag(x$lands)),
+  D0 = aligned %>% 
+    purrr::map_dbl(.f = function(x) extract_feature_D(x$lands)),
+  length0 = aligned %>% 
+    purrr::map_dbl(.f = function(x) extract_feature_length(x$lands)),
+  overlap0 = aligned %>% 
+    purrr::map_dbl(.f = function(x) extract_feature_overlap(x$lands))
+)
+
+hcomparisons_bcp <- hcomparisons_bcp %>% mutate(
+  striae = aligned %>% purrr::map(.f = sig_cms_max, span = 75) 
+)
+hcomparisons_bcp <- hcomparisons_bcp %>% mutate(
+  cms_per_mm = purrr::map2(striae, aligned, .f = function(s, a) {
+    extract_feature_cms_per_mm(s$lines, a$lands, resolution=0.645)
+  }),
+  matches0 = striae %>% purrr::map_dbl(.f = function(s) {
+    bulletxtrctr:::extract_helper_feature_n_striae(s$lines, type = "peak", match = TRUE)
+  }),
+  mismatches0 = striae %>% purrr::map_dbl(.f = function(s) {
+    bulletxtrctr:::extract_helper_feature_n_striae(s$lines, type = "peak", match = FALSE)
+  })
+  
+)
+
+hcomparisons_bcp <- hcomparisons_bcp %>% mutate(
+  bulletA = gsub("([1-2])-([1-6])","\\1",land1),
+  bulletB = gsub("([1-2])-([1-6])","\\1",land2),
+  landA = gsub("([1-2])-([1-6])","\\2",land1),
+  landB = gsub("([1-2])-([1-6])","\\2",land2)
+)
+
+hcomparisons_bcp <- hcomparisons_bcp %>% mutate(
+  features = purrr::map2(.x = aligned, .y = striae, .f = extract_features_all, resolution = 0.645)
+)
+
+hcomparisons_bcp <- hcomparisons_bcp %>% mutate(
+  legacy_features = purrr::map(striae, extract_features_all_legacy, resolution = 0.645)
+)
+
+hcomparisons_bcp <- hcomparisons_bcp %>% tidyr::unnest(legacy_features) 
+# scale features before using them in the random forest, legacy features can be used out of the box
+hcomparisons_bcp$rfscore <- predict(bulletxtrctr::rtrees, newdata = hcomparisons_bcp, type = "prob")[,2]
+
+head(hcomparisons_bcp)
+
+saveRDS(hcomparisons_bcp, "../data/phoenix/comparisons_bcp.rda")
+rfscores_bcp_p <- hcomparisons_bcp %>% select(land1, land2, rfscore)
+saveRDS(rfscores_bcp_p, "../data/phoenix/rfscores_bcp.rda")
+
+```
