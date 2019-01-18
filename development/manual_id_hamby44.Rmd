@@ -1,0 +1,192 @@
+---
+title: "manual_id_hamby44"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r packages-and-data, echo = F, message = F, warning = F}
+#install.packages("tidyr")
+#install.packages("dplyr")
+#install.packages("purrr")
+#install.packages("ggplot2")
+library(tidyr)
+library(plyr)
+library(dplyr)
+library(purrr)
+library(ggplot2)
+
+hamby44 <- readRDS("//opt/hamby44/hamby44.rda")
+#hamby44[1:6,] # to look at what the first 6 rows look like.  
+```
+
+```{r ccdata-define, echo = F}
+
+hamby44 <- hamby44 %>% filter(!is.na(crosscuts))
+hamby44 <- hamby44 %>% mutate(ccdata = purrr::map(ccdata, .f = function(df){
+  df %>% group_by(y) %>% dplyr::summarise(y_new = mean(x, na.rm = T), x_new = mean(y), value = mean(value, na.rm = T))
+}))
+
+hamby44 <- hamby44 %>% mutate(ccdata = purrr::map(ccdata, .f = function(df){
+  new.frame <- data.frame(x = df$x_new, y = df$y_new, value = df$value)
+  return(new.frame)
+}))
+
+ccdata <- hamby44$ccdata
+
+```
+
+```{r grooves-define, warning = F}
+#devtools::install_github("bulletxtrctr", username = "heike")
+library(bulletxtrctr)
+grooves <- ccdata %>% purrr::map(.f = function(X) {
+  if (is.null(X)) return(NULL) 
+  get_grooves_rollapply(x = X$x, value = X$value, return_plot = T)
+  })
+saveRDS(grooves, file="../data/hamby44/grooves_kr2.rda")
+```
+
+```{r manual-groove-id, echo = F}
+## code taken from "01-data-processing.Rmd" from Heike
+
+library(shiny)
+
+#if (interactive()) {
+shinyApp(
+  
+  ui = fluidPage(
+    selectInput("k","Investigate kth plot:", selected = 1,
+                choices=1:length(grooves)),
+    textOutput("groovelocations"),
+    actionButton("confirm", "Confirm"),
+    actionButton("save", "Save"),
+    plotOutput("groovePlot", click = "plot_click"),
+    verbatimTextOutput("info")
+  ),
+  
+  server = function(input, output, session) {
+    output$groovePlot <- renderPlot({
+      k <- as.numeric(input$k)
+      p <- grooves[[k]]$plot 
+
+      p
+    })
+    output$groovelocations <- renderText({
+      paste("Left Groove: ",grooves[[as.numeric(input$k)]]$groove[1], 
+            " Right Groove: ",grooves[[as.numeric(input$k)]]$groove[2])
+    })
+    observeEvent(input$confirm,{
+      cat(str(input$k))
+      updateSelectInput(session, "k","Investigate kth plot:", 
+                        selected = as.numeric(input$k)+1,
+                        choices=1:length(grooves))
+    })
+    observeEvent(input$save,{
+      saveRDS(grooves, file="../data/phoenix/grooves_kr1.rda")
+      cat("groove data saved\n")
+    })
+    
+    observeEvent(input$plot_click,{
+      k <- as.numeric(input$k)
+      xloc <- input$plot_click$x
+      
+      gr <- grooves[[k]]$groove
+      if (abs(gr[1]-xloc) < abs(gr[2]-xloc)) {
+        grooves[[k]]$groove[1] <<- xloc
+      } else {
+        grooves[[k]]$groove[2] <<- xloc
+      }
+      output$groovePlot <- renderPlot({ 
+      k <- as.numeric(input$k)
+      p <- grooves[[k]]$plot + 
+        geom_vline(xintercept = grooves[[k]]$groove[1], colour="green") +
+        geom_vline(xintercept = grooves[[k]]$groove[2], colour="green")
+    
+      p
+      })
+  
+    })
+    output$info <- renderText({
+    paste0("x=", input$plot_click$x, "\ny=", input$plot_click$y)
+  })
+
+  },
+
+  options = list(height = 500)
+)
+#}
+saveRDS(grooves, file="../data/hamby44/grooves_kr2.rda")
+
+```
+
+```{r}
+grooves_kr2 <- readRDS("../data/hamby44/grooves_kr2.rda")
+#na_crosscuts <- which(is.na(houston$crosscut)) ## just get rid of these before doing the ShinyApp in the future! 
+#grooves <- grooves[-na_crosscuts]
+#houston_eval <- houston[-na_crosscuts,]
+hamby44_paper <- readRDS("../data/hamby44/hamby44_paper.rda")
+hamby44_paper$grooves_kr2 <- grooves_kr2
+```
+
+
+```{r define-left-and-right-groove, echo = F, warning = F, message = F}
+
+hamby44_paper$left_groove_kr2 <- 0
+hamby44_paper$right_groove_kr2 <- 0
+for (i in 1:nrow(hamby44_paper)){
+  hamby44_paper$left_groove_kr2[i] <- hamby44_paper$grooves_kr2[[i]]$groove[1]
+  hamby44_paper$right_groove_kr2[i] <- hamby44_paper$grooves_kr2[[i]]$groove[2]
+}
+
+saveRDS(hamby44_paper, "../data/hamby44/hamby44_paper.rda")
+
+
+head(hamby44_paper)
+```
+
+
+
+
+
+```{r}
+#grooves_kr1 <- readRDS("../data/hamby44/grooves_kr1.rda")
+#hamby44_paper <- readRDS("../data/hamby44/hamby44_paper.rda")
+#hamby44_paper$grooves_kr1 <- grooves_kr1
+
+
+#hamby44_paper$left_groove_kr1 <- 0
+#hamby44_paper$right_groove_kr1 <- 0
+#for (i in 1:nrow(hamby44_paper)){
+#  hamby44_paper$left_groove_kr1[i] <- hamby44_paper$grooves_kr1[[i]]$groove[1]
+#  hamby44_paper$right_groove_kr1[i] <- hamby44_paper$grooves_kr1[[i]]$groove[2]
+#}
+
+
+#saveRDS(hamby44_paper, "../data/hamby44/hamby44_paper.rda")
+
+#head(hamby44_paper)
+
+```
+
+
+
+```{r}
+#grooves_kr2 <- readRDS("../data/hamby44/grooves_kr2.rda")
+#hamby44_paper <- readRDS("../data/hamby44/hamby44_paper.rda")
+#hamby44_paper$grooves_kr2 <- grooves_kr2
+
+
+#hamby44_paper$left_groove_kr2 <- 0
+#hamby44_paper$right_groove_kr2 <- 0
+#for (i in 1:nrow(hamby44_paper)){
+#  hamby44_paper$left_groove_kr2[i] <- hamby44_paper$grooves_kr2[[i]]$groove[1]
+#  hamby44_paper$right_groove_kr2[i] <- hamby44_paper$grooves_kr2[[i]]$groove[2]
+#}
+
+#saveRDS(hamby44_paper, "../data/hamby44/hamby44_paper.rda")
+
+#head(hamby44_paper)
+```
+
