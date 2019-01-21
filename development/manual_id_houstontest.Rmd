@@ -38,7 +38,7 @@ grooves <- ccdata %>% purrr::map(.f = function(X) {
   if (is.null(X)) return(NULL) 
   get_grooves_rollapply(x = X$x, value = X$value, return_plot = T)
   })
-saveRDS(grooves, file="../data/houston-test/grooves_kr1.rda")
+saveRDS(grooves, file="../data/houston-test/grooves_kr2.rda")
 ```
 
 ```{r manual-groove-id, echo = F}
@@ -77,7 +77,7 @@ shinyApp(
                         choices=1:length(grooves))
     })
     observeEvent(input$save,{
-      saveRDS(grooves, file="../data/phoenix/grooves_kr1.rda")
+      saveRDS(grooves, file="../data/houston-test/grooves_kr2.rda")
       cat("groove data saved\n")
     })
     
@@ -110,30 +110,41 @@ shinyApp(
   options = list(height = 500)
 )
 #}
-saveRDS(grooves, file="../data/houston-test/grooves_kr1.rda")
+saveRDS(grooves, file="../data/houston-test/grooves_kr2.rda")
 
 ```
 
 
 
 ```{r}
-grooves_kr1 <- readRDS("../data/houston-test/grooves_kr1.rda")
-#na_crosscuts <- which(is.na(houston$crosscut)) ## just get rid of these before doing the ShinyApp in the future! 
-#grooves <- grooves[-na_crosscuts]
-#houston_eval <- houston[-na_crosscuts,]
-houstontest_eval <- readRDS("../data/houston-test/houstontest_paper.rda")
-houstontest_eval$grooves_kr1 <- grooves_kr1
+grooves_kr2 <- readRDS("../data/houston-test/grooves_kr2.rda")
+
+houstontest_paper <- readRDS("../data/houston-test/houstontest_paper.rda")
+houstontest_paper$grooves_kr2 <- grooves_kr2
+
+houstontest_paper$left_groove_kr2 <- 0
+houstontest_paper$right_groove_kr2 <- 0
+for (i in 1:nrow(houstontest_paper)){
+  houstontest_paper$left_groove_kr2[i] <- houstontest_paper$grooves_kr2[[i]]$groove[1]
+  houstontest_paper$right_groove_kr2[i] <- houstontest_paper$grooves_kr2[[i]]$groove[2]
+}
+head(houstontest_paper)
+saveRDS(houstontest_paper, "../data/houston-test/houstontest_paper.rda")
 ```
 
 
-```{r define-left-and-right-groove, echo = F, warning = F, message = F}
+```{r}
+grooves_kr1 <- readRDS("../data/houston-test/grooves_kr1.rda")
 
-houstontest_eval$left_groove_kr1 <- 0
-houstontest_eval$right_groove_kr1 <- 0
-for (i in 1:nrow(houstontest_eval)){
-  houstontest_eval$left_groove_kr1[i] <- houstontest_eval$grooves_kr1[[i]]$groove[1]
-  houstontest_eval$right_groove_kr1[i] <- houstontest_eval$grooves_kr1[[i]]$groove[2]
+houstontest_paper <- readRDS("../data/houston-test/houstontest_paper.rda")
+houstontest_paper$grooves_kr1 <- grooves_kr1
+
+houstontest_paper$left_groove_kr1 <- 0
+houstontest_paper$right_groove_kr1 <- 0
+for (i in 1:nrow(houstontest_paper)){
+  houstontest_paper$left_groove_kr1[i] <- houstontest_paper$grooves_kr1[[i]]$groove[1]
+  houstontest_paper$right_groove_kr1[i] <- houstontest_paper$grooves_kr1[[i]]$groove[2]
 }
-head(houstontest_eval)
-saveRDS(houstontest_eval, "../data/houston-test/houstontest_eval.rda")
+head(houstontest_paper)
+saveRDS(houstontest_paper, "../data/houston-test/houstontest_paper.rda")
 ```

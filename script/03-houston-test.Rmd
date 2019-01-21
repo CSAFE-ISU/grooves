@@ -30,7 +30,6 @@ hbullets <- hbullets %>%
   mutate(source = purrr::map(source, .f = function(col){
     split1<- strsplit(col, "//")[[1]][2]
     split2 <- strsplit(split1, "-")[[1]]
-    b
     return(bbl2)
   })) %>% 
   separate(source, c("barrel", "bullet", "land"), sep = "/") %>% 
