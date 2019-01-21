@@ -38,7 +38,7 @@ grooves <- ccdata %>% purrr::map(.f = function(X) {
   if (is.null(X)) return(NULL) 
   get_grooves_rollapply(x = X$x, value = X$value, return_plot = T)
   })
-saveRDS(grooves, file="../data/phoenix/grooves_kr1.rda")
+saveRDS(grooves, file="../data/phoenix/grooves_kr3.rda")
 ```
 
 ```{r manual-groove-id, echo = F}
@@ -77,7 +77,7 @@ shinyApp(
                         choices=1:length(grooves))
     })
     observeEvent(input$save,{
-      saveRDS(grooves, file="../data/phoenix/grooves_kr1.rda")
+      saveRDS(grooves, file="../data/phoenix/grooves_kr3.rda")
       cat("groove data saved\n")
     })
     
@@ -110,33 +110,67 @@ shinyApp(
   options = list(height = 500)
 )
 #}
-saveRDS(grooves, file="../data/phoenix/grooves_kr1.rda")
+saveRDS(grooves, file="../data/phoenix/grooves_kr3.rda")
 
 ```
+
+
+
 
 ```{r}
 grooves_kr1 <- readRDS("../data/phoenix/grooves_kr1.rda")
-#na_crosscuts <- which(is.na(houston$crosscut)) ## just get rid of these before doing the ShinyApp in the future! 
-#grooves <- grooves[-na_crosscuts]
-#houston_eval <- houston[-na_crosscuts,]
-phoenix_eval <- readRDS("../data/phoenix/phoenix_paper.rda")
-phoenix_eval$grooves_kr1 <- grooves_kr1
-```
 
+phoenix_paper <- readRDS("../data/phoenix/phoenix_paper.rda")
+phoenix_paper$grooves_kr1 <- grooves_kr1
 
-```{r define-left-and-right-groove, echo = F, warning = F, message = F}
-
-phoenix_eval$left_groove_kr1 <- 0
-phoenix_eval$right_groove_kr1 <- 0
-for (i in 1:nrow(phoenix_eval)){
-  phoenix_eval$left_groove_kr1[i] <- phoenix_eval$grooves_kr1[[i]]$groove[1]
-  phoenix_eval$right_groove_kr1[i] <- phoenix_eval$grooves_kr1[[i]]$groove[2]
+phoenix_paper$left_groove_kr1 <- 0
+phoenix_paper$right_groove_kr1 <- 0
+for (i in 1:nrow(phoenix_paper)){
+  phoenix_paper$left_groove_kr1[i] <- phoenix_paper$grooves_kr1[[i]]$groove[1]
+  phoenix_paper$right_groove_kr1[i] <- phoenix_paper$grooves_kr1[[i]]$groove[2]
 }
 
-saveRDS(phoenix_eval, "../data/phoenix/phoenix_paper.rda")
-
+saveRDS(phoenix_paper, "../data/phoenix/phoenix_paper.rda")
 ```
 
+
+
+
+```{r}
+grooves_kr2 <- readRDS("../data/phoenix/grooves_kr2.rda")
+
+phoenix_paper <- readRDS("../data/phoenix/phoenix_paper.rda")
+phoenix_paper$grooves_kr2 <- grooves_kr2
+
+
+phoenix_paper$left_groove_kr2 <- 0
+phoenix_paper$right_groove_kr2 <- 0
+for (i in 1:nrow(phoenix_paper)){
+  phoenix_paper$left_groove_kr2[i] <- phoenix_paper$grooves_kr2[[i]]$groove[1]
+  phoenix_paper$right_groove_kr2[i] <- phoenix_paper$grooves_kr2[[i]]$groove[2]
+}
+
+saveRDS(phoenix_paper, "../data/phoenix/phoenix_paper.rda")
+```
+
+
+
+```{r}
+grooves_kr3 <- readRDS("../data/phoenix/grooves_kr3.rda")
+
+phoenix_paper <- readRDS("../data/phoenix/phoenix_paper.rda")
+phoenix_paper$grooves_kr3 <- grooves_kr3
+
+
+phoenix_paper$left_groove_kr3 <- 0
+phoenix_paper$right_groove_kr3 <- 0
+for (i in 1:nrow(phoenix_paper)){
+  phoenix_paper$left_groove_kr3[i] <- phoenix_paper$grooves_kr3[[i]]$groove[1]
+  phoenix_paper$right_groove_kr3[i] <- phoenix_paper$grooves_kr3[[i]]$groove[2]
+}
+
+saveRDS(phoenix_paper, "../data/phoenix/phoenix_paper.rda")
+```
 
 
 

@@ -45,7 +45,7 @@ grooves <- ccdata %>% purrr::map(.f = function(X) {
   if (is.null(X)) return(NULL) 
   get_grooves_rollapply(x = X$x, value = X$value, return_plot = T)
   })
-saveRDS(grooves, file="../data/hamby44/grooves_kr2.rda")
+saveRDS(grooves, file="../data/hamby44/grooves_kr3.rda")
 ```
 
 ```{r manual-groove-id, echo = F}
@@ -84,7 +84,7 @@ shinyApp(
                         choices=1:length(grooves))
     })
     observeEvent(input$save,{
-      saveRDS(grooves, file="../data/phoenix/grooves_kr1.rda")
+      saveRDS(grooves, file="../data/hamby44/grooves_kr3.rda")
       cat("groove data saved\n")
     })
     
@@ -117,27 +117,27 @@ shinyApp(
   options = list(height = 500)
 )
 #}
-saveRDS(grooves, file="../data/hamby44/grooves_kr2.rda")
+saveRDS(grooves, file="../data/hamby44/grooves_kr3.rda")
 
 ```
 
 ```{r}
-grooves_kr2 <- readRDS("../data/hamby44/grooves_kr2.rda")
+grooves_kr3 <- readRDS("../data/hamby44/grooves_kr3.rda")
 #na_crosscuts <- which(is.na(houston$crosscut)) ## just get rid of these before doing the ShinyApp in the future! 
 #grooves <- grooves[-na_crosscuts]
 #houston_eval <- houston[-na_crosscuts,]
 hamby44_paper <- readRDS("../data/hamby44/hamby44_paper.rda")
-hamby44_paper$grooves_kr2 <- grooves_kr2
+hamby44_paper$grooves_kr3 <- grooves_kr3
 ```
 
 
 ```{r define-left-and-right-groove, echo = F, warning = F, message = F}
 
-hamby44_paper$left_groove_kr2 <- 0
-hamby44_paper$right_groove_kr2 <- 0
+hamby44_paper$left_groove_kr3 <- 0
+hamby44_paper$right_groove_kr3 <- 0
 for (i in 1:nrow(hamby44_paper)){
-  hamby44_paper$left_groove_kr2[i] <- hamby44_paper$grooves_kr2[[i]]$groove[1]
-  hamby44_paper$right_groove_kr2[i] <- hamby44_paper$grooves_kr2[[i]]$groove[2]
+  hamby44_paper$left_groove_kr3[i] <- hamby44_paper$grooves_kr3[[i]]$groove[1]
+  hamby44_paper$right_groove_kr3[i] <- hamby44_paper$grooves_kr3[[i]]$groove[2]
 }
 
 saveRDS(hamby44_paper, "../data/hamby44/hamby44_paper.rda")

@@ -415,3 +415,103 @@ rfscores_bcp_p <- pcomparisons_bcp %>% select(land1, land2, rfscore)
 saveRDS(rfscores_bcp_p, "../data/phoenix/rfscores_bcp.rda")
 
 ```
+
+
+
+
+## Manual 
+
+
+
+```{r}
+
+pbullets_manual <- pbullets
+
+
+pbullets_manual <- pbullets_manual %>% mutate(
+  sigs = purrr::map2(
+    .x = ccdata, .y = grooves_kr1, 
+    .f = function(x, y) {
+      cc_get_signature(
+        ccdata = x, grooves = y, span1 = 0.75, span2 = 0.03)
+    })
+)
+#head(pbullets_manual)
+
+
+pbullets_manual$bulletland <- paste0(pbullets_manual$bullet,"-", pbullets_manual$land)
+pbullets_manual$barrelbulletland <- paste0(pbullets_manual$barrel, "-", pbullets_manual$bullet, "-", pbullets_manual$land)
+plands_manual <- unique(pbullets_manual$barrelbulletland)
+pcomparisons_manual <- data.frame(
+  expand.grid(land1 = plands_manual, land2 = plands_manual), stringsAsFactors = FALSE)
+
+######
+pcomparisons_manual <- pcomparisons_manual %>% mutate(
+  aligned = purrr::map2(.x = land1, .y = land2, .f = function(xx, yy) {
+    land1 <- pbullets_manual$sigs[pbullets_manual$barrelbulletland == xx][[1]]
+    land2 <- pbullets_manual$sigs[pbullets_manual$barrelbulletland == yy][[1]]
+    land1$bullet <- "first-land"
+    land2$bullet <- "second-land"
+    
+    sig_align(land1$sig, land2$sig)
+  })
+)
+
+#head(pcomparisons_manual)
+
+pcomparisons_manual <- pcomparisons_manual %>% mutate(
+  ccf0 = aligned %>% 
+    purrr::map_dbl(.f = function(x) extract_feature_ccf(x$lands)),
+  lag0 = aligned %>% 
+    purrr::map_dbl(.f = function(x) extract_feature_lag(x$lands)),
+  D0 = aligned %>% 
+    purrr::map_dbl(.f = function(x) extract_feature_D(x$lands)),
+  length0 = aligned %>% 
+    purrr::map_dbl(.f = function(x) extract_feature_length(x$lands)),
+  overlap0 = aligned %>% 
+    purrr::map_dbl(.f = function(x) extract_feature_overlap(x$lands))
+)
+
+pcomparisons_manual <- pcomparisons_manual %>% mutate(
+  striae = aligned %>% purrr::map(.f = sig_cms_max, span = 75) 
+)
+pcomparisons_manual <- pcomparisons_manual %>% mutate(
+  cms_per_mm = purrr::map2(striae, aligned, .f = function(s, a) {
+    extract_feature_cms_per_mm(s$lines, a$lands, resolution=0.645)
+  }),
+  matches0 = striae %>% purrr::map_dbl(.f = function(s) {
+    bulletxtrctr:::extract_helper_feature_n_striae(s$lines, type = "peak", match = TRUE)
+  }),
+  mismatches0 = striae %>% purrr::map_dbl(.f = function(s) {
+    bulletxtrctr:::extract_helper_feature_n_striae(s$lines, type = "peak", match = FALSE)
+  })
+  
+)
+
+pcomparisons_manual <- pcomparisons_manual %>% mutate(
+  bulletA = gsub("([1-2])-([1-6])","\\1",land1),
+  bulletB = gsub("([1-2])-([1-6])","\\1",land2),
+  landA = gsub("([1-2])-([1-6])","\\2",land1),
+  landB = gsub("([1-2])-([1-6])","\\2",land2)
+)
+
+pcomparisons_manual <- pcomparisons_manual %>% mutate(
+  features = purrr::map2(.x = aligned, .y = striae, .f = extract_features_all, resolution = 0.645)
+)
+
+pcomparisons_manual <- pcomparisons_manual %>% mutate(
+  legacy_features = purrr::map(striae, extract_features_all_legacy, resolution = 0.645)
+)
+
+pcomparisons_manual <- pcomparisons_manual %>% tidyr::unnest(legacy_features) 
+# scale features before using them in the random forest, legacy features can be used out of the box
+pcomparisons_manual$rfscore <- predict(bulletxtrctr::rtrees, newdata = pcomparisons_manual, type = "prob")[,2]
+
+head(pcomparisons_manual)
+
+saveRDS(pcomparisons_manual, "../data/phoenix/comparisons_manual.rda")
+rfscores_manual_p <- pcomparisons_manual %>% select(land1, land2, rfscore)
+saveRDS(rfscores_manual_p, "../data/phoenix/rfscores_manual.rda")
+
+```
+
