@@ -283,6 +283,3 @@ When we impute the missing values, we compute the conditional mean of the missin
 
 \[ E(Y^*|Y = y) = \Sigma_{y^*y} \Sigma_{yy}^{-1}y \].  
 
-
-
-
