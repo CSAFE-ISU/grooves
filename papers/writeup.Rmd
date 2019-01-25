@@ -79,15 +79,18 @@ However, since LOESS is still rooted in traditional regression techniques, it is
 
 This model is fit as follows: (add more formulaic language here...)
 
-1. Fit a LOESS model (span = 1) to an entire crosscut to predict y using values of x. Assign weights of 1 to each data point for this fitting procedure.  
-2. Obtain predicted values of y from the model fit in step 1.  
-3. Calculate residual values using the predicted y values.  
-4. Calculate bisquare weights for each residual value using the following formula:  
-$$\max(1 - (residual/(6*MAR))^2, 0)^2,$$   where MAR is the median absolute residual for the crosscut.  
-5. Assign weights to each data point according to its residual value. If the residual value is positive, assign the bisquare downweight. If the residual is zero or negative, leave the weight at 1.  
-6. Repeat steps 1-5 with updated weights at each iteration for $k$ iterations, with 20 iterations as the default.  
-7. After $k$ iterations of updating the weight vector, fit a LOESS model (span = 1) and obtained predicted and residual values.  
+\begin{enumerate}
 
+\item Fit a LOESS model (span = 1) to an entire crosscut to predict y using values of x. Assign weights of 1 to each data point for this fitting procedure.  
+\item Obtain predicted values of y from the model fit in step 1.  
+\item Calculate residual values using the predicted y values.  
+\item Calculate bisquare weights for each residual value using the following formula:  
+$$\max(1 - (residual/(6*MAR))^2, 0)^2,$$   where MAR is the median absolute residual for the crosscut.  
+\item Assign weights to each data point according to its residual value. If the residual value is positive, assign the bisquare downweight. If the residual is zero or negative, leave the weight at 1.  
+\item Repeat steps 1-5 with updated weights at each iteration for $k$ iterations, with 20 iterations as the default.  
+\item After $k$ iterations of updating the weight vector, fit a LOESS model (span = 1) and obtained predicted and residual values.  
+
+\end{enumerate}
 
 The subsequent prediction methods for shoulder location are based on the residuals calculated from the fit to the global structure of each land. One method uses penalized two-class classification techniques to classify each data point into "LEA" or "GEA", while the second uses Bayesian changepoint analysis to predict the data points at which the shoulders begin on either side.  
 
@@ -233,12 +236,12 @@ In order to complete a Bayesian model specification, we need priors on each of t
 \subsubsection{Bayesian Model Estimation}
 As was noted in @stephens1994, for any model including a changepoint, the likelihood is not a smooth function of the changepoint location. This is because, holding all other parameters fixed, shifting the changepoint value will result in zero change to the likelihood until it crosses the nearest point to the right or left, at which point the likelihood makes a jump. This makes maximum likelihood estimation in the standard way infeasible, but Bayesian estimation can be done in a fairly straightforward way via Markov chain Monte Carlo (MCMC). The basic idea is that, for each model, we can construct a two step Gibbs sampler. In step 1 we sample from the posterior distribution of the mean and covariance parameters given the changepoint locations, and in step 2 we sample from the changepoint locations given the mean and covariance parameters. Because of the non-conjugacy in our model, we perform both sampling steps using a random walk Metropolis-Hastings (RWMH) step with Gaussian proposals. For details on Gibbs sampling and the Metropolis-Hastings algorithm see @gelman2013. It is also worth mentioning that the zero changepoint model does not require Gibbs sampling at all, and we perform estimation there using a RWMH algorithm. 
 
-We now provide the two basic steps of the Gibbs sampler for the two changepoint case. The algorithms to sample from the other three models are omitted, and are nearly identical except for the a smaller number of parameters need to be sampled. Denote collection of mean and covariance parameters for the left GEA as $\theta_1$, the LEA as $\theta_2$, and the right GEA as $\theta_3$. Then, at iteration $t$ after warmup
+We now provide the two basic steps of the Gibbs sampler for the two changepoint case. The algorithms to sample from the other three models are omitted, and are nearly identical except for the a smaller number of parameters need to be sampled. Denote collection of mean and covariance parameters for the left GEA as $\theta_1$, the LEA as $\theta_2$, and the right GEA as $\theta_3$. Then, at iteration $t$ after warmup  
 
-1. given changepoint locations $(c_l^{(t - 1)}, c_r^{(t - 1)})$, sample $(\theta_1^{(t)}, \theta_2^{(t)}, \theta_3^{(t)})$ using independent RWMH steps for each $\theta_i$
-2. given $(\theta_1^{(t)}, \theta_2^{(t)}, \theta_3^{(t)})$, sample $(c_l^{(t)}, c_r^{(t)})$ using a single RWMH step.
+1. given changepoint locations $(c_l^{(t - 1)}, c_r^{(t - 1)})$, sample $(\theta_1^{(t)}, \theta_2^{(t)}, \theta_3^{(t)})$ using independent RWMH steps for each $\theta_i$  
+2. given $(\theta_1^{(t)}, \theta_2^{(t)}, \theta_3^{(t)})$, sample $(c_l^{(t)}, c_r^{(t)})$ using a single RWMH step.  
 
-After running the MCMC for each model, parameter estimates and the most likely model are jointly chosen according to the largest joint posterior value. That is, we arrive at estimates $(\hat{\theta}, \hat{M}) = \underset{(\theta, M)}{\operatorname{argmax}}{\log(p(\theta, M | Y))}$, where $M$ is the random variable associated with the choice of model, $\theta$ is the associated parameter vector for the appropriate model, and $Y$ is all of the available data. Additional MCMC details can be found in the appendix.
+After running the MCMC for each model, parameter estimates and the most likely model are jointly chosen according to the largest joint posterior value. That is, we arrive at estimates $(\hat{\theta}, \hat{M}) = \underset{(\theta, M)}{\operatorname{argmax}}{\log(p(\theta, M | Y))}$, where $M$ is the random variable associated with the choice of model, $\theta$ is the associated parameter vector for the appropriate model, and $Y$ is all of the available data. Additional MCMC details can be found in the appendix.  
 
 \section{Results}  
 
@@ -246,34 +249,40 @@ After running the MCMC for each model, parameter estimates and the most likely m
 
 \section{References}  
 
-\section{Appendix}
+\section{Appendix}  
 
-\subsection{MCMC Details}
-As a practical note, it turns out that the posterior distribution is almost always multimodal, and it can happen that the sampler gets stuck in a suboptimal mode for a large number of iterations. It is also the case that the suboptimal modes need not even be close to the groove locations. It has, however, been our experience that the optimal mode corresponds well to the actual groove locations, which are often somewhat close to the edges of the data. With this in mind, starting values and the RWMH proposal variances play a very important role in the success of the sampling algorithm. Fortunately, it seems to be the case that by setting the initial changepoint values close to the edges of the data and making the proposal variance small (around 100 seems to work well) allows the sampler to wander inwards, and even with a modest number of iterations (say 5000), typically pass through the largest mode corresponding to the groove locations. This is not always the case, and it is possible that increasing the number of iterations produces better results.
+\subsection{MCMC Details}  
 
-In our implementation of this algorithm, the sampling functions were originally written with the intention of tuning the proposal variances to potentially accelerate convergence, and thus several warmup iterations are required for this purpose. This turns out to be a bad idea in this context for two reasons. The first reason is that the warmup iterations allow the sampler to wander past the global modes and get stuck in suboptimal modes far from the groove locations, from which the sampler may or may not find its way back to the optimal modes in just a few thousand iterations. Secondly, if the sampler does wander past the optimal modes, which are usually on the edges of the data, the tuned proposal variance can be quite large. The large proposal variance might not be a huge problem if it weren't for the fact that the width of the modes are almost always quite small. This means that it can take a very, very long time for the sampler to move from a suboptimal mode to the global mode. In order to mitigate this problem, we are currently setting the number of warmup iterations to be relatively small (somewhere in 100 to 500 seems to work well). In future, our implementation of the algorithm will not require any warmup iterations.
+As a practical note, it turns out that the posterior distribution is almost always multimodal, and it can happen that the sampler gets stuck in a suboptimal mode for a large number of iterations. It is also the case that the suboptimal modes need not even be close to the groove locations. It has, however, been our experience that the optimal mode corresponds well to the actual groove locations, which are often somewhat close to the edges of the data. With this in mind, starting values and the RWMH proposal variances play a very important role in the success of the sampling algorithm. Fortunately, it seems to be the case that by setting the initial changepoint values close to the edges of the data and making the proposal variance small (around 100 seems to work well) allows the sampler to wander inwards, and even with a modest number of iterations (say 5000), typically pass through the largest mode corresponding to the groove locations. This is not always the case, and it is possible that increasing the number of iterations produces better results.  
 
-Initially, the Metropolis proposal variance for each $\theta_i$ is diagonal with diagonal elements all equal to $1/2$. The proposal variance for $(c_l, c_r)$ is initially set to be diagonal with elements equal to $10^2$. Note that because of the currently necessary warmup iterations, the variances after warmup for each $\theta_i$ becomes $\frac{2.4^2}{d}\hat{Var}(\theta_i^{(1:w)}) + \text{diag}(0.1)$, where $d$ is the dimension of $\theta_i$ (which is not constant between GEAs and LEA), and $\hat{Var}(\theta_i^{(1:w)})$ is the estimated variance covariance matrix from the $w$ warmup iterations. Note that the addition of a diagonal matrix with entries $0.1$ is to avoid the case when most or all warmup iterations have the same value. Similarly, the proposal variance for $(c_l, c_r)$ after warmup becomes $\frac{2.4^2}{2}\hat{Var}((c_l,c_r)^{(1:w)}) + \text{diag}(1)$.
+In our implementation of this algorithm, the sampling functions were originally written with the intention of tuning the proposal variances to potentially accelerate convergence, and thus several warmup iterations are required for this purpose. This turns out to be a bad idea in this context for two reasons. The first reason is that the warmup iterations allow the sampler to wander past the global modes and get stuck in suboptimal modes far from the groove locations, from which the sampler may or may not find its way back to the optimal modes in just a few thousand iterations. Secondly, if the sampler does wander past the optimal modes, which are usually on the edges of the data, the tuned proposal variance can be quite large. The large proposal variance might not be a huge problem if it weren't for the fact that the width of the modes are almost always quite small. This means that it can take a very, very long time for the sampler to move from a suboptimal mode to the global mode. In order to mitigate this problem, we are currently setting the number of warmup iterations to be relatively small (somewhere in 100 to 500 seems to work well). In future, our implementation of the algorithm will not require any warmup iterations.  
 
-\subsection{Data Preprocessing for MCMC}
-Before running the MCMC to do the changepoint detection, we first perform two data preprocessing steps. The first step is to scale the residuals from the robust loess procedure by the standard deviation calculated from the entire set of residuals. The reason for this is simply to make priors for standard deviation and slope parameters easier to specify. For example, ensuring that the residuals are scaled to have standard deviation one means that the standard deviation parameters in our model should also be close to one. This scaling also ensures that slopes values are not very large. 
+Initially, the Metropolis proposal variance for each $\theta_i$ is diagonal with diagonal elements all equal to $1/2$. The proposal variance for $(c_l, c_r)$ is initially set to be diagonal with elements equal to $10^2$. Note that because of the currently necessary warmup iterations, the variances after warmup for each $\theta_i$ becomes $\frac{2.4^2}{d}\hat{Var}(\theta_i^{(1:w)}) + \text{diag}(0.1)$, where $d$ is the dimension of $\theta_i$ (which is not constant between GEAs and LEA), and $\hat{Var}(\theta_i^{(1:w)})$ is the estimated variance covariance matrix from the $w$ warmup iterations. Note that the addition of a diagonal matrix with entries $0.1$ is to avoid the case when most or all warmup iterations have the same value. Similarly, the proposal variance for $(c_l, c_r)$ after warmup becomes $\frac{2.4^2}{2}\hat{Var}((c_l,c_r)^{(1:w)}) + \text{diag}(1)$.  
 
-The second preprocessing step is a bit more involved. In order to enable the algorithm to run reasonably fast, we need to take advantage of the sparse precision matrix structure that is induced by the exponential covariance function. Indeed, this was the reason for choosing this covariance function in the first place. Unfortunately, it is challenging to do this unless the observations are evenly spaced in the domain. In our case, this would be true if there were no missing values. In order to remedy this problem, we impute the missing data, but only in the case that there exist nonmissing observations outside of the missing values. In the case that the missing values exist on the edges of the data, we simply do not consider those domain values in the model. 
+\subsection{Data Preprocessing for MCMC}  
 
-We perform the imputation by treating the observations as coming from an unknown function, and infer the missing values from the known function values. In order to do this, we model the data with a Gaussian process and the squared exponential covariance function. That is, we suppose that 
+Before running the MCMC to do the changepoint detection, we first perform two data preprocessing steps. The first step is to scale the residuals from the robust loess procedure by the standard deviation calculated from the entire set of residuals. The reason for this is simply to make priors for standard deviation and slope parameters easier to specify. For example, ensuring that the residuals are scaled to have standard deviation one means that the standard deviation parameters in our model should also be close to one. This scaling also ensures that slopes values are not very large.  
+
+The second preprocessing step is a bit more involved. In order to enable the algorithm to run reasonably fast, we need to take advantage of the sparse precision matrix structure that is induced by the exponential covariance function. Indeed, this was the reason for choosing this covariance function in the first place. Unfortunately, it is challenging to do this unless the observations are evenly spaced in the domain. In our case, this would be true if there were no missing values. In order to remedy this problem, we impute the missing data, but only in the case that there exist nonmissing observations outside of the missing values. In the case that the missing values exist on the edges of the data, we simply do not consider those domain values in the model.  
+
+We perform the imputation by treating the observations as coming from an unknown function, and infer the missing values from the known function values. In order to do this, we model the data with a Gaussian process and the squared exponential covariance function. That is, we suppose that  
 
 \[
 Y(x) \sim \mathcal{GP}(0, K(x,x';\sigma^2, \ell)),
 \]
 
-\noindent where now $K(x,x';\sigma^2, \ell) = \sigma^2 e^{-(x - x')^2/(2\ell^2)}$ is the squared exponential covariance function. We emphasize for clarity that this is a different covariance function than we use in the changepoint model. The main reason for this is that in imputing values, it seems desireable to allow dependencies beyond immediately neighboring points to influence predictions as the function that we are trying to predict generally has a smooth global structure. For all of our experiments, we set $\sigma = 0.8$ and $\ell = 15$. These values were chosen from doing maximum likelihood estimation for a representative bullet.
+\noindent where now $K(x,x';\sigma^2, \ell) = \sigma^2 e^{-(x - x')^2/(2\ell^2)}$ is the squared exponential covariance function. We emphasize for clarity that this is a different covariance function than we use in the changepoint model. The main reason for this is that in imputing values, it seems desireable to allow dependencies beyond immediately neighboring points to influence predictions as the function that we are trying to predict generally has a smooth global structure. For all of our experiments, we set $\sigma = 0.8$ and $\ell = 15$. These values were chosen from doing maximum likelihood estimation for a representative bullet.  
 
-When we impute the missing values, we compute the conditional mean of the missing values. To be clear, denote the distribution of the observed and missing data as 
+When we impute the missing values, we compute the conditional mean of the missing values. To be clear, denote the distribution of the observed and missing data as  
 
 \[ 
 (Y,Y^*)^\top \sim N\left( \begin{bmatrix} 0 \\ 0 \end{bmatrix}, \begin{bmatrix} \Sigma_{yy} & \Sigma_{yy^*} \\ \Sigma_{y^*y} & \Sigma_{y^*y^*}\end{bmatrix} \right).
 \]
 
-\noindent Here, $Y$ is observed data and $Y^*$ is the missing data, and the covariance matrix above is constructed from the squared exponential covariance function. We then use normal distribution theory to calculate the imputed values 
+\noindent Here, $Y$ is observed data and $Y^*$ is the missing data, and the covariance matrix above is constructed from the squared exponential covariance function. We then use normal distribution theory to calculate the imputed values  
 
-\[ E(Y^*|Y = y) = \Sigma_{y^*y} \Sigma_{yy}^{-1}y \]. 
+\[ E(Y^*|Y = y) = \Sigma_{y^*y} \Sigma_{yy}^{-1}y \].  
+
+
+
+
