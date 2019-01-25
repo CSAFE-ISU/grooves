@@ -13,6 +13,7 @@ library(randomForest)
 library(ggplot2)
 library(readr)
 library(furrr)
+library(stringr)
 
 
 hbullets <- readRDS("../data/houston-test/houstontest_paper.rda")
@@ -29,12 +30,16 @@ hbullets <- hbullets %>%
   mutate(source = as.character(source)) %>%
   mutate(source = purrr::map(source, .f = function(col){
     split1<- strsplit(col, "//")[[1]][2]
-    split2 <- strsplit(split1, "-")[[1]]
-    return(bbl2)
+    group <- strsplit(split1, "-")[[1]][2]
+    split2 <- strsplit(split1, "-Sneox")[[1]][1]
+    land <- str_sub(split2, start = -6)
+    split3 <- str_sub(split2, start = 17, end = -8)
+    bullet <- ifelse(str_detect(split3, "K.") == T, str_sub(split3, start = -8), str_sub(split3, start = -3))
+    barrel <- ifelse(str_detect(split3, "K.") == T, str_extract(split3, "K."), "Unknowns")
+    gbbl <- paste(group, barrel, bullet, land, sep = "-")
+    return(gbbl)
   })) %>% 
-  separate(source, c("barrel", "bullet", "land"), sep = "/") %>% 
-  mutate(land = ifelse(is.na(land), bullet, land)) %>% 
-  mutate(bullet = ifelse(bullet == land, "B1", bullet))
+  separate(source, c("group", "barrel", "bullet", "land"), sep = "-")
 
 head(hbullets)
 ```
@@ -56,7 +61,7 @@ hbullets_roll <- hbullets_roll %>% mutate(
 
 
 hbullets_roll$bulletland <- paste0(hbullets_roll$bullet,"-", hbullets_roll$land)
-hbullets_roll$barrelbulletland <- paste0(hbullets_roll$barrel, "-", hbullets_roll$bullet, "-", hbullets_roll$land)
+hbullets_roll$barrelbulletland <- paste0(hbullets_roll$group, "-", hbullets_roll$barrel, "-", hbullets_roll$bullet, "-", hbullets_roll$land)
 hlands_roll <- unique(hbullets_roll$barrelbulletland)
 hcomparisons_rollapply <- data.frame(
   expand.grid(land1 = hlands_roll, land2 = hlands_roll), stringsAsFactors = FALSE)
@@ -125,9 +130,9 @@ hcomparisons_rollapply$rfscore <- predict(bulletxtrctr::rtrees, newdata = hcompa
 
 head(hcomparisons_rollapply)
 
-saveRDS(hcomparisons_rollapply, "../data/phoenix/comparisons_rollapply.rda")
-rfscores_roll_p <- hcomparisons_rollapply %>% select(land1, land2, rfscore)
-saveRDS(rfscores_roll_p, "../data/phoenix/rfscores_roll.rda")
+saveRDS(hcomparisons_rollapply, "../data/houston-test/comparisons_rollapply.rda")
+rfscores_roll_ht <- hcomparisons_rollapply %>% select(land1, land2, rfscore)
+saveRDS(rfscores_roll_ht, "../data/houston-test/rfscores_roll.rda")
 
 ```
 
@@ -150,7 +155,7 @@ hbullets_lb <- hbullets_lb %>% mutate(
 
 
 hbullets_lb$bulletland <- paste0(hbullets_lb$bullet,"-", hbullets_lb$land)
-hbullets_lb$barrelbulletland <- paste0(hbullets_lb$barrel, "-", hbullets_lb$bullet, "-", hbullets_lb$land)
+hbullets_lb$barrelbulletland <- paste0(hbullets_lb$group, "-", hbullets_lb$barrel, "-", hbullets_lb$bullet, "-", hbullets_lb$land)
 hlands_lb <- unique(hbullets_lb$barrelbulletland)
 hcomparisons_lb <- data.frame(
   expand.grid(land1 = hlands_lb, land2 = hlands_lb), stringsAsFactors = FALSE)
@@ -219,9 +224,9 @@ hcomparisons_lb$rfscore <- predict(bulletxtrctr::rtrees, newdata = hcomparisons_
 
 head(hcomparisons_lb)
 
-saveRDS(hcomparisons_lb, "../data/phoenix/comparisons_lb.rda")
-rfscores_lb_p <- hcomparisons_lb %>% select(land1, land2, rfscore)
-saveRDS(rfscores_lb_p, "../data/phoenix/rfscores_lb.rda")
+saveRDS(hcomparisons_lb, "../data/houston-test/comparisons_lb.rda")
+rfscores_lb_ht <- hcomparisons_lb %>% select(land1, land2, rfscore)
+saveRDS(rfscores_lb_ht, "../data/houston-test/rfscores_lb.rda")
 
 ```
 
@@ -245,7 +250,7 @@ hbullets_lf <- hbullets_lf %>% mutate(
 
 
 hbullets_lf$bulletland <- paste0(hbullets_lf$bullet,"-", hbullets_lf$land)
-hbullets_lf$barrelbulletland <- paste0(hbullets_lf$barrel, "-", hbullets_lf$bullet, "-", hbullets_lf$land)
+hbullets_lf$barrelbulletland <- paste0(hbullets_lf$group, "-", hbullets_lf$barrel, "-", hbullets_lf$bullet, "-", hbullets_lf$land)
 hlands_lf <- unique(hbullets_lf$barrelbulletland)
 hcomparisons_lf <- data.frame(
   expand.grid(land1 = hlands_lf, land2 = hlands_lf), stringsAsFactors = FALSE)
@@ -314,9 +319,9 @@ hcomparisons_lf$rfscore <- predict(bulletxtrctr::rtrees, newdata = hcomparisons_
 
 head(hcomparisons_lf)
 
-saveRDS(hcomparisons_lf, "../data/phoenix/comparisons_lf.rda")
-rfscores_lf_p <- hcomparisons_lf %>% select(land1, land2, rfscore)
-saveRDS(rfscores_lf_p, "../data/phoenix/rfscores_lf.rda")
+saveRDS(hcomparisons_lf, "../data/houston-test/comparisons_lf.rda")
+rfscores_lf_ht <- hcomparisons_lf %>% select(land1, land2, rfscore)
+saveRDS(rfscores_lf_ht, "../data/houston-test/rfscores_lf.rda")
 
 ```
 
@@ -341,7 +346,7 @@ hbullets_bcp <- hbullets_bcp %>% mutate(
 
 
 hbullets_bcp$bulletland <- paste0(hbullets_bcp$bullet,"-", hbullets_bcp$land)
-hbullets_bcp$barrelbulletland <- paste0(hbullets_bcp$barrel, "-", hbullets_bcp$bullet, "-", hbullets_bcp$land)
+hbullets_bcp$barrelbulletland <- paste0(hbullets_bcp$group, "-", hbullets_bcp$barrel, "-", hbullets_bcp$bullet, "-", hbullets_bcp$land)
 hlands_bcp <- unique(hbullets_bcp$barrelbulletland)
 hcomparisons_bcp <- data.frame(
   expand.grid(land1 = hlands_bcp, land2 = hlands_bcp), stringsAsFactors = FALSE)
@@ -410,8 +415,8 @@ hcomparisons_bcp$rfscore <- predict(bulletxtrctr::rtrees, newdata = hcomparisons
 
 head(hcomparisons_bcp)
 
-saveRDS(hcomparisons_bcp, "../data/phoenix/comparisons_bcp.rda")
-rfscores_bcp_p <- hcomparisons_bcp %>% select(land1, land2, rfscore)
-saveRDS(rfscores_bcp_p, "../data/phoenix/rfscores_bcp.rda")
+saveRDS(hcomparisons_bcp, "../data/houston-test/comparisons_bcp.rda")
+rfscores_bcp_ht <- hcomparisons_bcp %>% select(land1, land2, rfscore)
+saveRDS(rfscores_bcp_ht, "../data/houston-test/rfscores_bcp.rda")
 
 ```

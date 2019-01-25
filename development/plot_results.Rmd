@@ -37,6 +37,14 @@ hamby44_plot <- prediction_scores(hamby44_plot, "lassofull")
 hamby44_plot <- prediction_scores(hamby44_plot, "bcp")
 
 
+```
+
+
+# plot_scores  
+
+
+```{r}
+
 plot_scores <- function(dataset, methods = NULL){
   colnames <- c()
   for (i in 1:length(methods)){
@@ -59,6 +67,14 @@ plot_scores <- function(dataset, methods = NULL){
 
 plot_scores(hamby44_plot, methods = c("rollapply", "lassobasic", "lassofull", "bcp"))
 
+
+```
+
+
+
+## plot_scores_zoom
+
+```{r}
 head(hamby44_plot)
 
 
@@ -86,12 +102,12 @@ plot_scores_zoom <- function(dataset, zoom_cutoff, methods = NULL){
 plot_scores_zoom(hamby44_plot, zoom_cutoff = 5000, methods = c("rollapply", "lassobasic", "lassofull", "bcp"))
 
 
+```
 
 
 
-
-
-
+# plot bar charts  
+```{r}
 dataset <- hamby44_plot
   methods <- c("rollapply", "lassobasic", "lassofull", "bcp")
   colnames <- c()
@@ -122,12 +138,12 @@ dataset <- hamby44_plot
                      labels = c("Rollapply", "LASSO", "LASSO Interactions", "Bayesian Changepoint"), 
                      limits=c("rollapply","lassobasic","lassofull", "bcp")) + 
     theme(axis.text.x = element_text(angle =10, size = 8))
-  
-
-
 
 ```
 
+
+
+# plot all methods on graph for single land  
 
 ```{r}
 plot_preds <- function(dataset, bullet_num){
@@ -163,15 +179,117 @@ plot_preds <- function(dataset, bullet_num){
 ```
 
 
-## PHOENIX 
 
 
+## plot within standard deviations  
 
 ```{r}
-phoenix_eval <- readRDS("../data/phoenix/phoenix_eval.rda")
+
+h44_ldf <- data.frame(kr1 = hamby44_paper$left_groove_kr1, kr2 = hamby44_paper$left_groove_kr2, kr3 = hamby44_paper$left_groove_kr3)
+h44_ldf$left_manual_sd <- apply(h44_ldf, 1, sd)
+h44_ldf$left_manual_mean <- apply(h44_ldf[,1:3], 1, mean)
+head(h44_ldf)
+h44_ldf <- h44_ldf %>% select(left_manual_sd, left_manual_mean)
+
+hamby44_paper$left_manual_sd <- h44_ldf$left_manual_sd
+hamby44_paper$left_manual_mean <- h44_ldf$left_manual_mean
 
 
 
+h44_rdf <- data.frame(kr1 = hamby44_paper$right_groove_kr1, kr2 = hamby44_paper$right_groove_kr2, kr3 = hamby44_paper$right_groove_kr3)
+h44_rdf$right_manual_sd <- apply(h44_rdf, 1, sd)
+h44_rdf$right_manual_mean <- apply(h44_rdf[,1:3], 1, mean)
+head(h44_rdf)
+h44_rdf <- h44_rdf %>% select(right_manual_sd, right_manual_mean)
+
+hamby44_paper$right_manual_sd <- h44_rdf$right_manual_sd
+hamby44_paper$right_manual_mean <- h44_rdf$right_manual_mean
+
+head(hamby44_paper)
+
+
+
+prediction_ranges <- function(dataset, method){
+  colname <- paste0("grooves_", method)
+  new_colname <- paste0("inrange_left_", method)
+  new_colname2 <- paste0("inrange_right_", method)
+  dataset[,new_colname] <- 0
+  dataset[,new_colname2] <- 0
+  for(i in 1:nrow(dataset)){
+    bullet <- dataset[i,]
+    left_pred <- bullet[,colname][[1]][[1]]$groove[1]
+    left_groove <- as.numeric(bullet[,"left_manual_mean"])
+    left_sd <- as.numeric(bullet[,"left_manual_sd"])
+    range5 <- c(left_groove - 5*left_sd, left_groove + 5*left_sd)
+    range3 <- c(left_groove - 3*left_sd, left_groove + 3*left_sd)
+    
+    dataset[i,new_colname] <- ifelse(between(left_pred, range3[1], range3[2]), "Within 3 SD", "Farther than 5 SD")
+    dataset[i,new_colname] <- ifelse(between(left_pred, range5[1], range5[2]) & dataset[i,new_colname] != "Within 3 SD", "Within 5 SD", dataset[i,new_colname])
+    
+    
+    right_pred <- bullet[,colname][[1]][[1]]$groove[2]
+    right_groove <- as.numeric(bullet[,"right_manual_mean"])
+    right_sd <- as.numeric(bullet[,"right_manual_sd"])
+    range5 <- c(right_groove - 5*right_sd, right_groove + 5*right_sd)
+    range3 <- c(right_groove - 3*right_sd, right_groove + 3*right_sd)
+    
+    dataset[i,new_colname2] <- ifelse(between(right_pred, range3[1], range3[2]), "Within 3 SD", "Farther than 5 SD")
+    dataset[i,new_colname2] <- ifelse(between(right_pred, range5[1], range5[2]) & dataset[i,new_colname2] != "Within 3 SD", "Within 5 SD", dataset[i,new_colname2])
+  }
+  return(dataset)
+}
+
+
+hamby44_plot_sds <- prediction_ranges(hamby44_paper, method = "rollapply")
+hamby44_plot_sds <- prediction_ranges(hamby44_plot_sds, method = "lassobasic")
+hamby44_plot_sds <- prediction_ranges(hamby44_plot_sds, method = "lassofull")
+hamby44_plot_sds <- prediction_ranges(hamby44_plot_sds, method = "bcp")
+
+head(hamby44_plot_sds)
+
+
+
+dataset <- hamby44_plot_sds
+  methods <- c("rollapply", "lassobasic", "lassofull", "bcp")
+  colnames <- c()
+  for (i in 1:length(methods)){
+    colnames <- c(colnames, paste0("inrange_left_", methods[i]))
+    colnames <- c(colnames, paste0("inrange_right_", methods[i]))
+  }
+  plot_df <- dataset %>% ungroup() %>% 
+    select(colnames) %>%  
+    gather(method, inrange) %>% 
+    mutate(GrooveMethod = unlist(purrr::map(method, .f = function(x){
+      strsplit(x, "_")[[1]][3]
+        })), GrooveSide = unlist(purrr::map(method, .f = function(x){
+      strsplit(x, "_")[[1]][2]
+        }))
+    )
+  
+  plot_df$GrooveLabels <- ifelse(plot_df$GrooveSide=="left", "left shoulder location", "right shoulder location")
+  plot_df %>% 
+    ggplot() + geom_bar(aes(x = GrooveMethod, fill=factor(inrange, levels=c("Farther than 5 SD","Within 5 SD", "Within 3 SD"))), position = "stack") + 
+      theme_bw() + labs(x = "Groove Method", y = "Number of Lands") + 
+    facet_wrap(~GrooveLabels ) + 
+    scale_fill_manual(name="Accuracy to Manual Predictions", values=c("#E69F00", "#56B4E9", "#009E73"),
+                         breaks=c("Farther than 5 SD", "Within 5 SD", "Within 3 SD"),
+                         labels=c("More than 5 SD away", "Between 3 and 5 SD away", "Within 3 SD")) + 
+    scale_x_discrete(name = "Method", breaks = c("rollapply", "lassobasic", "lassofull", "bcp"), 
+                     labels = c("Rollapply", "LASSO", "LASSO Interactions", "Bayesian Changepoint"), 
+                     limits=c("rollapply","lassobasic","lassofull", "bcp")) + 
+    theme(axis.text.x = element_text(angle =10, size = 8))
+
+
+
+```
+
+
+
+
+## PHOENIX 
+
+```{r}
+phoenix_paper <- readRDS("../data/phoenix/phoenix_paper.rda")
 
 
 robust_loess_fit <- function(bullet, iter){
@@ -233,12 +351,16 @@ prediction_scores <- function(dataset, method){
 
 
 
-phoenix_plot <- prediction_scores(phoenix_eval, "rollapply")
+phoenix_plot <- prediction_scores(phoenix_paper, "rollapply")
 phoenix_plot <- prediction_scores(phoenix_plot, "lassobasic")
 phoenix_plot <- prediction_scores(phoenix_plot, "lassofull")
 phoenix_plot <- prediction_scores(phoenix_plot, "bcp")
 
+```
 
+
+## plot_scores  
+```{r}
 plot_scores <- function(dataset, methods = NULL){
   colnames <- c()
   for (i in 1:length(methods)){
@@ -261,6 +383,12 @@ plot_scores <- function(dataset, methods = NULL){
 
 plot_scores(phoenix_plot, methods = c("rollapply", "lassobasic", "lassofull", "bcp"))
 
+```
+
+
+## plot_scores_zoom  
+
+```{r}
 head(phoenix_plot)
 
 
@@ -288,9 +416,12 @@ plot_scores_zoom <- function(dataset, zoom_cutoff, methods = NULL){
 plot_scores_zoom(phoenix_plot, zoom_cutoff = 5000, methods = c("rollapply", "lassobasic", "lassofull", "bcp"))
 
 
+```
 
 
+## bar chart  
 
+```{r}
 dataset <- phoenix_plot
   methods <- c("rollapply", "lassobasic", "lassofull", "bcp")
   colnames <- c()
@@ -321,12 +452,11 @@ dataset <- phoenix_plot
                      labels = c("Rollapply", "LASSO", "LASSO Interactions", "Bayesian Changepoint"), 
                      limits=c("rollapply","lassobasic","lassofull", "bcp")) + 
     theme(axis.text.x = element_text(angle =10, size = 8))
-  
-
-
 
 ```
 
+
+## plot all preds on single land  
 
 ```{r}
 plot_preds <- function(dataset, bullet_num){
@@ -360,3 +490,110 @@ plot_preds <- function(dataset, bullet_num){
     
 }
 ```
+
+
+
+## plot within standard deviations  
+
+
+```{r}
+
+pho_ldf <- data.frame(kr1 = phoenix_paper$left_groove_kr1, kr2 = phoenix_paper$left_groove_kr2, kr3 = phoenix_paper$left_groove_kr3)
+pho_ldf$left_manual_sd <- apply(pho_ldf, 1, sd)
+pho_ldf$left_manual_mean <- apply(pho_ldf[,1:3], 1, mean)
+head(pho_ldf)
+pho_ldf <- pho_ldf %>% select(left_manual_sd, left_manual_mean)
+
+phoenix_paper$left_manual_sd <- pho_ldf$left_manual_sd
+phoenix_paper$left_manual_mean <- pho_ldf$left_manual_mean
+
+
+
+pho_rdf <- data.frame(kr1 = phoenix_paper$right_groove_kr1, kr2 = phoenix_paper$right_groove_kr2, kr3 = phoenix_paper$right_groove_kr3)
+pho_rdf$right_manual_sd <- apply(pho_rdf, 1, sd)
+pho_rdf$right_manual_mean <- apply(pho_rdf[,1:3], 1, mean)
+head(pho_rdf)
+pho_rdf <- pho_rdf %>% select(right_manual_sd, right_manual_mean)
+
+phoenix_paper$right_manual_sd <- pho_rdf$right_manual_sd
+phoenix_paper$right_manual_mean <- pho_rdf$right_manual_mean
+
+head(phoenix_paper)
+
+
+
+prediction_ranges_phoenix <- function(dataset, method){
+  colname <- paste0("grooves_", method)
+  new_colname <- paste0("inrange_left_", method)
+  new_colname2 <- paste0("inrange_right_", method)
+  dataset[,new_colname] <- 0
+  dataset[,new_colname2] <- 0
+  for(i in 1:nrow(dataset)){
+    bullet <- dataset[i,]
+    left_pred <- bullet[,colname][[1]]$groove[1]
+    left_groove <- as.numeric(bullet[,"left_manual_mean"])
+    left_sd <- as.numeric(bullet[,"left_manual_sd"])
+    range5 <- c(left_groove - 5*left_sd, left_groove + 5*left_sd)
+    range3 <- c(left_groove - 3*left_sd, left_groove + 3*left_sd)
+    
+    dataset[i,new_colname] <- ifelse(between(left_pred, range3[1], range3[2]), "Within 3 SD", "Farther than 5 SD")
+    dataset[i,new_colname] <- ifelse(between(left_pred, range5[1], range5[2]) & dataset[i,new_colname] != "Within 3 SD", "Within 5 SD", dataset[i,new_colname])
+    
+    
+    right_pred <- bullet[,colname][[1]]$groove[2]
+    right_groove <- as.numeric(bullet[,"right_manual_mean"])
+    right_sd <- as.numeric(bullet[,"right_manual_sd"])
+    range5 <- c(right_groove - 5*right_sd, right_groove + 5*right_sd)
+    range3 <- c(right_groove - 3*right_sd, right_groove + 3*right_sd)
+    
+    dataset[i,new_colname2] <- ifelse(between(right_pred, range3[1], range3[2]), "Within 3 SD", "Farther than 5 SD")
+    dataset[i,new_colname2] <- ifelse(between(right_pred, range5[1], range5[2]) & dataset[i,new_colname2] != "Within 3 SD", "Within 5 SD", dataset[i,new_colname2])
+  }
+  return(dataset)
+}
+
+
+phoenix_plot_sds <- prediction_ranges_phoenix(phoenix_paper, method = "rollapply")
+phoenix_plot_sds <- prediction_ranges_phoenix(phoenix_plot_sds, method = "lassobasic")
+phoenix_plot_sds <- prediction_ranges_phoenix(phoenix_plot_sds, method = "lassofull")
+phoenix_plot_sds <- prediction_ranges_phoenix(phoenix_plot_sds, method = "bcp")
+
+head(phoenix_plot_sds)
+
+
+
+dataset <- phoenix_plot_sds
+  methods <- c("rollapply", "lassobasic", "lassofull", "bcp")
+  colnames <- c()
+  for (i in 1:length(methods)){
+    colnames <- c(colnames, paste0("inrange_left_", methods[i]))
+    colnames <- c(colnames, paste0("inrange_right_", methods[i]))
+  }
+  plot_df <- dataset %>% ungroup() %>% 
+    select(colnames) %>%  
+    gather(method, inrange) %>% 
+    mutate(GrooveMethod = unlist(purrr::map(method, .f = function(x){
+      strsplit(x, "_")[[1]][3]
+        })), GrooveSide = unlist(purrr::map(method, .f = function(x){
+      strsplit(x, "_")[[1]][2]
+        }))
+    )
+  
+  plot_df$GrooveLabels <- ifelse(plot_df$GrooveSide=="left", "left shoulder location", "right shoulder location")
+  plot_df %>% 
+    ggplot() + geom_bar(aes(x = GrooveMethod, fill=factor(inrange, levels=c("Farther than 5 SD","Within 5 SD", "Within 3 SD"))), position = "stack") + 
+      theme_bw() + labs(x = "Groove Method", y = "Number of Lands") + 
+    facet_wrap(~GrooveLabels ) + 
+    scale_fill_manual(name="Accuracy to Manual Predictions", values=c("#E69F00", "#56B4E9", "#009E73"),
+                         breaks=c("Farther than 5 SD", "Within 5 SD", "Within 3 SD"),
+                         labels=c("More than 5 SD away", "Between 3 and 5 SD away", "Within 3 SD")) + 
+    scale_x_discrete(name = "Method", breaks = c("rollapply", "lassobasic", "lassofull", "bcp"), 
+                     labels = c("Rollapply", "LASSO", "LASSO Interactions", "Bayesian Changepoint"), 
+                     limits=c("rollapply","lassobasic","lassofull", "bcp")) + 
+    theme(axis.text.x = element_text(angle =10, size = 8))
+
+
+
+```
+
+
