@@ -38,7 +38,11 @@ grooves <- ccdata %>% purrr::map(.f = function(X) {
   if (is.null(X)) return(NULL) 
   get_grooves_rollapply(x = X$x, value = X$value, return_plot = T)
   })
+<<<<<<< HEAD
 saveRDS(grooves, file="../data/houston-test/grooves_kr3.rda")
+=======
+saveRDS(grooves, file="../data/houston-test/grooves_kr2.rda")
+>>>>>>> 75f943be0454f6a9d0d4aa70e7e0bce108ead60c
 ```
 
 ```{r manual-groove-id, echo = F}
@@ -77,7 +81,11 @@ shinyApp(
                         choices=1:length(grooves))
     })
     observeEvent(input$save,{
+<<<<<<< HEAD
       saveRDS(grooves, file="../data/houston-test/grooves_kr3.rda")
+=======
+      saveRDS(grooves, file="../data/houston-test/grooves_kr2.rda")
+>>>>>>> 75f943be0454f6a9d0d4aa70e7e0bce108ead60c
       cat("groove data saved\n")
     })
     
@@ -110,12 +118,17 @@ shinyApp(
   options = list(height = 500)
 )
 #}
+<<<<<<< HEAD
 saveRDS(grooves, file="../data/houston-test/grooves_kr3.rda")
+=======
+saveRDS(grooves, file="../data/houston-test/grooves_kr2.rda")
+>>>>>>> 75f943be0454f6a9d0d4aa70e7e0bce108ead60c
 
 ```
 
 
 
+<<<<<<< HEAD
 
 ```{r}
 grooves_kr3 <- readRDS("../data/houston-test/grooves_kr3.rda")
@@ -135,6 +148,8 @@ saveRDS(houstontest_paper, "../data/houston-test/houstontest_paper.rda")
 
 
 
+=======
+>>>>>>> 75f943be0454f6a9d0d4aa70e7e0bce108ead60c
 ```{r}
 grooves_kr2 <- readRDS("../data/houston-test/grooves_kr2.rda")
 
