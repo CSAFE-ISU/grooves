@@ -549,7 +549,7 @@ dataset <- phoenix_plot
 
 ```{r}
 plot_preds <- function(dataset, bullet_num){
-  bullet <- dataset$ccdata[[bullet_num]]
+  bullet <- dataset$ccdata_w_resid[[bullet_num]]
   rollapply_left <- dataset$grooves_rollapply[[bullet_num]]$groove[1]
   rollapply_right <- dataset$grooves_rollapply[[bullet_num]]$groove[2]
   
@@ -559,22 +559,24 @@ plot_preds <- function(dataset, bullet_num){
   bcp_left <- dataset$grooves_bcp[[bullet_num]]$groove[1]
   bcp_right <- dataset$grooves_bcp[[bullet_num]]$groove[2]
   
+  
   #left <- dataset$left_groove[[bullet_num]]
   #right <- dataset$right_groove[[bullet_num]]
   
   bullet %>% ggplot() + theme_bw() + 
-    geom_point(aes(x = x, y = value), size = 0.5) + 
+    geom_point(aes(x = x, y = value_std), size = 0.5) + 
+    geom_line(aes(x = x, y = rlo_pred), color = "red") + 
     
     #geom_vline(aes(xintercept = left), lty = 1, colour = "gray31", lwd = 1.3) + 
     #geom_vline(aes(xintercept = right), lty = 1, colour = "gray31", lwd = 1.3) + 
     
-    geom_vline(aes(xintercept = rollapply_left), lty = 2, lwd = 1.1, colour = "#E69F00") + 
+    geom_vline(aes(xintercept = rollapply_left), lty = 2, lwd = 1.1, colour = "#E69F00") + #orange
     geom_vline(aes(xintercept = rollapply_right), lty = 2, lwd = 1.1, colour = "#E69F00") + 
     
-    geom_vline(aes(xintercept = lassofull_left), lty = 3, lwd = 1.1, colour = "#009E73") + 
+    geom_vline(aes(xintercept = lassofull_left), lty = 3, lwd = 1.1, colour = "#009E73") + #green
     geom_vline(aes(xintercept = lassofull_right), lty = 3, lwd = 1.1, colour = "#009E73") + 
     
-    geom_vline(aes(xintercept = bcp_left), lty = 4, lwd = 1.1, colour = "#56B4E9") + 
+    geom_vline(aes(xintercept = bcp_left), lty = 4, lwd = 1.1, colour = "#56B4E9") + #blue
     geom_vline(aes(xintercept = bcp_right), lty = 4, lwd = 1.1, colour = "#56B4E9")
     
 }
@@ -768,4 +770,97 @@ dataset <- phoenix_plot_range
 
 
 ```
+
+
+
+# HOUSTON-TEST  
+## plot "inside v outside" manual IDs  
+
+```{r}
+houstontest_paper <- readRDS("../data/houston-test/houstontest_paper.rda")
+
+hou_ldf <- data.frame(kr1 = houstontest_paper$left_groove_kr1, kr2 = houstontest_paper$left_groove_kr2, kr3 = houstontest_paper$left_groove_kr3)
+hou_ldf$left_manual_min <- apply(hou_ldf, 1, min)
+
+houstontest_paper$left_manual_min <- hou_ldf$left_manual_min
+
+
+
+hou_rdf <- data.frame(kr1 = houstontest_paper$right_groove_kr1, kr2 = houstontest_paper$right_groove_kr2, kr3 = houstontest_paper$right_groove_kr3)
+hou_rdf$right_manual_max <- apply(hou_rdf, 1, max)
+
+houstontest_paper$right_manual_max <- hou_rdf$right_manual_max
+
+head(houstontest_paper)
+
+
+
+prediction_inrange <- function(dataset, method){
+  colname <- paste0("grooves_", method)
+  new_colname <- paste0("inrange_left_", method)
+  new_colname2 <- paste0("inrange_right_", method)
+  dataset[,new_colname] <- 0
+  dataset[,new_colname2] <- 0
+  for(i in 1:nrow(dataset)){
+    bullet <- dataset[i,]
+    left_pred <- bullet[,colname][[1]]$groove[1]
+    left_groove <- as.numeric(bullet[,"left_manual_min"])
+    
+    dataset[i,new_colname] <- ifelse(left_pred >= left_groove, "Removes Groove Data", "Fails to Remove Groove Data")
+    
+    
+    right_pred <- bullet[,colname][[1]]$groove[2]
+    right_groove <- as.numeric(bullet[,"right_manual_max"])
+
+    dataset[i,new_colname2] <- ifelse(right_pred <= right_groove, "Removes Groove Data", "Fails to Remove Groove Data")
+  }
+  return(dataset)
+}
+
+
+houstontest_plot_range <- prediction_inrange(houstontest_paper, method = "rollapply")
+houstontest_plot_range <- prediction_inrange(houstontest_plot_range, method = "lassobasic")
+houstontest_plot_range <- prediction_inrange(houstontest_plot_range, method = "lassofull")
+houstontest_plot_range <- prediction_inrange(houstontest_plot_range, method = "bcp")
+
+head(houstontest_plot_range)
+
+
+
+dataset <- houstontest_plot_range
+  methods <- c("rollapply", "lassobasic", "lassofull", "bcp")
+  colnames <- c()
+  for (i in 1:length(methods)){
+    colnames <- c(colnames, paste0("inrange_left_", methods[i]))
+    colnames <- c(colnames, paste0("inrange_right_", methods[i]))
+  }
+  plot_df <- dataset %>% ungroup() %>% 
+    select(colnames) %>%  
+    gather(method, inrange) %>% 
+    mutate(GrooveMethod = unlist(purrr::map(method, .f = function(x){
+      strsplit(x, "_")[[1]][3]
+        })), GrooveSide = unlist(purrr::map(method, .f = function(x){
+      strsplit(x, "_")[[1]][2]
+        }))
+    )
+  
+  plot_df$GrooveLabels <- ifelse(plot_df$GrooveSide=="left", "left shoulder location", "right shoulder location")
+  plot_df %>% 
+    ggplot() + geom_bar(aes(x = GrooveMethod, fill=factor(inrange, levels=c("Fails to Remove Groove Data","Removes Groove Data"))), position = "stack") + 
+      theme_bw() + labs(x = "Groove Method", y = "Number of Lands") + 
+    facet_wrap(~GrooveLabels ) + 
+    scale_fill_manual(name="Accuracy of Groove Removal", values=c("#E69F00", "#009E73"),
+                         breaks=c("Fails to Remove Groove Data", "Removes Groove Data"),
+                         labels=c("Fails to Remove Groove Data",  "Removes Groove Data")) + 
+    scale_x_discrete(name = "Method", breaks = c("rollapply", "lassobasic", "lassofull", "bcp"), 
+                     labels = c("Rollapply", "LASSO", "LASSO Interactions", "Bayesian Changepoint"), 
+                     limits=c("rollapply","lassobasic","lassofull", "bcp")) + 
+    theme(axis.text.x = element_text(angle =10, size = 8)) + 
+    coord_flip()
+
+
+```
+
+
+
 

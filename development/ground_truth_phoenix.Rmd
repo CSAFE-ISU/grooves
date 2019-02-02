@@ -1,0 +1,185 @@
+---
+title: "Phoenix set ground truth"
+author: "Kiegan Rice"
+output: html_document
+---
+
+# Read in data, packages  
+
+```{r}
+library(bulletxtrctr)
+library(tidyverse)
+
+
+phoenix_pairwise <- readRDS("../data/phoenix/rfscores_manual.rda")
+head(phoenix_pairwise)
+```
+
+# Investigate lands - known barrels, find "shift"  
+
+```{r}
+phoenix_pairwise %>% filter(land1 == "Gun 1-A9-B1-L1") %>% arrange(desc(rfscore))
+phoenix_pairwise %>% filter(land1 == "Gun 1-A9-B2-L1") %>% arrange(desc(rfscore))
+phoenix_pairwise %>% filter(land1 == "Gun 1-A9-B3-L2") %>% arrange(desc(rfscore))
+
+#bullet 1 land 1 - bullet 2 land 4??
+#bullet 1 land 1 - bullet 3 land 6?? 
+
+phoenix_pairwise %>% filter(land1 == "Gun 1-C8-B1-L1") %>% arrange(desc(rfscore))
+phoenix_pairwise %>% filter(land1 == "Gun 1-C8-B2-L2") %>% arrange(desc(rfscore))
+phoenix_pairwise %>% filter(land1 == "Gun 1-C8-B3-L1") %>% arrange(desc(rfscore))
+
+
+#bullet 1 land 1 - bullet 2 land 6 (shift = 5)
+#bullet 1 land 1 - bullet 3 land 2 (shift = 1)
+
+phoenix_pairwise %>% filter(land1 == "Gun 1-F6-B1-L1") %>% arrange(desc(rfscore))
+#bullet 1 land 1 - bullet 2 land 5 (shift = 4)
+#bullet 1 land 1 - bullet 3 land 6 (shift = 5)
+
+phoenix_pairwise %>% filter(land1 == "Gun 1-L5-B1-L1") %>% arrange(desc(rfscore))
+phoenix_pairwise %>% filter(land1 == "Gun 1-L5-B2-L1") %>% arrange(desc(rfscore))
+
+#bullet 1 land 1 - bullet 2 land ??
+#bullet 1 land 1 - bullet 3 land 1 (shift = 0)
+
+phoenix_pairwise %>% filter(land1 == "Gun 1-M2-B1-L1") %>% arrange(desc(rfscore))
+#bullet 1 land 1 - bullet 2 land 2 (shift = 1)
+#bullet 1 land 1 - bullet 3 land 5 (shift = 4)
+
+phoenix_pairwise %>% filter(land1 == "Gun 1-P7-B1-L1") %>% arrange(desc(rfscore))
+#bullet 1 land 1 - bullet 2 land 1 (shift = 0)
+#bullet 1 land 1 - bullet 3 land 6 (shift = 5)
+
+phoenix_pairwise %>% filter(land1 == "Gun 1-R3-B1-L1") %>% arrange(desc(rfscore))
+#bullet 1 land 1 - bullet 2 land 1 (shift = 0)
+#bullet 1 land 1 - bullet 3 land 2 (shift = 1)
+
+phoenix_pairwise %>% filter(land1 == "Gun 1-U10-B1-L1") %>% arrange(desc(rfscore))
+phoenix_pairwise %>% filter(land1 == "Gun 1-U10-B2-L1") %>% arrange(desc(rfscore))
+
+#bullet 1 land 1 - bullet 2 land 3 (shift = 2)
+#bullet 1 land 1 - bullet 3 land ??
+```
+
+
+
+# Investigate lands - unknowns, find matches  
+
+```{r}
+phoenix_pairwise %>% filter(land1 == "Unknown 1-B-B1-L1") %>% arrange(desc(rfscore))
+#bullet B land 1 - barrel C8 bullet 2 land 2 ? 
+
+phoenix_pairwise %>% filter(land1 == "Unknown 1-E-B1-L1") %>% arrange(desc(rfscore))
+#bullet E land 1 - barrel F6
+
+phoenix_pairwise %>% filter(land1 == "Unknown 1-H-B1-L1") %>% arrange(desc(rfscore))
+#bullet H land 1 - barrel M2
+
+phoenix_pairwise %>% filter(land1 == "Unknown 1-J-B1-L1") %>% arrange(desc(rfscore))
+#bullet J land 1 - barrel P7
+
+phoenix_pairwise %>% filter(land1 == "Unknown 1-K-B1-L1") %>% arrange(desc(rfscore))
+#bullet K land 1 - barrel R3
+
+phoenix_pairwise %>% filter(land1 == "Unknown 1-N-B1-L1") %>% arrange(desc(rfscore))
+#bullet N land 1 - barrel A9 
+
+phoenix_pairwise %>% filter(land1 == "Unknown 1-Q-B1-L1") %>% arrange(desc(rfscore))
+#bullet Q land 1 - ???
+
+phoenix_pairwise %>% filter(land1 == "Unknown 1-T-B1-L1") %>% arrange(desc(rfscore))
+#bullet T land 1 - ???
+
+phoenix_pairwise %>% filter(land1 == "Unknown 1-Y-B1-L1") %>% arrange(desc(rfscore))
+#bullet Y land 1 - ????
+
+
+
+```
+
+
+## To investigate further:  
+
+Barrel 5 and Bullet H of Unknowns
+Barrel 6 or Barrel 4 and Bullet I of Unknowns
+Bullet L of Unknowns - maybe Barrel 3?  
+
+
+```{r}
+hamby44_lands <- readRDS("../data/hamby44/hamby44_paper.rda")
+
+bullet_l <- hamby44_lands %>% filter(bullet == "Bullet 'L'" | barrel == "Barrel 3")
+dim(bullet_l)
+head(bullet_l)
+
+bullet_l_l1 <- bullet_l %>% filter(bullet == "Bullet 'L'" & land == "Land 1") 
+barrel_3 <- bullet_l %>% filter(bullet == "Bullet 1")
+
+ggplot() + geom_point(data = bullet_l_l1$ccdata_w_resid[[1]], aes(x = x, y = rlo_resid), color ="red") + geom_point(data = barrel_3[1,]$ccdata_w_resid[[1]], aes(x = x, y = rlo_resid), color = "blue") + theme_bw()
+
+```
+```{r}
+bullet_i <- hamby44_lands %>% filter(bullet == "Bullet 'I'" | barrel == "Barrel 6")
+dim(bullet_i)
+head(bullet_i)
+
+bullet_i_l1 <- bullet_i %>% filter(bullet == "Bullet 'I'" & land == "Land 1") 
+barrel_6 <- bullet_i %>% filter(bullet == "Bullet 2")
+
+ggplot() + geom_point(data = bullet_i_l1$ccdata_w_resid[[1]], aes(x = x, y = value_std), color ="red") + geom_point(data = barrel_6[3,]$ccdata_w_resid[[1]], aes(x = x, y = value_std), color = "blue") + theme_bw()
+
+```
+
+```{r}
+hamby44_lands <- readRDS("../data/hamby44/hamby44_paper.rda")
+
+bullet_h <- hamby44_lands %>% filter(bullet == "Bullet 'H'" | barrel == "Barrel 5")
+dim(bullet_h)
+head(bullet_h)
+
+bullet_h_l1 <- bullet_h %>% filter(bullet == "Bullet 'H'" & land == "Land 1") 
+barrel_5 <- bullet_h %>% filter(bullet == "Bullet 2")
+
+ggplot() + geom_point(data = bullet_h_l1$ccdata_w_resid[[1]], aes(x = x, y = value_std), color ="red") + geom_point(data = barrel_5[6,]$ccdata_w_resid[[1]], aes(x = x, y = value_std), color = "blue") + theme_bw()
+
+```
+
+
+# Now - the mess that is coding this up.  
+
+```{r}
+hamby44_gt <- hamby44_lands %>% select(barrel, bullet, land) %>% mutate(scan_id = paste(barrel, bullet, land, sep = "-"))
+write_csv(hamby44_gt, path = "../data/hamby44/hamby44_gt.csv") 
+
+## manually put in unique ID's for each individual "land". 
+```
+
+```{r}
+hamby44_gt <- read_csv("../data/hamby44/hamby44_gt.csv")
+head(hamby44_gt)
+
+hamby44_mat <- matrix(NA, nrow = nrow(hamby44_gt), ncol = nrow(hamby44_gt))
+row.names(hamby44_mat) <- hamby44_gt$scan_id
+colnames(hamby44_mat) <- hamby44_gt$scan_id
+
+for (i in 1:nrow(hamby44_mat)){
+  for(j in 1:ncol(hamby44_mat)){
+    hamby44_mat[i,j] <- ifelse(hamby44_gt$unique_id[i] == hamby44_gt$unique_id[j], "Same Source", "Different Source")
+  }
+}
+
+
+hamby44_mat <- as.data.frame(hamby44_mat)
+hamby44_mat$land1 <- rownames(hamby44_mat)
+hamby44_mat <- hamby44_mat %>% gather(1:208, key = "land2", value = "ground_truth")
+
+hamby44_results <- full_join(hamby44_pairwise, hamby44_mat)
+head(hamby44_results)
+
+hamby44_results$rfscore_manual <- hamby44_results$rfscore
+hamby44_results <- hamby44_results %>% select(-rfscore)
+
+saveRDS(hamby44_results, "../data/hamby44/hamby44_results.rda")
+```
+

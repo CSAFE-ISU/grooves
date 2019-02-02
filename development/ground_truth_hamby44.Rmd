@@ -1,0 +1,258 @@
+---
+title: "Hamby set 44 ground truth"
+author: "Kiegan Rice"
+output: html_document
+---
+
+# Read in data, packages  
+
+```{r}
+library(bulletxtrctr)
+library(tidyverse)
+
+
+hamby44_pairwise <- readRDS("../data/hamby44/rfscores_manual.rda")
+```
+
+# Investigate lands - known barrels, find "shift"  
+
+```{r}
+hamby44_pairwise %>% filter(land1 == "Barrel 1-Bullet 1-Land 1") %>% arrange(desc(rfscore))
+#bullet 1 land 1 - bullet 2 land 5 (shift = 4)
+
+hamby44_pairwise %>% filter(land1 == "Barrel 2-Bullet 1-Land 1") %>% arrange(desc(rfscore))
+#bullet 1 land 1 - bullet 2 land 3 (shift = 2)
+
+hamby44_pairwise %>% filter(land1 == "Barrel 3-Bullet 1-Land 1") %>% arrange(desc(rfscore))
+#bullet 1 land 1 - bullet 2 land 1 (shift = 0)
+
+hamby44_pairwise %>% filter(land1 == "Barrel 4-Bullet 1-Land 1") %>% arrange(desc(rfscore))
+#bullet 1 land 1 - bullet 2 land 5 (shift = 4)
+
+hamby44_pairwise %>% filter(land1 == "Barrel 5-Bullet 1-Land 1") %>% arrange(desc(rfscore))
+#bullet 1 land 1 - bullet 2 land 2 (shift = 1)
+
+hamby44_pairwise %>% filter(land1 == "Barrel 6-Bullet 1-Land 1") %>% arrange(desc(rfscore))
+# bullet 1 land 1 - bullet 2 land 1 (shift = 0)  
+
+hamby44_pairwise %>% filter(land1 == "Barrel 7-Bullet 1-Land 1") %>% arrange(desc(rfscore))
+# bullet 1 land 1 - bullet 2 land 3 (shift = 2)
+
+hamby44_pairwise %>% filter(land1 == "Barrel 8-Bullet 1-Land 1") %>% arrange(desc(rfscore))
+#bullet 1 land 1 - bullet 2 land 4 (shift = 3)
+
+hamby44_pairwise %>% filter(land1 == "Barrel 9-Bullet 1-Land 1") %>% arrange(desc(rfscore))
+#bullet 1 land 1 - bullet 2 land 4 (shift = 3)
+
+hamby44_pairwise %>% filter(land1 == "Barrel 10-Bullet 1-Land 1") %>% arrange(desc(rfscore))
+#bullet 1 land 1 - bullet 2 land 1 (shift = 0)
+
+```
+
+
+
+# Investigate lands - unknowns, find matches  
+
+```{r}
+hamby44_pairwise %>% filter(land1 == "Unknowns-Bullet 'E'-Land 1") %>% arrange(desc(rfscore))
+#bullet E land 1 - barrel 7, bullet 1, land 4 (shift = 3)
+#bullet E land 1 - barrel 7, bullet 2, land 6 (shift = 5) 
+#bullet E land 1 - bullet U land 5 (shift = 4)
+#bullet E land 1 - bullet X land 1 (shift = 0)
+
+hamby44_pairwise %>% filter(land1 == "Unknowns-Bullet 'F'-Land 1") %>% arrange(desc(rfscore))
+#bullet F land 1 - barrel 8, bullet 1, land 1 (shift = 0)
+#bullet F land 1 - barrel 8, bullet 2, land 4 (shift = 3)  
+
+hamby44_pairwise %>% filter(land1 == "Unknowns-Bullet 'G'-Land 1") %>% arrange(desc(rfscore))
+#bullet G land 1 - barrel 9, bullet 1, land 3 (shift = 2)
+#bullet G land 1 - barrel 9, bullet 2, land 6 (shift = 5)
+#bullet G land 1 - bullet Y land 4 (shift = 3)
+
+hamby44_pairwise %>% filter(land1 == "Unknowns-Bullet 'H'-Land 1") %>% arrange(desc(rfscore))
+#bullet H land 1 - barrel 5, bullet 2, land 4 (shift = 3)
+#bullet H land 1 - barrel 5, bullet 1, land 3 (shift = 2)
+
+hamby44_pairwise %>% filter(land1 == "Unknowns-Bullet 'I'-Land 1") %>% arrange(desc(rfscore))
+
+hamby44_pairwise %>% filter(land1 == "Unknowns-Bullet 'J'-Land 1") %>% arrange(desc(rfscore))
+#bullet J land 1 - barrel 4, bullet 1, land 3 (shift = 2)
+#bullet J land 1 - barrel 4, bullet 2, land 1 (shift = 0)
+
+hamby44_pairwise %>% filter(land1 == "Unknowns-Bullet 'K'-Land 1") %>% arrange(desc(rfscore))
+#bullet K land 1 - barrel 1, bullet 1, land 5 (shift = 4)
+#bullet K land 1 - barrel 1, bullet 2, land 3 (shift = 2)
+
+hamby44_pairwise %>% filter(land1 == "Unknowns-Bullet 'L'-Land 1") %>% arrange(desc(rfscore))
+#bullet L land 1 - barrel 3, bullet 2, land 5 (shift = 4)  
+#bullet L land 1 - barrel 3, bullet 1, land 5 (shift = 4)
+
+hamby44_pairwise %>% filter(land1 == "Unknowns-Bullet 'O'-Land 1") %>% arrange(desc(rfscore))
+#bullet O land 1 - barrel 2, bullet 1, land 6 (shift = 5)
+#bullet O land 1 - barrel 2, bullet 2, land 2 (shift = 1)
+
+hamby44_pairwise %>% filter(land1 == "Unknowns-Bullet 'P'-Land 1") %>% arrange(desc(rfscore))
+#bullet P land 1 - barrel 4, bullet 1, land 6 (shift = 5)
+#bullet P land 1 - barrel 4, bullet 2, land 4 (shift = 3)
+
+hamby44_pairwise %>% filter(land1 == "Unknowns-Bullet 'S'-Land 1") %>% arrange(desc(rfscore))
+#bullet S land 1 - barrel 10, bullet 1, land 6 (shift = 5)
+#bullet S land 1 - barrel 10, bullet 2, land 6 (shift = 5)
+
+hamby44_pairwise %>% filter(land1 == "Unknowns-Bullet 'T'-Land 1") %>% arrange(desc(rfscore))
+#bullet T land 1 - barrel 9, bullet 1, land 1 (shift = 0)
+#bullet T land 1 - barrel 9, bullet 2, land 4 (shift = 3)
+
+hamby44_pairwise %>% filter(land1 == "Unknowns-Bullet 'U'-Land 1") %>% arrange(desc(rfscore))
+#bullet U land 1 - barrel 7, bullet 1, land 6 (shift = 5)
+#bullet U land 1 - barrel 7, bullet 2, land 2 (shift = 1)
+#bullet E land 3 (shift = 2)
+#bullet X land 3 (shift = 2)
+
+hamby44_pairwise %>% filter(land1 == "Unknowns-Bullet 'X'-Land 1") %>% arrange(desc(rfscore))
+#bullet X land 1 - barrel 7, bullet 1, land 4 (shift = 3)
+#bullet X land 1 - barrel 7, bullet 2, land 6 (shift = 5)
+#bullet E land 1 (shift = 0)
+#bullet U land 5 (shift = 4)
+
+hamby44_pairwise %>% filter(land1 == "Unknowns-Bullet 'Y'-Land 1") %>% arrange(desc(rfscore))
+#bullet Y land 1 - barrel 6, bullet 1, land 3 (shift = 2)
+#bullet Y land 1 - barrel 6, bullet 2, land 3 (shift = 2)
+#bullet G land 4 (shift = 3)
+
+
+
+```
+
+
+## To investigate further:  
+
+Barrel 5 and Bullet H of Unknowns
+Barrel 6 or Barrel 4 and Bullet I of Unknowns
+Bullet L of Unknowns - maybe Barrel 3?  
+
+
+```{r}
+hamby44_lands <- readRDS("../data/hamby44/hamby44_paper.rda")
+
+bullet_l <- hamby44_lands %>% filter(bullet == "Bullet 'L'" | barrel == "Barrel 3")
+dim(bullet_l)
+head(bullet_l)
+
+bullet_l_l1 <- bullet_l %>% filter(bullet == "Bullet 'L'" & land == "Land 1") 
+barrel_3 <- bullet_l %>% filter(bullet == "Bullet 1")
+
+ggplot() + geom_point(data = bullet_l_l1$ccdata_w_resid[[1]], aes(x = x, y = rlo_resid), color ="red") + geom_point(data = barrel_3[1,]$ccdata_w_resid[[1]], aes(x = x, y = rlo_resid), color = "blue") + theme_bw()
+
+```
+
+```{r}
+bullet_i <- hamby44_lands %>% filter(bullet == "Bullet 'I'" | barrel == "Barrel 6")
+dim(bullet_i)
+head(bullet_i)
+
+bullet_i_l1 <- bullet_i %>% filter(bullet == "Bullet 'I'" & land == "Land 1") 
+barrel_6 <- bullet_i %>% filter(bullet == "Bullet 2")
+
+ggplot() + geom_point(data = bullet_i_l1$ccdata_w_resid[[1]], aes(x = x, y = value_std), color ="red") + geom_point(data = barrel_6[3,]$ccdata_w_resid[[1]], aes(x = x, y = value_std), color = "blue") + theme_bw()
+
+```
+
+```{r}
+hamby44_lands <- readRDS("../data/hamby44/hamby44_paper.rda")
+
+bullet_h <- hamby44_lands %>% filter(bullet == "Bullet 'H'" | barrel == "Barrel 5")
+dim(bullet_h)
+head(bullet_h)
+
+bullet_h_l1 <- bullet_h %>% filter(bullet == "Bullet 'H'" & land == "Land 1") 
+barrel_5 <- bullet_h %>% filter(bullet == "Bullet 2")
+
+ggplot() + geom_point(data = bullet_h_l1$ccdata_w_resid[[1]], aes(x = x, y = value_std), color ="red") + geom_point(data = barrel_5[6,]$ccdata_w_resid[[1]], aes(x = x, y = value_std), color = "blue") + theme_bw()
+
+```
+
+
+# Now - the mess that is coding this up.  
+
+```{r}
+hamby44_gt <- hamby44_lands %>% select(barrel, bullet, land) %>% mutate(scan_id = paste(barrel, bullet, land, sep = "-"))
+write_csv(hamby44_gt, path = "../data/hamby44/hamby44_gt.csv") 
+
+## manually put in unique ID's for each individual "land". 
+```
+
+```{r}
+hamby44_gt <- read_csv("../data/hamby44/hamby44_gt.csv")
+head(hamby44_gt)
+
+hamby44_mat <- matrix(NA, nrow = nrow(hamby44_gt), ncol = nrow(hamby44_gt))
+row.names(hamby44_mat) <- hamby44_gt$scan_id
+colnames(hamby44_mat) <- hamby44_gt$scan_id
+
+for (i in 1:nrow(hamby44_mat)){
+  for(j in 1:ncol(hamby44_mat)){
+    hamby44_mat[i,j] <- ifelse(hamby44_gt$unique_id[i] == hamby44_gt$unique_id[j], "Same Source", "Different Source")
+  }
+}
+
+
+hamby44_mat <- as.data.frame(hamby44_mat)
+hamby44_mat$land1 <- rownames(hamby44_mat)
+hamby44_mat <- hamby44_mat %>% gather(1:208, key = "land2", value = "ground_truth")
+
+hamby44_results <- full_join(hamby44_pairwise, hamby44_mat)
+head(hamby44_results)
+
+hamby44_results$rfscore_manual <- hamby44_results$rfscore
+hamby44_results <- hamby44_results %>% select(-rfscore)
+
+saveRDS(hamby44_results, "../data/hamby44/hamby44_results.rda")
+```
+
+
+
+## visuals for the ones i'm not sure about:  
+
+```{r}
+hamby44_pairwise %>% 
+  filter(str_detect(land1, "Unknowns-Bullet 'L'") == T & str_detect(land2, "Barrel 3-Bullet 1") == T) %>% 
+  mutate(land1 = factor(land1, levels = c("Unknowns-Bullet 'L'-Land 6", "Unknowns-Bullet 'L'-Land 4", "Unknowns-Bullet 'L'-Land 3", "Unknowns-Bullet 'L'-Land 2", "Unknowns-Bullet 'L'-Land 1")), land2 = factor(land2, levels = c("Barrel 3-Bullet 1-Land 1", "Barrel 3-Bullet 1-Land 2", "Barrel 3-Bullet 1-Land 3", "Barrel 3-Bullet 1-Land 4", "Barrel 3-Bullet 1-Land 5", "Barrel 3-Bullet 1-Land 6"))) %>% 
+  ggplot(aes(x = land2, y = land1, fill = rfscore)) +
+  geom_tile() +
+  scale_fill_gradient2(low = "grey80", high = "darkorange", 
+                       midpoint = .5) +
+  #facet_grid(bulletB~bulletA, labeller = "label_both") +
+  #xlab("Land A") +
+  #ylab("Land B") +
+  theme(aspect.ratio = 1, axis.text.x = element_text(angle =10))
+```
+
+
+
+
+```{r}
+hamby44_pairwise %>% 
+  filter(str_detect(land1, "Unknowns-Bullet 'I'") == T & str_detect(land2, "Barrel 5-Bullet 1") == T) %>% 
+  mutate(land1 = factor(land1, levels = c("Unknowns-Bullet 'I'-Land 6", "Unknowns-Bullet 'I'-Land 5","Unknowns-Bullet 'I'-Land 4", "Unknowns-Bullet 'I'-Land 3", "Unknowns-Bullet 'I'-Land 2", "Unknowns-Bullet 'I'-Land 1")), land2 = factor(land2, levels = c("Barrel 5-Bullet 1-Land 1", "Barrel 5-Bullet 1-Land 2", "Barrel 5-Bullet 1-Land 3", "Barrel 5-Bullet 1-Land 4", "Barrel 5-Bullet 1-Land 5", "Barrel 5-Bullet 1-Land 6"))) %>% 
+  ggplot(aes(x = land2, y = land1, fill = rfscore)) +
+  geom_tile() +
+  scale_fill_gradient2(low = "grey80", high = "darkorange", 
+                       midpoint = .5) +
+  #facet_grid(bulletB~bulletA, labeller = "label_both") +
+  #xlab("Land A") +
+  #ylab("Land B") +
+  theme(aspect.ratio = 1, axis.text.x = element_text(angle =10))
+
+
+
+bullet_i <- hamby44_lands %>% filter(bullet == "Bullet 'I'" | barrel == "Barrel 5")
+dim(bullet_i)
+head(bullet_i)
+
+bullet_i_l3 <- bullet_i %>% filter(bullet == "Bullet 'I'" & land == "Land 3") 
+barrel_5 <- bullet_i %>% filter(bullet == "Bullet 1")
+
+ggplot() + geom_point(data = bullet_i_l3$ccdata_w_resid[[1]], aes(x = x, y = value_std), color ="red") + geom_point(data = barrel_5[4,]$ccdata_w_resid[[1]], aes(x = x, y = value_std), color = "blue") + theme_bw()
+
+```

@@ -113,6 +113,32 @@ saveRDS(phoenix_paper, file = "../data/phoenix/phoenix_paper.rda")
 ```
 
 
+# PHOENIX BCP RE-DO
+
+```{r}
+phoenix <- readRDS("../data/phoenix/phoenix_paper.rda")
+
+
+
+
+phoenix_10 <- phoenix[c(1, 4, 5, 7, 8, 9, 10, 12, 13, 14),]
+phoenix_10 <- phoenix_10 %>% mutate(grooves_bcp_new = purrr::map(ccdata, .f = function(land){
+  bulletxtrctr::cc_locate_grooves(method = "bcp", ccdata = land, return_plot = F, iter = 20000)
+  #bulletcp::get_grooves_bcp(x = land$x, value = land$value, adjust = 10)
+  }))
+
+plot_10 <- function(dataset, bullet_num){
+  ggplot() + geom_point(data = dataset$ccdata[[bullet_num]], aes(x = x, y = value)) + 
+  geom_vline(xintercept = dataset$grooves_bcp_new[[bullet_num]]$groove[1], color = "blue") + 
+  geom_vline(xintercept = dataset$grooves_bcp_new[[bullet_num]]$groove[2], color = "blue") +
+  geom_vline(xintercept = dataset$grooves_bcp[[bullet_num]]$groove[1], color = "red") + 
+  geom_vline(xintercept = dataset$grooves_bcp[[bullet_num]]$groove[2], color = "red") +
+  theme_bw()
+}
+
+
+```
+
 
 # HOUSTON-TEST
 
@@ -159,6 +185,41 @@ houston <- houston %>% mutate(grooves_bcp = purrr::map(ccdata, .f = function(lan
 
 ```{r}
 
+houstontest_paper <- houston
+head(houstontest_paper)
+
+saveRDS(houstontest_paper, file = "../data/houston-test/houstontest_paper.rda")
+```
+
+
+
+# HOUSTON-TEST BCP REDO  
+
+```{r}
+houston <- readRDS("../data/houston-test/houstontest_paper.rda")
+
+
+
+
+houston_10 <- houston[c(1, 4, 5, 7, 8, 9, 10, 12, 13, 14),]
+houston_10 <- houston_10 %>% mutate(grooves_bcp_new = purrr::map(ccdata, .f = function(land){
+  bulletxtrctr::cc_locate_grooves(method = "bcp", ccdata = land, return_plot = F, iter = 100000)
+  #bulletcp::get_grooves_bcp(x = land$x, value = land$value, adjust = 10)
+  }))
+
+ggplot() + geom_point(data = houston_10$ccdata[[10]], aes(x = x, y = value)) + 
+  geom_vline(xintercept = houston_10$grooves_bcp_new[[10]]$groove[1], color = "blue") + 
+  geom_vline(xintercept = houston_10$grooves_bcp_new[[10]]$groove[2], color = "blue") +
+  geom_vline(xintercept = houston_10$grooves_bcp[[10]]$groove[1], color = "red") + 
+  geom_vline(xintercept = houston_10$grooves_bcp[[10]]$groove[2], color = "red") +
+  theme_bw()
+
+```
+
+
+
+
+```{r}
 houstontest_paper <- houston
 head(houstontest_paper)
 
