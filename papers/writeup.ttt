@@ -1,0 +1,13 @@
+\begin{table}[]
+\centering
+\caption{Downstream results for Hamby set 44}
+\begin{tabular}{|l|l|l|l|}
+\hline
+\textbf{Method} & \textbf{AUC} & \textbf{Controlled FP Rate} & \textbf{Cutoff} \\ \hline
+Rollapply & 0.7899325 &  & \\ \hline
+LASSO basic & 0.927193 &  &  \\ \hline
+LASSO full & 0.9268781 &  &  \\ \hline
+Bayesian Changepoint & 0.914678 &  & \\ \hline
+Manual ID & 0.9308856 &  & \\ \hline
+\end{tabular}
+\end{table}
