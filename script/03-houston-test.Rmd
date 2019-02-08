@@ -343,7 +343,7 @@ hbullets_bcp <- hbullets_bcp %>% mutate(
         ccdata = x, grooves = y, span1 = 0.75, span2 = 0.03)
     })
 )
-#head(hbullets_lf)
+#head(hbullets_bcp)
 
 
 hbullets_bcp$bulletland <- paste0(hbullets_bcp$bullet,"-", hbullets_bcp$land)
