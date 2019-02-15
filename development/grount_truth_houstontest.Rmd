@@ -1,0 +1,153 @@
+---
+title: "Houston-test set ground truth"
+author: "Kiegan Rice"
+output: html_document
+---
+
+# Read in data, packages  
+
+```{r}
+library(bulletxtrctr)
+library(tidyverse)
+
+
+houston_pairwise <- readRDS("../data/houston-test/rfscores_manual.rda")
+head(houston_pairwise)
+```
+
+# Investigate lands - known barrels, find "shift"  
+
+```{r}
+houston_pairwise <- houston_pairwise %>% 
+  mutate(land1 = as.character(land1), land2 = as.character(land2)) %>% 
+  mutate(group_1 = purrr::map_chr(land1, .f = function(col){
+    strsplit(col, "-")[[1]][1]
+  }),
+    barrel_1 = purrr::map_chr(land1, .f = function(col){
+    strsplit(col, "-")[[1]][2]
+      }),
+    bullet_1 = purrr::map_chr(land1, .f = function(col){
+      strsplit(col, "-")[[1]][3]
+    }), 
+    land_1 = purrr::map_chr(land1, .f = function(col){
+      strsplit(col, "-")[[1]][4]
+    }), 
+   group_2 = purrr::map_chr(land2, .f = function(col){
+    strsplit(col, "-")[[1]][1]
+  }),
+    barrel_2 = purrr::map_chr(land2, .f = function(col){
+    strsplit(col, "-")[[1]][2]
+      }),
+    bullet_2 = purrr::map_chr(land2, .f = function(col){
+      strsplit(col, "-")[[1]][3]
+    }), 
+    land_2 = purrr::map_chr(land2, .f = function(col){
+      strsplit(col, "-")[[1]][4]
+    }) )
+head(houston_pairwise)
+houston_pairwise %>%
+  filter(str_detect(land1, "Group 1-KA-Bullet 1") == T & str_detect(land2, "Group 1-KA-Bullet 2") == T) %>% 
+  #filter(str_detect(land1, "Unknown/1-Q") == T) %>% 
+  ggplot(aes(x = land2, y = land1, fill = rfscore)) +
+  geom_tile() +
+  scale_fill_gradient2(low = "grey80", high = "darkorange", 
+                       midpoint = .5) +
+  facet_wrap(~bullet_2) +
+  #xlab("Land A") +
+  #ylab("Land B") +
+  theme(aspect.ratio = 1, axis.text.x = element_text(angle =20))
+```
+
+
+
+```{r}
+houston_pairwise %>% filter(land1 == "Group 2-Unknowns-U34-Land 1") %>% arrange(desc(rfscore))
+
+```
+```{r}
+houston_pairwise %>%
+  filter(str_detect(land1, "Group 1-KC-Bullet 2") == T & str_detect(land2, "Group 1-KC-Bullet 3") == T) %>% 
+  #filter(str_detect(land1, "Unknown/1-Q") == T) %>% 
+  ggplot(aes(x = land2, y = land1, fill = rfscore)) +
+  geom_tile() +
+  scale_fill_gradient2(low = "grey80", high = "darkorange", 
+                       midpoint = .5) +
+  facet_wrap(~bullet_2) +
+  #xlab("Land A") +
+  #ylab("Land B") +
+  theme(aspect.ratio = 1, axis.text.x = element_text(angle =20))
+```
+
+
+
+
+
+
+
+## To investigate further:  
+
+
+```{r}
+houston_lands <- readRDS("../data/houston-test/houstontest_paper.rda")
+
+```
+
+
+
+# Now - the mess that is coding this up.  
+
+```{r}
+houston_lands <- houston_lands %>% 
+  mutate(source = as.character(source)) %>%
+  mutate(source = purrr::map(source, .f = function(col){
+    split1<- strsplit(col, "//")[[1]][2]
+    group <- strsplit(split1, "-")[[1]][2]
+    split2 <- strsplit(split1, "-Sneox")[[1]][1]
+    land <- str_sub(split2, start = -6)
+    split3 <- str_sub(split2, start = 17, end = -8)
+    bullet <- ifelse(str_detect(split3, "K.") == T, str_sub(split3, start = -8), str_sub(split3, start = -3))
+    barrel <- ifelse(str_detect(split3, "K.") == T, str_extract(split3, "K."), "Unknowns")
+    gbbl <- paste(group, barrel, bullet, land, sep = "-")
+    return(gbbl)
+  })) %>% 
+  separate(source, c("group", "barrel", "bullet", "land"), sep = "-")
+
+houston_gt <- houston_lands %>% select(group, barrel, bullet, land) %>% mutate(scan_id = paste(group, barrel, bullet, land, sep = "-"))
+write_csv(houston_gt, path = "../data/houston-test/houston_gt.csv") 
+
+## manually put in unique ID's for each individual "land". 
+```
+
+```{r}
+houston_gt <- read_csv("../data/houston-test/houston_gt.csv")
+head(houston_gt)
+
+houston_mat <- matrix(NA, nrow = nrow(houston_gt), ncol = nrow(houston_gt))
+row.names(houston_mat) <- houston_gt$scan_id
+colnames(houston_mat) <- houston_gt$scan_id
+
+for (i in 1:nrow(houston_mat)){
+  for(j in 1:ncol(houston_mat)){
+    houston_mat[i,j] <- ifelse(houston_gt$unique_id[i] == houston_gt$unique_id[j], "Same Source", "Different Source")
+  }
+}
+
+
+houston_mat <- as.data.frame(houston_mat)
+houston_mat$land1 <- rownames(houston_mat)
+houston_mat <- houston_mat %>% gather(1:414, key = "land2", value = "ground_truth")
+
+
+
+houston_pairwise <- readRDS("../data/houston-test/rfscores_manual.rda")
+
+
+houston_results <- full_join(houston_pairwise, houston_mat)
+head(houston_results)
+
+houston_results$rfscore_manual <- houston_results$rfscore
+houston_results <- houston_results %>% select(-rfscore)
+
+saveRDS(houston_results, "../data/houston-test/houston_results.rda")
+```
+

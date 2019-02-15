@@ -101,85 +101,258 @@ phoenix_pairwise %>% filter(land1 == "Unknown 1-Y-B1-L1") %>% arrange(desc(rfsco
 
 ## To investigate further:  
 
-Barrel 5 and Bullet H of Unknowns
-Barrel 6 or Barrel 4 and Bullet I of Unknowns
-Bullet L of Unknowns - maybe Barrel 3?  
-
 
 ```{r}
-hamby44_lands <- readRDS("../data/hamby44/hamby44_paper.rda")
-
-bullet_l <- hamby44_lands %>% filter(bullet == "Bullet 'L'" | barrel == "Barrel 3")
-dim(bullet_l)
-head(bullet_l)
-
-bullet_l_l1 <- bullet_l %>% filter(bullet == "Bullet 'L'" & land == "Land 1") 
-barrel_3 <- bullet_l %>% filter(bullet == "Bullet 1")
-
-ggplot() + geom_point(data = bullet_l_l1$ccdata_w_resid[[1]], aes(x = x, y = rlo_resid), color ="red") + geom_point(data = barrel_3[1,]$ccdata_w_resid[[1]], aes(x = x, y = rlo_resid), color = "blue") + theme_bw()
+phoenix_lands <- readRDS("../data/phoenix/phoenix_paper.rda")
 
 ```
-```{r}
-bullet_i <- hamby44_lands %>% filter(bullet == "Bullet 'I'" | barrel == "Barrel 6")
-dim(bullet_i)
-head(bullet_i)
-
-bullet_i_l1 <- bullet_i %>% filter(bullet == "Bullet 'I'" & land == "Land 1") 
-barrel_6 <- bullet_i %>% filter(bullet == "Bullet 2")
-
-ggplot() + geom_point(data = bullet_i_l1$ccdata_w_resid[[1]], aes(x = x, y = value_std), color ="red") + geom_point(data = barrel_6[3,]$ccdata_w_resid[[1]], aes(x = x, y = value_std), color = "blue") + theme_bw()
-
-```
-
-```{r}
-hamby44_lands <- readRDS("../data/hamby44/hamby44_paper.rda")
-
-bullet_h <- hamby44_lands %>% filter(bullet == "Bullet 'H'" | barrel == "Barrel 5")
-dim(bullet_h)
-head(bullet_h)
-
-bullet_h_l1 <- bullet_h %>% filter(bullet == "Bullet 'H'" & land == "Land 1") 
-barrel_5 <- bullet_h %>% filter(bullet == "Bullet 2")
-
-ggplot() + geom_point(data = bullet_h_l1$ccdata_w_resid[[1]], aes(x = x, y = value_std), color ="red") + geom_point(data = barrel_5[6,]$ccdata_w_resid[[1]], aes(x = x, y = value_std), color = "blue") + theme_bw()
-
-```
-
 
 # Now - the mess that is coding this up.  
 
 ```{r}
-hamby44_gt <- hamby44_lands %>% select(barrel, bullet, land) %>% mutate(scan_id = paste(barrel, bullet, land, sep = "-"))
-write_csv(hamby44_gt, path = "../data/hamby44/hamby44_gt.csv") 
+phoenix_lands <- phoenix_lands %>% 
+  mutate(source = as.character(source)) %>%
+  mutate(source = purrr::map(source, .f = function(col){
+    split1<- strsplit(col, "//")[[1]][2]
+    split2 <- strsplit(split1, ".x3p")[[1]][1]
+    land <- str_sub(split2, start = -2)
+    barrel <- ifelse(str_detect(split2, "Unknown") == T, "Unknown", strsplit(split2, "/")[[1]][1])
+    bullet <- ifelse(str_detect(split2, "Gun") == T, 
+                     strsplit(split2, "/")[[1]][2], str_sub(split2, start = -6, end = -4))
+    bbl <- paste(barrel, bullet, land, sep = "/")
+    return(bbl)
+  })) %>% 
+  separate(source, c("barrel", "bullet", "land"), sep = "/")
+
+
+phoenix_gt <- phoenix_lands %>% select(barrel, bullet, land) %>% mutate(scan_id = paste(barrel, bullet, land, sep = "-"))
+write_csv(phoenix_gt, path = "../data/phoenix/phoenix_gt.csv") 
 
 ## manually put in unique ID's for each individual "land". 
 ```
 
 ```{r}
-hamby44_gt <- read_csv("../data/hamby44/hamby44_gt.csv")
-head(hamby44_gt)
+phoenix_gt <- read_csv("../data/phoenix/phoenix_gt.csv")
+head(phoenix_gt)
 
-hamby44_mat <- matrix(NA, nrow = nrow(hamby44_gt), ncol = nrow(hamby44_gt))
-row.names(hamby44_mat) <- hamby44_gt$scan_id
-colnames(hamby44_mat) <- hamby44_gt$scan_id
+phoenix_mat <- matrix(NA, nrow = nrow(phoenix_gt), ncol = nrow(phoenix_gt))
+row.names(phoenix_mat) <- phoenix_gt$scan_id
+colnames(phoenix_mat) <- phoenix_gt$scan_id
 
-for (i in 1:nrow(hamby44_mat)){
-  for(j in 1:ncol(hamby44_mat)){
-    hamby44_mat[i,j] <- ifelse(hamby44_gt$unique_id[i] == hamby44_gt$unique_id[j], "Same Source", "Different Source")
+for (i in 1:nrow(phoenix_mat)){
+  for(j in 1:ncol(phoenix_mat)){
+    phoenix_mat[i,j] <- ifelse(phoenix_gt$unique_id[i] == phoenix_gt$unique_id[j], "Same Source", "Different Source")
   }
 }
 
 
-hamby44_mat <- as.data.frame(hamby44_mat)
-hamby44_mat$land1 <- rownames(hamby44_mat)
-hamby44_mat <- hamby44_mat %>% gather(1:208, key = "land2", value = "ground_truth")
+phoenix_mat <- as.data.frame(phoenix_mat)
+phoenix_mat$land1 <- rownames(phoenix_mat)
+phoenix_mat <- phoenix_mat %>% gather(1:198, key = "land2", value = "ground_truth")
 
-hamby44_results <- full_join(hamby44_pairwise, hamby44_mat)
-head(hamby44_results)
 
-hamby44_results$rfscore_manual <- hamby44_results$rfscore
-hamby44_results <- hamby44_results %>% select(-rfscore)
 
-saveRDS(hamby44_results, "../data/hamby44/hamby44_results.rda")
+phoenix_pairwise <- readRDS("../data/phoenix/rfscores_manual.rda")
+
+phoenix_pairwise <- phoenix_pairwise %>% 
+  mutate(land1 = as.character(land1)) %>%
+  mutate(land1 = purrr::map_chr(land1, .f = function(col){
+    land <- str_sub(col, start = -2)
+    barrel <- ifelse(str_detect(col, "Unknown") == T, "Unknown", strsplit(col, "-")[[1]][2])
+    bullet <- ifelse(str_detect(col, "Gun") == T, 
+                     strsplit(col, "-")[[1]][3], str_sub(col, start = 9, end = 11))
+    bbl <- paste(barrel, bullet, land, sep = "/")
+    return(bbl)
+  })) %>% 
+  mutate(land2 = as.character(land2)) %>%
+  mutate(land2 = purrr::map_chr(land2, .f = function(col){
+    land <- str_sub(col, start = -2)
+    barrel <- ifelse(str_detect(col, "Unknown") == T, "Unknown", strsplit(col, "-")[[1]][2])
+    bullet <- ifelse(str_detect(col, "Gun") == T, 
+                     strsplit(col, "-")[[1]][3], str_sub(col, start = 9, end = 11))
+    bbl <- paste(barrel, bullet, land, sep = "/")
+    return(bbl)
+  })) 
+
+phoenix_mat <- phoenix_mat %>% 
+  mutate(land1 = as.character(land1)) %>%
+  mutate(land1 = purrr::map_chr(land1, .f = function(col){
+    land <- str_sub(col, start = -2)
+    barrel <- ifelse(str_detect(col, "Unknown") == T, "Unknown", strsplit(col, "-")[[1]][2])
+    bullet <- ifelse(str_detect(col, "Gun") == T, 
+                     strsplit(col, "-")[[1]][3], str_sub(col, start = 9, end = 11))
+    bbl <- paste(barrel, bullet, land, sep = "/")
+    return(bbl)
+  })) %>% 
+  mutate(land2 = as.character(land2)) %>%
+  mutate(land2 = purrr::map_chr(land2, .f = function(col){
+    land <- str_sub(col, start = -2)
+    barrel <- ifelse(str_detect(col, "Unknown") == T, "Unknown", strsplit(col, "-")[[1]][2])
+    bullet <- ifelse(str_detect(col, "Gun") == T, 
+                     strsplit(col, "-")[[1]][3], str_sub(col, start = 9, end = 11))
+    bbl <- paste(barrel, bullet, land, sep = "/")
+    return(bbl)
+  })) 
+
+phoenix_results <- full_join(phoenix_pairwise, phoenix_mat)
+head(phoenix_results)
+
+phoenix_results$rfscore_manual <- phoenix_results$rfscore
+phoenix_results <- phoenix_results %>% select(-rfscore)
+
+saveRDS(phoenix_results, "../data/phoenix/phoenix_results.rda")
 ```
 
+```{r}
+rfscore_roll <- readRDS("../data/phoenix/rfscores_roll.rda")
+rfscore_lb <- readRDS("../data/phoenix/rfscores_lb.rda")
+rfscore_lf <- readRDS("../data/phoenix/rfscores_lf.rda")
+rfscore_bcp <- readRDS("../data/phoenix/rfscores_bcp.rda")
+
+
+rfscore_roll <- rfscore_roll %>% 
+  mutate(land1 = as.character(land1)) %>%
+  mutate(land1 = purrr::map_chr(land1, .f = function(col){
+    land <- str_sub(col, start = -2)
+    barrel <- ifelse(str_detect(col, "Unknown") == T, "Unknown", strsplit(col, "-")[[1]][2])
+    bullet <- ifelse(str_detect(col, "Gun") == T, 
+                     strsplit(col, "-")[[1]][3], str_sub(col, start = 9, end = 11))
+    bbl <- paste(barrel, bullet, land, sep = "/")
+    return(bbl)
+  })) %>% 
+  mutate(land2 = as.character(land2)) %>%
+  mutate(land2 = purrr::map_chr(land2, .f = function(col){
+    land <- str_sub(col, start = -2)
+    barrel <- ifelse(str_detect(col, "Unknown") == T, "Unknown", strsplit(col, "-")[[1]][2])
+    bullet <- ifelse(str_detect(col, "Gun") == T, 
+                     strsplit(col, "-")[[1]][3], str_sub(col, start = 9, end = 11))
+    bbl <- paste(barrel, bullet, land, sep = "/")
+    return(bbl)
+  }))
+rfscore_lb <- rfscore_lb %>% 
+  mutate(land1 = as.character(land1)) %>%
+  mutate(land1 = purrr::map_chr(land1, .f = function(col){
+    land <- str_sub(col, start = -2)
+    barrel <- ifelse(str_detect(col, "Unknown") == T, "Unknown", strsplit(col, "-")[[1]][2])
+    bullet <- ifelse(str_detect(col, "Gun") == T, 
+                     strsplit(col, "-")[[1]][3], str_sub(col, start = 9, end = 11))
+    bbl <- paste(barrel, bullet, land, sep = "/")
+    return(bbl)
+  })) %>% 
+  mutate(land2 = as.character(land2)) %>%
+  mutate(land2 = purrr::map_chr(land2, .f = function(col){
+    land <- str_sub(col, start = -2)
+    barrel <- ifelse(str_detect(col, "Unknown") == T, "Unknown", strsplit(col, "-")[[1]][2])
+    bullet <- ifelse(str_detect(col, "Gun") == T, 
+                     strsplit(col, "-")[[1]][3], str_sub(col, start = 9, end = 11))
+    bbl <- paste(barrel, bullet, land, sep = "/")
+    return(bbl)
+  }))
+
+rfscore_lf <- rfscore_lf %>% 
+  mutate(land1 = as.character(land1)) %>%
+  mutate(land1 = purrr::map_chr(land1, .f = function(col){
+    land <- str_sub(col, start = -2)
+    barrel <- ifelse(str_detect(col, "Unknown") == T, "Unknown", strsplit(col, "-")[[1]][2])
+    bullet <- ifelse(str_detect(col, "Gun") == T, 
+                     strsplit(col, "-")[[1]][3], str_sub(col, start = 9, end = 11))
+    bbl <- paste(barrel, bullet, land, sep = "/")
+    return(bbl)
+  })) %>% 
+  mutate(land2 = as.character(land2)) %>%
+  mutate(land2 = purrr::map_chr(land2, .f = function(col){
+    land <- str_sub(col, start = -2)
+    barrel <- ifelse(str_detect(col, "Unknown") == T, "Unknown", strsplit(col, "-")[[1]][2])
+    bullet <- ifelse(str_detect(col, "Gun") == T, 
+                     strsplit(col, "-")[[1]][3], str_sub(col, start = 9, end = 11))
+    bbl <- paste(barrel, bullet, land, sep = "/")
+    return(bbl)
+  }))
+
+rfscore_bcp <- rfscore_bcp %>% 
+  mutate(land1 = as.character(land1)) %>%
+  mutate(land1 = purrr::map_chr(land1, .f = function(col){
+    land <- str_sub(col, start = -2)
+    barrel <- ifelse(str_detect(col, "Unknown") == T, "Unknown", strsplit(col, "-")[[1]][2])
+    bullet <- ifelse(str_detect(col, "Gun") == T, 
+                     strsplit(col, "-")[[1]][3], str_sub(col, start = 9, end = 11))
+    bbl <- paste(barrel, bullet, land, sep = "/")
+    return(bbl)
+  })) %>% 
+  mutate(land2 = as.character(land2)) %>%
+  mutate(land2 = purrr::map_chr(land2, .f = function(col){
+    land <- str_sub(col, start = -2)
+    barrel <- ifelse(str_detect(col, "Unknown") == T, "Unknown", strsplit(col, "-")[[1]][2])
+    bullet <- ifelse(str_detect(col, "Gun") == T, 
+                     strsplit(col, "-")[[1]][3], str_sub(col, start = 9, end = 11))
+    bbl <- paste(barrel, bullet, land, sep = "/")
+    return(bbl)
+  }))
+
+
+
+saveRDS(rfscore_roll, "../data/phoenix/rfscores_roll.rda")
+saveRDS(rfscore_lb, "../data/phoenix/rfscores_lb.rda")
+saveRDS(rfscore_lf, "../data/phoenix/rfscores_lf.rda")
+saveRDS(rfscore_bcp, "../data/phoenix/rfscores_bcp.rda")
+
+```
+
+# Visualize lands to make sure in sequence
+
+```{r}
+
+phoenix_pairwise <- readRDS("../data/phoenix/rfscores_manual.rda")
+
+phoenix_pairwise <- phoenix_pairwise %>% 
+  mutate(land1 = as.character(land1)) %>%
+  mutate(land1 = purrr::map_chr(land1, .f = function(col){
+    land <- str_sub(col, start = -2)
+    barrel <- ifelse(str_detect(col, "Unknown") == T, "Unknown", str_sub(col, end = 8))
+    bullet <- ifelse(str_detect(col, "Gun") == T, 
+                     str_sub(col, start = 10, end = 11), str_sub(col, start = 9, end = 11))
+    bbl <- paste(barrel, bullet, land, sep = "/")
+    return(bbl)
+  })) %>% 
+  mutate(land2 = as.character(land2)) %>%
+  mutate(land2 = purrr::map_chr(land2, .f = function(col){
+    land <- str_sub(col, start = -2)
+    barrel <- ifelse(str_detect(col, "Unknown") == T, "Unknown", str_sub(col, end = 8))
+    bullet <- ifelse(str_detect(col, "Gun") == T, 
+                     str_sub(col, start = 10, end = 11), str_sub(col, start = 9, end = 11))
+    bbl <- paste(barrel, bullet, land, sep = "/")
+    return(bbl)
+  })) #
+
+head(phoenix_pairwise)
+phoenix_pairwise <- phoenix_pairwise %>% 
+  mutate(barrel_1 = purrr::map_chr(land1, .f = function(col){
+    strsplit(col, "/")[[1]][1]}),
+    bullet_1 = purrr::map_chr(land1, .f = function(col){
+      strsplit(col, "/")[[1]][2]
+    }), 
+    land_1 = purrr::map_chr(land1, .f = function(col){
+      strsplit(col, "/")[[1]][3]
+    }), 
+    barrel_2 = purrr::map_chr(land2, .f = function(col){
+    strsplit(col, "/")[[1]][1]
+      }),
+    bullet_2 = purrr::map_chr(land2, .f = function(col){
+      strsplit(col, "/")[[1]][2]
+    }), 
+    land_2 = purrr::map_chr(land2, .f = function(col){
+      strsplit(col, "/")[[1]][3]
+    }) )
+head(phoenix_pairwise)
+phoenix_pairwise %>%
+  filter(str_detect(land1, "Gun 1-A9") == T & str_detect(land2, "Unknown") == T) %>% 
+  #filter(str_detect(land1, "Unknown/1-Q") == T) %>% 
+  ggplot(aes(x = land2, y = land1, fill = rfscore)) +
+  geom_tile() +
+  scale_fill_gradient2(low = "grey80", high = "darkorange", 
+                       midpoint = .5) +
+  facet_wrap(~bullet_2) +
+  #xlab("Land A") +
+  #ylab("Land B") +
+  theme(aspect.ratio = 1, axis.text.x = element_text(angle =10))
+```

@@ -281,6 +281,21 @@ auc_manual <- colAUC(h44_results$rfscore_manual, h44_results$truth_01)[[1]]
 
 
 
+cutoff_frame <- function(cutoff_vec, response_col, prob_col){
+  fpr <- rep(NA, times = length(cutoff_vec))
+  dat <- data.frame(prob_col, response_col)
+  all_negs <- sum(dat$response_col == 0)
+  for(i in 1:length(cutoff_vec)){
+    dat$class_pred <- ifelse(prob_col <= cutoff_vec[i], 0, 1)
+    fpr[i] <- sum(dat$class_pred == 1 & dat$response_col == 0)/all_negs
+  }
+  return(data.frame(cutoff_vec, fpr))
+}
+
+
+h44_cutoffs <- seq(0,1, length.out = 1000)
+#h44_fprs <- cutoff_frame(h44_cutoffs, response_col = h44_results$truth_01, prob_col = h44_)
+
 ```
 
 
@@ -288,15 +303,113 @@ auc_manual <- colAUC(h44_results$rfscore_manual, h44_results$truth_01)[[1]]
 \begin{table}[]
 \centering
 \caption{Downstream results for Hamby set 44}
-\begin{tabular}{|l|l|l|l|}
-\hline
+\begin{tabular}{llll}
 \textbf{Method} & \textbf{AUC} & \textbf{Controlled FP Rate} & \textbf{Cutoff} \\ \hline
-Rollapply & `r auc_roll` &  & \\ \hline
-LASSO basic & `r auc_lb` &  &  \\ \hline
-LASSO full & `r auc_lf` &  &  \\ \hline
-Bayesian Changepoint & `r auc_bcp` &  & \\ \hline
-Manual ID & `r auc_manual` &  & \\ \hline 
+Rollapply & `r round(auc_roll, 3)` & .1 &  \\ \hline
+LASSO basic & `r round(auc_lb, 3)` & .1 &  \\ \hline
+LASSO full & `r round(auc_lf, 3)` & .1 &  \\ \hline
+Bayesian Changepoint & `r round(auc_bcp, 3)` & .1 & \\ \hline
+Manual ID & `r round(auc_manual, 3)` & .1 & \\ \hline 
 \end{tabular}
+\end{table}
+
+
+\subsection{Phoenix PD} 
+
+```{r phoenix-results, echo = F, warning = F, message = F}
+phoenix_results <- readRDS("../data/phoenix/phoenix_results.rda")
+rfscore_roll <- readRDS("../data/phoenix/rfscores_roll.rda")
+rfscore_lb <- readRDS("../data/phoenix/rfscores_lb.rda")
+rfscore_lf <- readRDS("../data/phoenix/rfscores_lf.rda")
+rfscore_bcp <- readRDS("../data/phoenix/rfscores_bcp.rda")
+
+rfscore_roll <- rfscore_roll %>% mutate(rfscore_roll = rfscore) %>% select(-rfscore)
+rfscore_lb <- rfscore_lb %>% mutate(rfscore_lb = rfscore) %>% select(-rfscore)
+rfscore_lf <- rfscore_lf %>% mutate(rfscore_lf = rfscore) %>% select(-rfscore)
+rfscore_bcp <- rfscore_bcp %>% mutate(rfscore_bcp = rfscore) %>% select(-rfscore)
+
+
+phoenix_results <- full_join(phoenix_results, rfscore_roll)
+phoenix_results <- full_join(phoenix_results, rfscore_lb)
+phoenix_results <- full_join(phoenix_results, rfscore_lf)
+phoenix_results <- full_join(phoenix_results, rfscore_bcp)
+phoenix_results$truth_01 <- ifelse(phoenix_results$ground_truth == "Same Source", 1, 0)
+
+#head(phoenix_results)
+
+auc_roll_p <- colAUC(phoenix_results$rfscore_roll, phoenix_results$truth_01)[[1]]
+auc_lb_p <- colAUC(phoenix_results$rfscore_lb, phoenix_results$truth_01)[[1]]
+auc_lf_p <- colAUC(phoenix_results$rfscore_lf, phoenix_results$truth_01)[[1]]
+auc_bcp_p <- colAUC(phoenix_results$rfscore_bcp, phoenix_results$truth_01)[[1]]
+auc_manual_p <- colAUC(phoenix_results$rfscore_manual, phoenix_results$truth_01)[[1]]
+
+
+
+```
+
+
+
+\begin{table}[]
+\centering
+\caption{Downstream results for Phoenix PD set}
+\begin{tabular}{llll}
+\textbf{Method} & \textbf{AUC} & \textbf{Controlled FP Rate} & \textbf{Cutoff} \\ \hline
+Rollapply & `r round(auc_roll_p, 3)` &  & \\ \hline
+LASSO basic & `r round(auc_lb_p, 3)` &  &  \\ \hline
+LASSO full & `r round(auc_lf_p, 3)` &  &  \\ \hline
+Bayesian Changepoint & `r round(auc_bcp_p, 3)` &  & \\ \hline
+Manual ID & `r round(auc_manual_p, 3)` &  & \\ \hline 
+\end{tabular}
+\end{table}
+
+
+
+\subsection{Houston-test set} 
+
+```{r houston-results, echo = F, warning = F, message = F}
+houston_results <- readRDS("../data/houston-test/houston_results.rda")
+rfscore_roll <- readRDS("../data/houston-test/rfscores_roll.rda")
+rfscore_lb <- readRDS("../data/houston-test/rfscores_lb.rda")
+rfscore_lf <- readRDS("../data/houston-test/rfscores_lf.rda")
+rfscore_bcp <- readRDS("../data/houston-test/rfscores_bcp.rda")
+
+rfscore_roll <- rfscore_roll %>% mutate(rfscore_roll = rfscore) %>% select(-rfscore)
+rfscore_lb <- rfscore_lb %>% mutate(rfscore_lb = rfscore) %>% select(-rfscore)
+rfscore_lf <- rfscore_lf %>% mutate(rfscore_lf = rfscore) %>% select(-rfscore)
+rfscore_bcp <- rfscore_bcp %>% mutate(rfscore_bcp = rfscore) %>% select(-rfscore)
+
+
+houston_results <- full_join(houston_results, rfscore_roll)
+houston_results <- full_join(houston_results, rfscore_lb)
+houston_results <- full_join(houston_results, rfscore_lf)
+houston_results <- full_join(houston_results, rfscore_bcp)
+houston_results$truth_01 <- ifelse(houston_results$ground_truth == "Same Source", 1, 0)
+
+#head(houston_results)
+
+auc_roll_h <- colAUC(houston_results$rfscore_roll, houston_results$truth_01)[[1]]
+auc_lb_h <- colAUC(houston_results$rfscore_lb, houston_results$truth_01)[[1]]
+auc_lf_h <- colAUC(houston_results$rfscore_lf, houston_results$truth_01)[[1]]
+auc_bcp_h <- colAUC(houston_results$rfscore_bcp, houston_results$truth_01)[[1]]
+auc_manual_h <- colAUC(houston_results$rfscore_manual, houston_results$truth_01)[[1]]
+
+
+
+```
+
+
+
+\begin{table}[]
+\centering
+\caption{Downstream results for Houston-test set}
+\begin{tabular}{llll}
+\textbf{Method} & \textbf{AUC} & \textbf{Controlled FP Rate} & \textbf{Cutoff} \\ \hline
+Rollapply & `r round(auc_roll_h, 3)` &  & \\ \hline
+LASSO basic & `r round(auc_lb_h, 3)` &  &  \\ \hline
+LASSO full & `r round(auc_lf_h, 3)` &  &  \\ \hline
+Bayesian Changepoint & `r round(auc_bcp_h, 3)` &  & \\ \hline
+Manual ID & `r round(auc_manual_h, 3)` &  & \\ \hline 
+\end{tabular} 
 \end{table}
 
 

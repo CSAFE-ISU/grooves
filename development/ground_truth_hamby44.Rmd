@@ -256,3 +256,47 @@ barrel_5 <- bullet_i %>% filter(bullet == "Bullet 1")
 ggplot() + geom_point(data = bullet_i_l3$ccdata_w_resid[[1]], aes(x = x, y = value_std), color ="red") + geom_point(data = barrel_5[4,]$ccdata_w_resid[[1]], aes(x = x, y = value_std), color = "blue") + theme_bw()
 
 ```
+
+
+```{r}
+hamby44_pairwise <- hamby44_pairwise %>% 
+  mutate(land1 = as.character(land1), land2 = as.character(land2)) %>% 
+  mutate(barrel_1 = purrr::map_chr(land1, .f = function(col){
+    strsplit(col, "-")[[1]][1]}),
+    bullet_1 = purrr::map_chr(land1, .f = function(col){
+      strsplit(col, "-")[[1]][2]
+    }), 
+    land_1 = purrr::map_chr(land1, .f = function(col){
+      strsplit(col, "-")[[1]][3]
+    }), 
+    barrel_2 = purrr::map_chr(land2, .f = function(col){
+    strsplit(col, "-")[[1]][1]
+      }),
+    bullet_2 = purrr::map_chr(land2, .f = function(col){
+      strsplit(col, "-")[[1]][2]
+    }), 
+    land_2 = purrr::map_chr(land2, .f = function(col){
+      strsplit(col, "-")[[1]][3]
+    }) )
+head(hamby44_pairwise)
+hamby44_pairwise %>%
+  filter(str_detect(land1, "Barrel 10-Bullet 1") == T & str_detect(land2, "Bullet 'S'") == T) %>% 
+  #filter(str_detect(land1, "Unknown/1-Q") == T) %>% 
+  ggplot(aes(x = land2, y = land1, fill = rfscore)) +
+  geom_tile() +
+  scale_fill_gradient2(low = "grey80", high = "darkorange", 
+                       midpoint = .5) +
+  facet_wrap(~bullet_2) +
+  #xlab("Land A") +
+  #ylab("Land B") +
+  theme(aspect.ratio = 1, axis.text.x = element_text(angle =10))
+```
+
+
+
+
+
+
+
+
+

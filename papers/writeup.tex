@@ -708,15 +708,44 @@ found in the appendix.
 \begin{table}[]
 \centering
 \caption{Downstream results for Hamby set 44}
-\begin{tabular}{|l|l|l|l|}
-\hline
+\begin{tabular}{llll}
 \textbf{Method} & \textbf{AUC} & \textbf{Controlled FP Rate} & \textbf{Cutoff} \\ \hline
-Rollapply & 0.7899325 &  & \\ \hline
-LASSO basic & 0.927193 &  &  \\ \hline
-LASSO full & 0.9268781 &  &  \\ \hline
-Bayesian Changepoint & 0.914678 &  & \\ \hline
-Manual ID & 0.9308856 &  & \\ \hline 
+Rollapply & 0.801 &  & \\ \hline
+LASSO basic & 0.943 &  &  \\ \hline
+LASSO full & 0.941 &  &  \\ \hline
+Bayesian Changepoint & 0.932 &  & \\ \hline
+Manual ID & 0.944 &  & \\ \hline 
 \end{tabular}
+\end{table}
+
+\subsection{Phoenix PD}
+
+\begin{table}[]
+\centering
+\caption{Downstream results for Phoenix PD set}
+\begin{tabular}{llll}
+\textbf{Method} & \textbf{AUC} & \textbf{Controlled FP Rate} & \textbf{Cutoff} \\ \hline
+Rollapply & 0.818 &  & \\ \hline
+LASSO basic & 0.877 &  &  \\ \hline
+LASSO full & 0.893 &  &  \\ \hline
+Bayesian Changepoint & 0.903 &  & \\ \hline
+Manual ID & 0.953 &  & \\ \hline 
+\end{tabular}
+\end{table}
+
+\subsection{Houston-test set}
+
+\begin{table}[]
+\centering
+\caption{Downstream results for Houston-test set}
+\begin{tabular}{llll}
+\textbf{Method} & \textbf{AUC} & \textbf{Controlled FP Rate} & \textbf{Cutoff} \\ \hline
+Rollapply & 0.761 &  & \\ \hline
+LASSO basic & 0.852 &  &  \\ \hline
+LASSO full & 0.858 &  &  \\ \hline
+Bayesian Changepoint & 0.795 &  & \\ \hline
+Manual ID & 0.931 &  & \\ \hline 
+\end{tabular} 
 \end{table}
 
 \section{Conclusions}
