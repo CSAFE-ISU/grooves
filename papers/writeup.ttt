@@ -1,13 +1,14 @@
 \begin{table}[]
 \centering
 \caption{Downstream results for Hamby set 44}
-\begin{tabular}{llll}
-\textbf{Method} & \textbf{AUC} & \textbf{Controlled FP Rate} & \textbf{Cutoff} \\ \hline
-Rollapply & 0.801 &  & \\ \hline
-LASSO basic & 0.943 &  &  \\ \hline
-LASSO full & 0.941 &  &  \\ \hline
-Bayesian Changepoint & 0.932 &  & \\ \hline
-Manual ID & 0.944 &  & \\ \hline
+\begin{tabular}{lllllll}
+& & \multicolumn{5}{c}{\textbf{Controlled FPR = .01}}\\
+\textbf{Method} & \textbf{AUC} & Cutoff & FN &TP & TN & Accuracy \\ \hline
+Rollapply & 0.8 &  0.92 & 332 & 420&42126 & 0.98 \\ \hline
+LASSO basic & 0.94 &  0.75 &126 & 626&42098 & 0.99\\ \hline
+LASSO full & 0.94 &  0.75 &126 &626 &42106 & 0.99 \\ \hline
+Bayesian Changepoint & 0.93 &  0.74 &152 & 600&42098 & 0.99\\ \hline
+Manual ID & 0.94 &  0.74 & 124& 628&42088 & 0.99\\ \hline
 \end{tabular}
 \end{table}
 \efloatseparator
@@ -15,13 +16,14 @@ Manual ID & 0.944 &  & \\ \hline
 \begin{table}[]
 \centering
 \caption{Downstream results for Phoenix PD set}
-\begin{tabular}{llll}
-\textbf{Method} & \textbf{AUC} & \textbf{Controlled FP Rate} & \textbf{Cutoff} \\ \hline
-Rollapply & 0.818 &  & \\ \hline
-LASSO basic & 0.877 &  &  \\ \hline
-LASSO full & 0.893 &  &  \\ \hline
-Bayesian Changepoint & 0.903 &  & \\ \hline
-Manual ID & 0.953 &  & \\ \hline
+\begin{tabular}{lllllll}
+& & \multicolumn{5}{c}{\textbf{Controlled FPR = .01}}\\
+\textbf{Method} & \textbf{AUC} & Cutoff & FN &TP & TN & Accuracy \\ \hline
+Rollapply & 0.818 &  0.9 & 364 & 378&38082 & 0.981 \\ \hline
+LASSO basic & 0.877 &  0.947 &256 & 486&38088 & 0.9839\\ \hline
+LASSO full & 0.893 &  0.953 &238 &504 &38082 & 0.9842 \\ \hline
+Bayesian Changepoint & 0.903 &  0.937 &256 & 486&38080 & 0.9837\\ \hline
+Manual ID & 0.953 &  0.853 & 96& 646&38084 & 0.9879\\ \hline
 \end{tabular}
 \end{table}
 \efloatseparator
@@ -29,12 +31,13 @@ Manual ID & 0.953 &  & \\ \hline
 \begin{table}[]
 \centering
 \caption{Downstream results for Houston-test set}
-\begin{tabular}{llll}
-\textbf{Method} & \textbf{AUC} & \textbf{Controlled FP Rate} & \textbf{Cutoff} \\ \hline
-Rollapply & 0.761 &  & \\ \hline
-LASSO basic & 0.852 &  &  \\ \hline
-LASSO full & 0.858 &  &  \\ \hline
-Bayesian Changepoint & 0.795 &  & \\ \hline
-Manual ID & 0.931 &  & \\ \hline
+\begin{tabular}{lllllll}
+& & \multicolumn{5}{c}{\textbf{Controlled FPR = .01}}\\
+\textbf{Method} & \textbf{AUC} & Cutoff & FN &TP & TN & Accuracy \\ \hline
+Rollapply & 0.761 &  0.91 & 1652 & 1016&167118 & 0.981 \\ \hline
+LASSO basic & 0.852 &  0.88 &1274 & 1394&167136 & 0.9833\\ \hline
+LASSO full & 0.858 &  0.823 &1144 &1524 &167062 & 0.9836 \\ \hline
+Bayesian Changepoint & 0.795 &  0.863 &1552 & 1116&167096 & 0.9814\\ \hline
+Manual ID & 0.931 &  0.823 & 614& 2054&167098 & 0.9869\\ \hline
 \end{tabular}
 \end{table}

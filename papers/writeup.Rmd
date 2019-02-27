@@ -251,6 +251,7 @@ After running the MCMC for each model, parameter estimates and the most likely m
 ```{r h44-results, echo = F, warning = F, message = F}
 library(tidyverse)
 library(caTools)
+#library(ROCR)
 
 h44_results <- readRDS("../data/hamby44/hamby44_results.rda")
 rfscore_roll <- readRDS("../data/hamby44/rfscores_roll.rda")
@@ -280,22 +281,33 @@ auc_bcp <- colAUC(h44_results$rfscore_bcp, h44_results$truth_01)[[1]]
 auc_manual <- colAUC(h44_results$rfscore_manual, h44_results$truth_01)[[1]]
 
 
-
-cutoff_frame <- function(cutoff_vec, response_col, prob_col){
-  fpr <- rep(NA, times = length(cutoff_vec))
-  dat <- data.frame(prob_col, response_col)
-  all_negs <- sum(dat$response_col == 0)
-  for(i in 1:length(cutoff_vec)){
-    dat$class_pred <- ifelse(prob_col <= cutoff_vec[i], 0, 1)
-    fpr[i] <- sum(dat$class_pred == 1 & dat$response_col == 0)/all_negs
-  }
-  return(data.frame(cutoff_vec, fpr))
+controlfp_fun <- function(column, truth_col, control_fp){
+  df <- data.frame(column = column, truth_col = truth_col)
+  n_neg <- sum(df$truth_col == 0)
+  n_pos <- sum(df$truth_col == 1)
+  n_fp <- floor(control_fp*n_neg)
+  cut_frame <- df %>% 
+    filter(truth_col == 0) %>% 
+    select(column, truth_col) %>%
+    arrange(desc(column)) %>%
+    summarise(cutoff = column[n_fp])
+  cutoff <- cut_frame$cutoff
+  df %>% 
+    select(column, truth_col) %>%
+    mutate(pred_class = ifelse(column > cutoff, 1, 0)) %>%
+    summarise(fp = sum(pred_class == 1 & truth_col == 0), 
+              tp = sum(pred_class == 1 & truth_col == 1), 
+              tn = sum(pred_class == 0 & truth_col == 0), 
+              fn = sum(pred_class == 0 & truth_col == 1), 
+              acc = (tp + tn)/(fp + tp + tn + fn), 
+              cutoff = cutoff)
 }
 
-
-h44_cutoffs <- seq(0,1, length.out = 1000)
-#h44_fprs <- cutoff_frame(h44_cutoffs, response_col = h44_results$truth_01, prob_col = h44_)
-
+h44_roll_table <- controlfp_fun(h44_results$rfscore_roll, h44_results$truth_01, .01)
+h44_lb_table <- controlfp_fun(h44_results$rfscore_lb, h44_results$truth_01, .01)
+h44_lf_table <- controlfp_fun(h44_results$rfscore_lf, h44_results$truth_01, .01)
+h44_bcp_table <- controlfp_fun(h44_results$rfscore_bcp, h44_results$truth_01, .01)
+h44_manual_table <- controlfp_fun(h44_results$rfscore_manual, h44_results$truth_01, .01)
 ```
 
 
@@ -303,13 +315,14 @@ h44_cutoffs <- seq(0,1, length.out = 1000)
 \begin{table}[]
 \centering
 \caption{Downstream results for Hamby set 44}
-\begin{tabular}{llll}
-\textbf{Method} & \textbf{AUC} & \textbf{Controlled FP Rate} & \textbf{Cutoff} \\ \hline
-Rollapply & `r round(auc_roll, 3)` & .1 &  \\ \hline
-LASSO basic & `r round(auc_lb, 3)` & .1 &  \\ \hline
-LASSO full & `r round(auc_lf, 3)` & .1 &  \\ \hline
-Bayesian Changepoint & `r round(auc_bcp, 3)` & .1 & \\ \hline
-Manual ID & `r round(auc_manual, 3)` & .1 & \\ \hline 
+\begin{tabular}{lllllll}
+& & \multicolumn{5}{c}{\textbf{Controlled FPR = .01}}\\
+\textbf{Method} & \textbf{AUC} & Cutoff & FN &TP & TN & Accuracy \\ \hline
+Rollapply & `r round(auc_roll, 2)` &  `r round(h44_roll_table$cutoff, 2)` & `r h44_roll_table$fn` & `r h44_roll_table$tp`&`r h44_roll_table$tn` & `r round(h44_roll_table$acc, 2)` \\ \hline
+LASSO basic & `r round(auc_lb, 2)` &  `r round(h44_lb_table$cutoff, 2)` &`r h44_lb_table$fn` & `r h44_lb_table$tp`&`r h44_lb_table$tn` & `r round(h44_lb_table$acc, 2)`\\ \hline
+LASSO full & `r round(auc_lf, 2)` &  `r round(h44_lf_table$cutoff, 2)` &`r h44_lf_table$fn` &`r h44_lf_table$tp` &`r h44_lf_table$tn` & `r round(h44_lf_table$acc, 2)` \\ \hline
+Bayesian Changepoint & `r round(auc_bcp, 2)` &  `r round(h44_bcp_table$cutoff, 2)` &`r h44_bcp_table$fn` & `r h44_bcp_table$tp`&`r h44_bcp_table$tn` & `r round(h44_bcp_table$acc, 2)`\\ \hline
+Manual ID & `r round(auc_manual, 2)` &  `r round(h44_manual_table$cutoff, 2)` & `r h44_manual_table$fn`& `r h44_manual_table$tp`&`r h44_manual_table$tn` & `r round(h44_manual_table$acc, 2)`\\ \hline 
 \end{tabular}
 \end{table}
 
@@ -344,7 +357,11 @@ auc_bcp_p <- colAUC(phoenix_results$rfscore_bcp, phoenix_results$truth_01)[[1]]
 auc_manual_p <- colAUC(phoenix_results$rfscore_manual, phoenix_results$truth_01)[[1]]
 
 
-
+pho_roll_table <- controlfp_fun(phoenix_results$rfscore_roll, phoenix_results$truth_01, .01)
+pho_lb_table <- controlfp_fun(phoenix_results$rfscore_lb, phoenix_results$truth_01, .01)
+pho_lf_table <- controlfp_fun(phoenix_results$rfscore_lf, phoenix_results$truth_01, .01)
+pho_bcp_table <- controlfp_fun(phoenix_results$rfscore_bcp, phoenix_results$truth_01, .01)
+pho_manual_table <- controlfp_fun(phoenix_results$rfscore_manual, phoenix_results$truth_01, .01)
 ```
 
 
@@ -352,13 +369,14 @@ auc_manual_p <- colAUC(phoenix_results$rfscore_manual, phoenix_results$truth_01)
 \begin{table}[]
 \centering
 \caption{Downstream results for Phoenix PD set}
-\begin{tabular}{llll}
-\textbf{Method} & \textbf{AUC} & \textbf{Controlled FP Rate} & \textbf{Cutoff} \\ \hline
-Rollapply & `r round(auc_roll_p, 3)` &  & \\ \hline
-LASSO basic & `r round(auc_lb_p, 3)` &  &  \\ \hline
-LASSO full & `r round(auc_lf_p, 3)` &  &  \\ \hline
-Bayesian Changepoint & `r round(auc_bcp_p, 3)` &  & \\ \hline
-Manual ID & `r round(auc_manual_p, 3)` &  & \\ \hline 
+\begin{tabular}{lllllll}
+& & \multicolumn{5}{c}{\textbf{Controlled FPR = .01}}\\
+\textbf{Method} & \textbf{AUC} & Cutoff & FN &TP & TN & Accuracy \\ \hline
+Rollapply & `r round(auc_roll_p, 3)` &  `r round(pho_roll_table$cutoff, 3)` & `r pho_roll_table$fn` & `r pho_roll_table$tp`&`r pho_roll_table$tn` & `r round(pho_roll_table$acc, 4)` \\ \hline
+LASSO basic & `r round(auc_lb_p, 3)` &  `r round(pho_lb_table$cutoff, 3)` &`r pho_lb_table$fn` & `r pho_lb_table$tp`&`r pho_lb_table$tn` & `r round(pho_lb_table$acc, 4)`\\ \hline
+LASSO full & `r round(auc_lf_p, 3)` &  `r round(pho_lf_table$cutoff, 3)` &`r pho_lf_table$fn` &`r pho_lf_table$tp` &`r pho_lf_table$tn` & `r round(pho_lf_table$acc, 4)` \\ \hline
+Bayesian Changepoint & `r round(auc_bcp_p, 3)` &  `r round(pho_bcp_table$cutoff, 3)` &`r pho_bcp_table$fn` & `r pho_bcp_table$tp`&`r pho_bcp_table$tn` & `r round(pho_bcp_table$acc, 4)`\\ \hline
+Manual ID & `r round(auc_manual_p, 3)` &  `r round(pho_manual_table$cutoff, 3)` & `r pho_manual_table$fn`& `r pho_manual_table$tp`&`r pho_manual_table$tn` & `r round(pho_manual_table$acc, 4)`\\ \hline 
 \end{tabular}
 \end{table}
 
@@ -394,24 +412,27 @@ auc_bcp_h <- colAUC(houston_results$rfscore_bcp, houston_results$truth_01)[[1]]
 auc_manual_h <- colAUC(houston_results$rfscore_manual, houston_results$truth_01)[[1]]
 
 
-
+hou_roll_table <- controlfp_fun(houston_results$rfscore_roll, houston_results$truth_01, .01)
+hou_lb_table <- controlfp_fun(houston_results$rfscore_lb, houston_results$truth_01, .01)
+hou_lf_table <- controlfp_fun(houston_results$rfscore_lf, houston_results$truth_01, .01)
+hou_bcp_table <- controlfp_fun(houston_results$rfscore_bcp, houston_results$truth_01, .01)
+hou_manual_table <- controlfp_fun(houston_results$rfscore_manual, houston_results$truth_01, .01)
 ```
-
 
 
 \begin{table}[]
 \centering
 \caption{Downstream results for Houston-test set}
-\begin{tabular}{llll}
-\textbf{Method} & \textbf{AUC} & \textbf{Controlled FP Rate} & \textbf{Cutoff} \\ \hline
-Rollapply & `r round(auc_roll_h, 3)` &  & \\ \hline
-LASSO basic & `r round(auc_lb_h, 3)` &  &  \\ \hline
-LASSO full & `r round(auc_lf_h, 3)` &  &  \\ \hline
-Bayesian Changepoint & `r round(auc_bcp_h, 3)` &  & \\ \hline
-Manual ID & `r round(auc_manual_h, 3)` &  & \\ \hline 
-\end{tabular} 
+\begin{tabular}{lllllll}
+& & \multicolumn{5}{c}{\textbf{Controlled FPR = .01}}\\
+\textbf{Method} & \textbf{AUC} & Cutoff & FN &TP & TN & Accuracy \\ \hline
+Rollapply & `r round(auc_roll_h, 3)` &  `r round(hou_roll_table$cutoff, 3)` & `r hou_roll_table$fn` & `r hou_roll_table$tp`&`r hou_roll_table$tn` & `r round(hou_roll_table$acc, 4)` \\ \hline
+LASSO basic & `r round(auc_lb_h, 3)` &  `r round(hou_lb_table$cutoff, 3)` &`r hou_lb_table$fn` & `r hou_lb_table$tp`&`r hou_lb_table$tn` & `r round(hou_lb_table$acc, 4)`\\ \hline
+LASSO full & `r round(auc_lf_h, 3)` &  `r round(hou_lf_table$cutoff, 3)` &`r hou_lf_table$fn` &`r hou_lf_table$tp` &`r hou_lf_table$tn` & `r round(hou_lf_table$acc, 4)` \\ \hline
+Bayesian Changepoint & `r round(auc_bcp_h, 3)` &  `r round(hou_bcp_table$cutoff, 3)` &`r hou_bcp_table$fn` & `r hou_bcp_table$tp`&`r hou_bcp_table$tn` & `r round(hou_bcp_table$acc, 4)`\\ \hline
+Manual ID & `r round(auc_manual_h, 3)` &  `r round(hou_manual_table$cutoff, 3)` & `r hou_manual_table$fn`& `r hou_manual_table$tp`&`r hou_manual_table$tn` & `r round(hou_manual_table$acc, 4)`\\ \hline 
+\end{tabular}
 \end{table}
-
 
 \section{Conclusions}  
 
