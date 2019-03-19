@@ -1,0 +1,334 @@
+---
+title: "Untitled"
+author: "Kiegan Rice"
+date: "3/19/2019"
+output: html_document
+---
+```{r}
+library(tidyverse)
+library(gridExtra)
+library(locfit)
+```
+
+Define robust_loess_fit function.
+```{r}
+robust_loess_fit <- function(bullet, iter){
+  n <- nrow(bullet)
+  weights <- rep(1, n)
+  fit <- loess(value_std~x, data = bullet, span = 1)
+  bullet$fit <- predict(fit, newdata = bullet)
+  bullet$resid <- bullet$value_std - bullet$fit
+  i <- 1
+  while(i < iter){
+    mar <- median(abs(bullet$resid), na.rm = T)
+    bullet$bisq <- pmax(1 - (bullet$resid/(6*mar))^2, 0)^2
+    weights <- ifelse(bullet$resid > 0 , bullet$bisq, 1)
+    fit <- loess(value_std~x, data = bullet, span = 1, weights = weights)
+    bullet$fit <- predict(fit, newdata = bullet)
+    bullet$resid <- bullet$value_std - bullet$fit
+    i <- i+1
+  }
+  return(fit)
+}
+#rlo_fit <- robust_loess_fit(bullet_houston, 10)
+#model_bh <- loess(value_std~x, data = bullet_houston, span = 1)
+#
+```
+
+
+Let's see if we can visualize the differences between regular LOESS, robust LOESS (ala Cleveland), and robust LOESS (ala Rice). 
+```{r}
+hamby_paper <- readRDS("../data/hamby44/hamby44_paper.rda")
+phoenix_paper <- readRDS("../data/phoenix/phoenix_paper.rda")
+houston_paper <- readRDS("../data/houston-test/houstontest_paper.rda")
+```
+
+
+
+
+Let's add columns to each "ccdata" for LOESS, robust LOESS, and robust LOESS ala Rice.  
+```{r}
+hamby_paper <- hamby_paper %>% mutate(ccdata_w_resid = purrr::map(ccdata_w_resid, .f = function(lea){
+  locfit_fit = locfit.robust(value_std~x, data = lea, alpha = 1, kern = "tcub")
+  lea$locfit_pred <- predict(locfit_fit, newdata = lea)
+  rlo_fit <- robust_loess_fit(lea, 10)
+  lea$rlo_pred <- predict(rlo_fit, newdata = lea)
+  loess_fit <- loess(value_std~x, data = lea, span = 1)
+  lea$lo_pred <- predict(loess_fit, newdata = lea)
+  return(lea)
+}))
+
+phoenix_paper <- phoenix_paper %>% mutate(ccdata_w_resid = purrr::map(ccdata_w_resid, .f = function(lea){
+  locfit_fit = locfit.robust(value_std~x, data = lea, alpha = 1, kern = "tcub")
+  lea$locfit_pred <- predict(locfit_fit, newdata = lea)
+  rlo_fit <- robust_loess_fit(lea, 10)
+  lea$rlo_pred <- predict(rlo_fit, newdata = lea)
+  loess_fit <- loess(value_std~x, data = lea, span = 1)
+  lea$lo_pred <- predict(loess_fit, newdata = lea)
+  return(lea)
+}))
+
+houston_paper <- houston_paper %>% mutate(ccdata_w_resid = purrr::map(ccdata, .f = function(lea){
+  check_min <- min(lea$value[!is.na(lea$value)])
+  lea <- lea %>% mutate(value_std = value - check_min)
+  locfit_fit = locfit.robust(value_std~x, data = lea, alpha = 1, kern = "tcub")
+  lea$locfit_pred <- predict(locfit_fit, newdata = lea)
+  rlo_fit <- robust_loess_fit(lea, 10)
+  lea$rlo_pred <- predict(rlo_fit, newdata = lea)
+  loess_fit <- loess(value_std~x, data = lea, span = 1)
+  lea$lo_pred <- predict(loess_fit, newdata = lea)
+  return(lea)
+}))
+```
+
+
+```{r}
+hamby_paper %>% 
+  unnest(ccdata_w_resid) %>%
+  group_by(x) %>%
+  summarise(min_lo_pred = min(lo_pred, na.rm = T), 
+            max_lo_pred = max(lo_pred, na.rm =T),
+            min_locfit_pred = min(locfit_pred, na.rm = T), 
+            max_locfit_pred = max(locfit_pred, na.rm = T),
+            min_rlo_pred = min(rlo_pred, na.rm = T), 
+            max_rlo_pred = max(rlo_pred, na.rm = T)) %>%
+  ggplot() + 
+  geom_ribbon(aes(x = x, ymin = min_lo_pred, ymax = max_lo_pred), fill = "grey50",alpha = 0.6) + 
+  geom_ribbon(aes(x = x, ymin = min_rlo_pred, ymax = max_rlo_pred), fill = "#1B9E77", alpha = 0.6) + 
+  theme_bw()
+
+
+
+phoenix_paper %>% 
+  unnest(ccdata_w_resid) %>%
+  group_by(x) %>%
+  summarise(min_lo_pred = min(lo_pred, na.rm = T), 
+            max_lo_pred = max(lo_pred, na.rm =T),
+            min_locfit_pred = min(locfit_pred, na.rm = T), 
+            max_locfit_pred = max(locfit_pred, na.rm = T),
+            min_rlo_pred = min(rlo_pred, na.rm = T), 
+            max_rlo_pred = max(rlo_pred, na.rm = T)) %>%
+  ggplot() + 
+  geom_ribbon(aes(x = x, ymin = min_lo_pred, ymax = max_lo_pred), fill = "grey50",alpha = 0.6) + 
+  geom_ribbon(aes(x = x, ymin = min_rlo_pred, ymax = max_rlo_pred), fill = "#1B9E77", alpha = 0.6) + 
+  theme_bw()
+
+
+houston_paper %>% 
+  unnest(ccdata_w_resid) %>%
+  group_by(x) %>%
+  summarise(min_lo_pred = min(lo_pred, na.rm = T), 
+            max_lo_pred = max(lo_pred, na.rm =T),
+            min_locfit_pred = min(locfit_pred, na.rm = T), 
+            max_locfit_pred = max(locfit_pred, na.rm = T),
+            min_rlo_pred = min(rlo_pred, na.rm = T), 
+            max_rlo_pred = max(rlo_pred, na.rm = T)) %>%
+  ggplot() + 
+  geom_ribbon(aes(x = x, ymin = min_lo_pred, ymax = max_lo_pred), fill = "grey50",alpha = 0.6) + 
+  geom_ribbon(aes(x = x, ymin = min_rlo_pred, ymax = max_rlo_pred), fill = "#1B9E77", alpha = 0.6) + 
+  theme_bw()
+```
+
+
+
+```{r}
+hamby_paper %>% 
+  mutate(ccdata_w_resid = purrr::map(ccdata_w_resid, .f = function(lea){
+    lea$loess_to_locfit <- lea$locfit_pred - lea$lo_pred
+    lea$loess_to_rlo <- lea$rlo_pred - lea$lo_pred
+    lea$locfit_to_rlo <- lea$rlo_pred - lea$locfit_pred
+    return(lea)
+  })) %>%
+  unnest(ccdata_w_resid) %>%
+  group_by(x) %>%
+  summarise(min_loess_to_locfit = min(loess_to_locfit, na.rm = T), 
+            max_loess_to_locfit = max(loess_to_locfit, na.rm =T),
+            med_loess_to_locfit = median(loess_to_locfit, na.rm = T),
+            min_loess_to_rlo = min(loess_to_rlo, na.rm = T), 
+            max_loess_to_rlo = max(loess_to_rlo, na.rm = T),
+            med_loess_to_rlo = median(loess_to_rlo, na.rm = T),
+            min_locfit_to_rlo = min(locfit_to_rlo, na.rm = T), 
+            max_locfit_to_rlo = max(locfit_to_rlo, na.rm = T),
+            med_locfit_to_rlo = median(locfit_to_rlo, na.rm = T)) %>%
+  ggplot() + 
+  #geom_ribbon(aes(x = x, ymin = min_loess_to_locfit, ymax = max_loess_to_locfit), fill = "#D95F02", alpha =0.5) + ## dark red
+  #geom_ribbon(aes(x = x, ymin = min_loess_to_rlo, ymax = max_loess_to_rlo), fill = "#1B9E77", alpha = 0.5) + ## green
+  #geom_line(aes(x = x, y = med_loess_to_locfit), color = "#D95F02") + 
+  #geom_line(aes(x = x, y = med_loess_to_rlo), color = "#1B9E77") + 
+  geom_ribbon(aes(x = x, ymin = min_loess_to_rlo, ymax = max_loess_to_rlo), fill = "grey50", alpha = 0.7) +
+  geom_line(aes(x = x, y = med_loess_to_rlo), color = "black") + 
+  theme_bw() + 
+  labs(x = "X Location", y = "Shift in Predicted Values", 
+       title = "Difference between LOESS and Robust LOESS Predicted Values", 
+       subtitle = "Hamby set 44")
+
+
+
+phoenix_paper %>% 
+  mutate(ccdata_w_resid = purrr::map(ccdata_w_resid, .f = function(lea){
+    lea$loess_to_locfit <- lea$locfit_pred - lea$lo_pred
+    lea$loess_to_rlo <- lea$rlo_pred - lea$lo_pred
+    lea$locfit_to_rlo <- lea$rlo_pred - lea$locfit_pred
+    return(lea)
+  })) %>%
+  unnest(ccdata_w_resid) %>%
+  group_by(x) %>%
+  summarise(min_loess_to_locfit = min(loess_to_locfit, na.rm = T), 
+            max_loess_to_locfit = max(loess_to_locfit, na.rm =T),
+            med_loess_to_locfit = median(loess_to_locfit, na.rm = T),
+            min_loess_to_rlo = min(loess_to_rlo, na.rm = T), 
+            max_loess_to_rlo = max(loess_to_rlo, na.rm = T),
+            med_loess_to_rlo = median(loess_to_rlo, na.rm = T),
+            min_locfit_to_rlo = min(locfit_to_rlo, na.rm = T), 
+            max_locfit_to_rlo = max(locfit_to_rlo, na.rm = T),
+            med_locfit_to_rlo = median(locfit_to_rlo, na.rm = T)) %>%
+  ggplot() + 
+  #geom_ribbon(aes(x = x, ymin = min_loess_to_locfit, ymax = max_loess_to_locfit), fill = "#D95F02", alpha =0.5) + ## dark red
+  #geom_ribbon(aes(x = x, ymin = min_loess_to_rlo, ymax = max_loess_to_rlo), fill = "#1B9E77", alpha = 0.5) + ## green
+  #geom_line(aes(x = x, y = med_loess_to_locfit), color = "#D95F02") + 
+  #geom_line(aes(x = x, y = med_loess_to_rlo), color = "#1B9E77") + 
+  geom_ribbon(aes(x = x, ymin = min_loess_to_rlo, ymax = max_loess_to_rlo), fill = "grey50", alpha = 0.7) +
+  geom_line(aes(x = x, y = med_loess_to_rlo), color = "black") + 
+  theme_bw() + 
+  labs(x = "X Location", y = "Shift in Predicted Values", 
+       title = "Difference between LOESS and Robust LOESS Predicted Values", 
+       subtitle = "Phoenix PD set")
+
+houston_paper %>% 
+  mutate(ccdata_w_resid = purrr::map(ccdata_w_resid, .f = function(lea){
+    lea$loess_to_locfit <- lea$locfit_pred - lea$lo_pred
+    lea$loess_to_rlo <- lea$rlo_pred - lea$lo_pred
+    lea$locfit_to_rlo <- lea$rlo_pred - lea$locfit_pred
+    return(lea)
+  })) %>%
+  unnest(ccdata_w_resid) %>%
+  group_by(x) %>%
+  summarise(min_loess_to_locfit = min(loess_to_locfit, na.rm = T), 
+            max_loess_to_locfit = max(loess_to_locfit, na.rm =T),
+            med_loess_to_locfit = median(loess_to_locfit, na.rm = T),
+            min_loess_to_rlo = min(loess_to_rlo, na.rm = T), 
+            max_loess_to_rlo = max(loess_to_rlo, na.rm = T),
+            med_loess_to_rlo = median(loess_to_rlo, na.rm = T),
+            min_locfit_to_rlo = min(locfit_to_rlo, na.rm = T), 
+            max_locfit_to_rlo = max(locfit_to_rlo, na.rm = T),
+            med_locfit_to_rlo = median(locfit_to_rlo, na.rm = T), 
+            n_x = n()) %>%
+  filter(n_x > 20) %>% ## get rid of x values that only appear on less than 20 LEAs
+  ggplot() + 
+  #geom_ribbon(aes(x = x, ymin = min_loess_to_locfit, ymax = max_loess_to_locfit), fill = "#D95F02", alpha =0.5) + ## dark red
+  #geom_ribbon(aes(x = x, ymin = min_loess_to_rlo, ymax = max_loess_to_rlo), fill = "#1B9E77", alpha = 0.5) + ## green
+  #geom_line(aes(x = x, y = med_loess_to_locfit), color = "#D95F02") + 
+  #geom_line(aes(x = x, y = med_loess_to_rlo), color = "#1B9E77") + 
+  geom_ribbon(aes(x = x, ymin = min_loess_to_rlo, ymax = max_loess_to_rlo), fill = "grey50", alpha = 0.7) +
+  geom_line(aes(x = x, y = med_loess_to_rlo), color = "black") + 
+  theme_bw() + 
+  labs(x = "X Location", y = "Shift in Predicted Values", 
+       title = "Difference between LOESS and Robust LOESS Predicted Values", 
+       subtitle = "Houston-test set")
+
+```
+
+
+
+
+
+
+
+
+```{r}
+hamby_paper %>% 
+  mutate(ccdata_w_resid = purrr::map(ccdata_w_resid, .f = function(lea){
+    lea$loess_to_locfit <- lea$locfit_pred - lea$lo_pred
+    lea$loess_to_rlo <- lea$rlo_pred - lea$lo_pred
+    lea$locfit_to_rlo <- lea$rlo_pred - lea$locfit_pred
+    return(lea)
+  })) %>%
+  unnest(ccdata_w_resid) %>%
+  group_by(x) %>%
+  summarise(min_loess_to_locfit = min(loess_to_locfit, na.rm = T), 
+            max_loess_to_locfit = max(loess_to_locfit, na.rm =T),
+            med_loess_to_locfit = median(loess_to_locfit, na.rm = T),
+            min_loess_to_rlo = min(loess_to_rlo, na.rm = T), 
+            max_loess_to_rlo = max(loess_to_rlo, na.rm = T),
+            med_loess_to_rlo = median(loess_to_rlo, na.rm = T),
+            min_locfit_to_rlo = min(locfit_to_rlo, na.rm = T), 
+            max_locfit_to_rlo = max(locfit_to_rlo, na.rm = T),
+            med_locfit_to_rlo = median(locfit_to_rlo, na.rm = T)) %>%
+  ggplot() + 
+  #geom_ribbon(aes(x = x, ymin = min_loess_to_locfit, ymax = max_loess_to_locfit), fill = "#D95F02", alpha =0.5) + ## dark red
+  #geom_ribbon(aes(x = x, ymin = min_loess_to_rlo, ymax = max_loess_to_rlo), fill = "#1B9E77", alpha = 0.5) + ## green
+  #geom_line(aes(x = x, y = med_loess_to_locfit), color = "#D95F02") + 
+  #geom_line(aes(x = x, y = med_loess_to_rlo), color = "#1B9E77") + 
+  geom_ribbon(aes(x = x, ymin = min_locfit_to_rlo, ymax = max_locfit_to_rlo), fill = "grey50", alpha = 0.7) +
+  geom_line(aes(x = x, y = med_locfit_to_rlo), color = "black") + 
+  theme_bw() + 
+  labs(x = "X Location", y = "Shift in Predicted Values", 
+       title = "Difference between locfit.robust and robust_loess_fit Predicted Values", 
+       subtitle = "Hamby set 44")
+
+
+
+phoenix_paper %>% 
+  mutate(ccdata_w_resid = purrr::map(ccdata_w_resid, .f = function(lea){
+    lea$loess_to_locfit <- lea$locfit_pred - lea$lo_pred
+    lea$loess_to_rlo <- lea$rlo_pred - lea$lo_pred
+    lea$locfit_to_rlo <- lea$rlo_pred - lea$locfit_pred
+    return(lea)
+  })) %>%
+  unnest(ccdata_w_resid) %>%
+  group_by(x) %>%
+  summarise(min_loess_to_locfit = min(loess_to_locfit, na.rm = T), 
+            max_loess_to_locfit = max(loess_to_locfit, na.rm =T),
+            med_loess_to_locfit = median(loess_to_locfit, na.rm = T),
+            min_loess_to_rlo = min(loess_to_rlo, na.rm = T), 
+            max_loess_to_rlo = max(loess_to_rlo, na.rm = T),
+            med_loess_to_rlo = median(loess_to_rlo, na.rm = T),
+            min_locfit_to_rlo = min(locfit_to_rlo, na.rm = T), 
+            max_locfit_to_rlo = max(locfit_to_rlo, na.rm = T),
+            med_locfit_to_rlo = median(locfit_to_rlo, na.rm = T)) %>%
+  ggplot() + 
+  #geom_ribbon(aes(x = x, ymin = min_loess_to_locfit, ymax = max_loess_to_locfit), fill = "#D95F02", alpha =0.5) + ## dark red
+  #geom_ribbon(aes(x = x, ymin = min_loess_to_rlo, ymax = max_loess_to_rlo), fill = "#1B9E77", alpha = 0.5) + ## green
+  #geom_line(aes(x = x, y = med_loess_to_locfit), color = "#D95F02") + 
+  #geom_line(aes(x = x, y = med_loess_to_rlo), color = "#1B9E77") + 
+  geom_ribbon(aes(x = x, ymin = min_locfit_to_rlo, ymax = max_locfit_to_rlo), fill = "grey50", alpha = 0.7) +
+  geom_line(aes(x = x, y = med_locfit_to_rlo), color = "black") + 
+  theme_bw() + 
+  labs(x = "X Location", y = "Shift in Predicted Values", 
+       title = "Difference between locfit.robust and robust_loess_fit Predicted Values", 
+       subtitle = "Phoenix PD set")
+
+houston_paper %>% 
+  mutate(ccdata_w_resid = purrr::map(ccdata_w_resid, .f = function(lea){
+    lea$loess_to_locfit <- lea$locfit_pred - lea$lo_pred
+    lea$loess_to_rlo <- lea$rlo_pred - lea$lo_pred
+    lea$locfit_to_rlo <- lea$rlo_pred - lea$locfit_pred
+    return(lea)
+  })) %>%
+  unnest(ccdata_w_resid) %>%
+  group_by(x) %>%
+  summarise(min_loess_to_locfit = min(loess_to_locfit, na.rm = T), 
+            max_loess_to_locfit = max(loess_to_locfit, na.rm =T),
+            med_loess_to_locfit = median(loess_to_locfit, na.rm = T),
+            min_loess_to_rlo = min(loess_to_rlo, na.rm = T), 
+            max_loess_to_rlo = max(loess_to_rlo, na.rm = T),
+            med_loess_to_rlo = median(loess_to_rlo, na.rm = T),
+            min_locfit_to_rlo = min(locfit_to_rlo, na.rm = T), 
+            max_locfit_to_rlo = max(locfit_to_rlo, na.rm = T),
+            med_locfit_to_rlo = median(locfit_to_rlo, na.rm = T), 
+            n_x = n()) %>%
+  filter(n_x > 20) %>%
+  ggplot() + 
+  #geom_ribbon(aes(x = x, ymin = min_loess_to_locfit, ymax = max_loess_to_locfit), fill = "#D95F02", alpha =0.5) + ## dark red
+  #geom_ribbon(aes(x = x, ymin = min_loess_to_rlo, ymax = max_loess_to_rlo), fill = "#1B9E77", alpha = 0.5) + ## green
+  #geom_line(aes(x = x, y = med_loess_to_locfit), color = "#D95F02") + 
+  #geom_line(aes(x = x, y = med_loess_to_rlo), color = "#1B9E77") + 
+  geom_ribbon(aes(x = x, ymin = min_locfit_to_rlo, ymax = max_locfit_to_rlo), fill = "grey50", alpha = 0.7) +
+  geom_line(aes(x = x, y = med_locfit_to_rlo), color = "black") + 
+  theme_bw() + 
+  labs(x = "X Location", y = "Shift in Predicted Values", 
+       title = "Difference between locfit.robust and robust_loess_fit Predicted Values", 
+       subtitle = "Houston-test set")
+
+```
+
