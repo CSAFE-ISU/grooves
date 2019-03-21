@@ -48,7 +48,9 @@ houston_paper <- readRDS("../data/houston-test/houstontest_paper.rda")
 
 Let's add columns to each "ccdata" for LOESS, robust LOESS, and robust LOESS ala Rice.  
 ```{r}
-hamby_paper <- hamby_paper %>% mutate(ccdata_w_resid = purrr::map(ccdata_w_resid, .f = function(lea){
+hamby_paper <- hamby_paper %>% mutate(ccdata_w_resid = purrr::map(ccdata, .f = function(lea){
+  check_min <- min(lea$value[!is.na(lea$value)])
+  lea <- lea %>% mutate(value_std = value - check_min)
   locfit_fit = locfit.robust(value_std~x, data = lea, alpha = 1, kern = "tcub")
   lea$locfit_pred <- predict(locfit_fit, newdata = lea)
   rlo_fit <- robust_loess_fit(lea, 10)
@@ -259,7 +261,7 @@ hamby_paper %>%
   #geom_ribbon(aes(x = x, ymin = min_loess_to_rlo, ymax = max_loess_to_rlo), fill = "#1B9E77", alpha = 0.5) + ## green
   #geom_line(aes(x = x, y = med_loess_to_locfit), color = "#D95F02") + 
   #geom_line(aes(x = x, y = med_loess_to_rlo), color = "#1B9E77") + 
-  geom_ribbon(aes(x = x, ymin = min_locfit_to_rlo, ymax = max_locfit_to_rlo), fill = "grey50", alpha = 0.7) +
+  #geom_ribbon(aes(x = x, ymin = min_locfit_to_rlo, ymax = max_locfit_to_rlo), fill = "grey50", alpha = 0.7) +
   geom_line(aes(x = x, y = med_locfit_to_rlo), color = "black") + 
   theme_bw() + 
   labs(x = "X Location", y = "Shift in Predicted Values", 
@@ -291,7 +293,7 @@ phoenix_paper %>%
   #geom_ribbon(aes(x = x, ymin = min_loess_to_rlo, ymax = max_loess_to_rlo), fill = "#1B9E77", alpha = 0.5) + ## green
   #geom_line(aes(x = x, y = med_loess_to_locfit), color = "#D95F02") + 
   #geom_line(aes(x = x, y = med_loess_to_rlo), color = "#1B9E77") + 
-  geom_ribbon(aes(x = x, ymin = min_locfit_to_rlo, ymax = max_locfit_to_rlo), fill = "grey50", alpha = 0.7) +
+  #geom_ribbon(aes(x = x, ymin = min_locfit_to_rlo, ymax = max_locfit_to_rlo), fill = "grey50", alpha = 0.7) +
   geom_line(aes(x = x, y = med_locfit_to_rlo), color = "black") + 
   theme_bw() + 
   labs(x = "X Location", y = "Shift in Predicted Values", 
@@ -323,7 +325,7 @@ houston_paper %>%
   #geom_ribbon(aes(x = x, ymin = min_loess_to_rlo, ymax = max_loess_to_rlo), fill = "#1B9E77", alpha = 0.5) + ## green
   #geom_line(aes(x = x, y = med_loess_to_locfit), color = "#D95F02") + 
   #geom_line(aes(x = x, y = med_loess_to_rlo), color = "#1B9E77") + 
-  geom_ribbon(aes(x = x, ymin = min_locfit_to_rlo, ymax = max_locfit_to_rlo), fill = "grey50", alpha = 0.7) +
+  #geom_ribbon(aes(x = x, ymin = min_locfit_to_rlo, ymax = max_locfit_to_rlo), fill = "grey50", alpha = 0.7) +
   geom_line(aes(x = x, y = med_locfit_to_rlo), color = "black") + 
   theme_bw() + 
   labs(x = "X Location", y = "Shift in Predicted Values", 
