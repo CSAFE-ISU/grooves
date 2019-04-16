@@ -1,5 +1,137 @@
 \begin{figure}
 \includegraphics[width=\textwidth]{../images/3d_plot_top_context_breakoff.png}
-\caption{An example of an LEA scan from Hamby set 44. There are six LEAs on each bullet in all three test sets.}
+\caption{An example of a high-resolution LEA scan captured on a Sensofar Confocal Light Microscope.}
 \label{LEA-scan}
+\end{figure}
+\efloatseparator
+ 
+\begin{figure}
+\begin{minipage}[b]{0.45\linewidth}
+    \raggedleft
+    \includegraphics[width=\textwidth]{../images/3d_plot_top_crosscut.png}
+    \centering
+    Step 0: High-resolution 3D scan
+\end{minipage}
+\hspace{.2cm}
+\begin{minipage}[b]{0.45\linewidth}
+    \raggedright
+    \includegraphics[width=\textwidth]{../images/Profile_1.png}
+    \centering
+    Step 1: Horizontal crosscut
+\end{minipage}
+\vspace{.6cm}
+
+\begin{minipage}[b]{0.45\linewidth}
+    \raggedleft
+    \includegraphics[width=\textwidth]{../images/Profile_1_red_grooves.png}
+    \centering
+    Step 2: GEA data removal
+\end{minipage}
+\hspace{.2cm}
+\begin{minipage}[b]{0.45\linewidth}
+    \raggedright
+    \includegraphics[width=\textwidth]{../images/signature.png}
+    \centering
+    Step 3: Extracted signature
+\end{minipage}
+\caption{The process of extracting a 2D signature from a high-resolution 3D scan of a land engraved area (LEA) on a bullet. Extraction of a signature is dependent on both the choice of horizontal crosscut and accuracy of GEA data removal procedure.}
+\label{processing-process}
+\end{figure}
+\efloatseparator
+ 
+\begin{figure}
+\centering
+\includegraphics{writeup_files/figure-latex/groove-no-groove-1.pdf}
+\caption{\label{groove-no-groove}An example of the impact failure to
+remove GEA data can have on an extracted 2D signature. Important data
+features are obfuscated in the signature by remaining GEA structure.}
+\end{figure}
+\efloatseparator
+ 
+\begin{figure}
+\centering
+\includegraphics{writeup_files/figure-latex/loess-vs-locfit-1.pdf}
+\caption{\label{loess-vs-locfit}An example of the difference between
+traditional LOESS fit and robust LOESS fit to an LEA crosscut from Hamby
+set 44. While the GEA structure present is relatively minor, even the
+small improvement in model fit with robust LOESS results in
+significantly different residual structures.}
+\end{figure}
+\efloatseparator
+ 
+\begin{figure}
+\centering
+\includegraphics{writeup_files/figure-latex/houston-locfit-1.pdf}
+\caption{\label{houston-locfit}An example of the difference between
+traditional LOESS fit and robust LOESS fit to an LEA crosscut from the
+Houston-test set. While the smaller GEA structure on the right side is
+accounted for using the robust procedure, the larger GEA structure on
+the left is still problematic.}
+\end{figure}
+\efloatseparator
+ 
+\begin{figure}
+\centering
+\includegraphics{writeup_files/figure-latex/houston-adapted-rlo-1.pdf}
+\caption{\label{houston-adapted-rlo}An example of the difference between
+robust LOESS fit and adapted robust LOESS fit to an LEA crosscut from
+the Houston-test set. Iteratively downweighting only positive residuals
+results in a significantly different fit which accounts for GEA
+structures on both the left and right.}
+\end{figure}
+\efloatseparator
+ 
+\begin{figure}
+\centering
+\includegraphics{writeup_files/figure-latex/adapted-rlo-shift-1.pdf}
+\caption{\label{adapted-rlo-shift}Mean shift in predictions when
+applying the adapted robust LOESS procedure in place of the traditional
+robust LOESS procedure. For Hamby set 44, predictions are, on average,
+very similar. The Phoenix PD and Houston-test sets have more significant
+downwards shifts in predictions near the left and right boundaries.}
+\end{figure}
+\efloatseparator
+ 
+\begin{figure}
+\centering
+\includegraphics{writeup_files/figure-latex/lasso-features-1.pdf}
+\caption{\label{lasso-features}Example distributions of features used in
+two-class classification. While depth shows the most clear separation
+between GEA and LEA data, it alone will not suffice to classify data
+correctly. While other distributions are relatively tight for LEA, there
+is still significant overlap with the wider GEA distributions.}
+\end{figure}
+\efloatseparator
+ 
+\begin{figure}
+\centering
+\includegraphics{writeup_files/figure-latex/hamby-groove-results-1.pdf}
+\caption{\label{hamby-groove-results}Random forest score distributions
+for same source and different source land-to-land comparisons for Hamby
+set 44. Distributions should ideally separate between same source and
+different source pairs. LASSO Basic, LASSO Full and Bayesian changepoint
+all demonstrate significant improvement over Rollapply.}
+\end{figure}
+\efloatseparator
+ 
+\begin{figure}
+\centering
+\includegraphics{writeup_files/figure-latex/phoenix-groove-results-1.pdf}
+\caption{\label{phoenix-groove-results}Random forest score distributions
+for same source and different source land-to-land comparisons for the
+Phoenix PD set. LASSO Basic, LASSO Full, and Bayesian changepoint all
+demonstrate significant improvement over Rollapply, but are still not as
+well separated as the Manual ID distributions.}
+\end{figure}
+\efloatseparator
+ 
+\begin{figure}
+\centering
+\includegraphics{writeup_files/figure-latex/houston-groove-results-1.pdf}
+\caption{\label{houston-groove-results}Random forest score distributions
+for same source and different source land-to-land comparisons for the
+Houston-test set. LASSO Basic and LASSO Full both demonstrate
+improvement over Rollapply, but are still not as well separated as the
+Manual ID distributions. Bayesian changepoint demonstrates minor
+improvement, but does not improve as much as the LASSO methods.}
 \end{figure}

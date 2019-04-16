@@ -78,8 +78,8 @@
 
 \if0\blind
 {
-  \title{\bf Automated Groove Identification in 3D Bullet Land Scans (we'll change
-the title)}
+  \title{\bf Statistical Approaches to Automated Groove Engraved Area Identification
+in 3D Bullet Land Scans}
 
   \author{
         Kiegan Rice \thanks{The authors gratefully acknowledge \ldots{}} \\
@@ -100,8 +100,8 @@ the title)}
   \bigskip
   \bigskip
   \begin{center}
-    {\LARGE\bf Automated Groove Identification in 3D Bullet Land Scans (we'll change
-the title)}
+    {\LARGE\bf Statistical Approaches to Automated Groove Engraved Area Identification
+in 3D Bullet Land Scans}
   \end{center}
   \medskip
 } \fi
@@ -128,13 +128,6 @@ the title)}
 
 \section{Background}
 
-\hh{Test Heike's color}\\
-\kr{Test Kiegan's color} \ug{Test Ulrike's color}\\
-\nate{Test Nate's color}
-
-\textbf{Images for background}: bullet and LEA scan (fig 1), LEA scan to
-profile??
-
 In forensic firearms analysis, visual feature comparison is used to
 analyze bullets to address the same source-difference source problem.
 Striation marks act as features which provide evidence to help determine
@@ -147,8 +140,8 @@ A cornerstone of forensic firearms analysis is that two bullets fired
 through the same barrel will bear more similar striation marks on their
 LEAs than two bullets fired from different barrels. The AFTE Theory of
 Identification \citep{AFTE} is used to make decisions when comparing two
-bullets under a comparison microscope: \textbf{add details here from
-AFTE Theory}.
+bullets under a comparison microscope:
+\kr{Add additional details from AFTE Theory of Identification here.}
 
 Technological advances coupled with concerns about the objectivity of
 visual comparison have produced several image-analysis algorithms which
@@ -157,21 +150,61 @@ aim to complete automated, quantitative analyses of bullet evidence.
 Many of these efforts have capitalized on the introduction of high
 resolution 3D scanning technology to forensic science
 \citep[see][]{DeKinder1, DeKinder2, Bachrach1}. 3D scans of land
-engraved areas have been used to develop several methods for the
-automated comparison of bullet lands
-\citep[e.g.][]{Ma1, Chu1, Chu2, Hare1}.
+engraved areas, such as the one seen in \autoref{LEA-scan}, have been
+used to develop several methods for the automated comparison of bullet
+lands \citep[e.g.][]{Ma1, Chu1, Chu2, Hare1}.
+
+\begin{figure}
+\includegraphics[width=\textwidth]{../images/3d_plot_top_context_breakoff.png}
+\caption{An example of a high-resolution LEA scan captured on a Sensofar Confocal Light Microscope.}
+\label{LEA-scan}
+\end{figure}
 
 One such method, proposed by \citet{Hare1}, is a random forest algorithm
-based on features calculated from 2D horizontal slides of the 3D images.
+based on features calculated from 2D horizontal slices of the 3D images.
 These slices, called profiles, have a data structure which is dominated
 by the global structure of the bullet land: they are curved. Feature
 comparison in firearms analysis is concerned with the similarity of
 straitions impressed by the barrel; whether two bullets are both curved
 does not answer the forensic inquiry. As such, a crucial step is to
-remove the global structure and distill the information down the
+remove the global structure and distill the information down to the
 deviations from the curve. The remaining pattern of peaks and valleys -
 called a signature - is a much more useful representation of the
-striations.
+striations. The process of translating a 3D scan into a 2D signature is
+demonstrated in \autoref{processing-process}.
+
+\begin{figure}
+\begin{minipage}[b]{0.45\linewidth}
+    \raggedleft
+    \includegraphics[width=\textwidth]{../images/3d_plot_top_crosscut.png}
+    \centering
+    Step 0: High-resolution 3D scan
+\end{minipage}
+\hspace{.2cm}
+\begin{minipage}[b]{0.45\linewidth}
+    \raggedright
+    \includegraphics[width=\textwidth]{../images/Profile_1.png}
+    \centering
+    Step 1: Horizontal crosscut
+\end{minipage}
+\vspace{.6cm}
+
+\begin{minipage}[b]{0.45\linewidth}
+    \raggedleft
+    \includegraphics[width=\textwidth]{../images/Profile_1_red_grooves.png}
+    \centering
+    Step 2: GEA data removal
+\end{minipage}
+\hspace{.2cm}
+\begin{minipage}[b]{0.45\linewidth}
+    \raggedright
+    \includegraphics[width=\textwidth]{../images/signature.png}
+    \centering
+    Step 3: Extracted signature
+\end{minipage}
+\caption{The process of extracting a 2D signature from a high-resolution 3D scan of a land engraved area (LEA) on a bullet. Extraction of a signature is dependent on both the choice of horizontal crosscut and accuracy of GEA data removal procedure.}  
+\label{processing-process}
+\end{figure}
 
 While removal of a curve from data is typically a straightforward
 statistical problem, 3D scans of LEAs contain a unique data structure
@@ -181,20 +214,31 @@ end slightly past the edges of the LEA, in the neighboring groove
 engraved areas (GEAs). This introduces a secondary structure that needs
 to be removed before algorithms can be reliably applied to data.
 
-Correctly separating LEA and GEA data is one of the most challenging -
-and important - aspects of data pre-processing. Without removing GEA
-data, algorithms will be using extraneous data which can misrepresent
-the character of the striations present on a given LEA. In order to
-distinguish between these areas, we aim to identify ``shoulder
-locations'', the locations at which the LEA ends and the GEAs begin.
+Correctly separating LEA and GEA data is one of the most challenging and
+important aspects of data pre-processing. Without removing GEA data,
+algorithms will be using extraneous data which can misrepresent the
+character of the striations present on a given LEA. This type of
+misrepresentation is demonstrated in \autoref{groove-no-groove}. In
+order to distinguish between LEA and GEA data, we aim to identify
+``shoulder locations'', the locations at which the LEA ends and the GEAs
+begin.
 
-The method described in \citet{Hare1}, based on data smoothing and local
-minima, fails to reliably separate the GEA data from LEA data.
-\textbf{Add more expanded description of two-step process to follow in
-the paper here}. The following work first describes a robust methodology
-for fitting the global curvature of 2D profiles. Three proposed methods
-to categorize the remaining data patterns into LEA and GEA are then
-described and tested.
+\begin{figure}
+\centering
+\includegraphics{writeup_files/figure-latex/groove-no-groove-1.pdf}
+\caption{\label{groove-no-groove}An example of the impact failure to
+remove GEA data can have on an extracted 2D signature. Important data
+features are obfuscated in the signature by remaining GEA structure.}
+\end{figure}
+
+The method for shoulder location identification described in
+\citet{Hare1}, based on data smoothing and local minima, fails to
+reliably separate the GEA data from LEA data. The following work first
+describes a robust methodology for fitting the global curvature of 2D
+profiles. Once global structure is removed, two different approaches to
+identify shouler locations are presented. Performance of both proposed
+shoulder location identification methods are then compared with current
+approaches.
 
 \section{Data Source}
 
@@ -226,12 +270,6 @@ bullets that are fired from a combination of the 10 known barrels and
 additional, out-of-set barrels. There are 6 LEAs for each of the fired
 bullets, producing a total of 414 individual land engraved areas.
 
-\begin{figure}
-\includegraphics[width=\textwidth]{../images/3d_plot_top_context_breakoff.png}
-\caption{An example of an LEA scan from Hamby set 44. There are six LEAs on each bullet in all three test sets.}
-\label{LEA-scan}
-\end{figure}
-
 The 3D scans of each test set were captured with a Sensofar Confocal
 light microscope at 20x magnification resulting in a resolution of 0.645
 microns per pixel. These LEAs were scanned at Iowa State University's
@@ -244,67 +282,131 @@ contain more than 3 million individual data points.
 
 A crosscut was extracted from each scan by identifying an optimal
 crosscut using \texttt{x3p\_crosscut\_optimize} in the
-\texttt{bulletxtrctr} package in \texttt{R}. Then, an averaged crosscut
-was calculated by averaging across ten consecutive crosscuts which fall
-directly to either side of the optimal crosscut identified. Shoulder
-location methods are applied to these averaged crosscut, for a total of
-820 crosscuts across the three test sets.
+\texttt{bulletxtrctr} package in \texttt{R} \cite{bulletxtrctr}. Then,
+an averaged crosscut was calculated by averaging across ten consecutive
+crosscuts which fall directly to either side of the optimal crosscut
+identified. Shoulder location methods are applied to these averaged
+crosscut, for a total of 820 crosscuts across the three test sets.
 
 \section{Methodology}
 
-We first need to remove the global structure of the bullet land.
-
 \subsection{Global Structure Removal}
 
-The non-traditional data structure necessitates employing
-non-traditional methods to model and remove the global structure. The
-data are made up of two competing structures: the LEA data, of which we
-would like to model the global structure, and the GEA data, which we
-would like to consider as outlying data. Traditional statistical
-modeling techniques minimize the least squared vertical distance from
-each data point to a fit line; this results in undue influence by GEA
-points, which pull any fit lines towards their unusual points.
+The first stage of our GEA removal process focuses on removing the
+bullet curvature from each crosscut. GEAs on the edge of each LEA
+represent a change in the data structure, so removal of the primary
+structure will result in two distinct structures remaining in the
+residuals. These two structures can then be separated using features of
+the remaining residuals.
 
-While bullets are traditionally circular, it is unwise to use a rigidly
-quadratic model to fit the global structure. We cannot assume that fired
-bullets will retain a neatly circular shape, especially at the level of
-detail scans are captured. The significant amount of physical pressure
-that acts upon bullets as they are fired through a barrel also can lead
-to some warping or slight deformations \emph{(find a citation from JFS
-or AFTE about warping/deformation of bullets?)}. Finally, the placement
-of the land relative to the plane of reference when a 3D scan is being
-captured can vary slightly, meaning that the 2D crosscuts can be
-slightly tilted or rotated. This will not translate into a clean
-quadratic-shaped(?) crosscut.
-
-To avoid the potential risks arising from using a quadratic linear
-model, we instead use a locally weighted regression (LOESS) which fits
-linear regression models on small pieces of the data and combines
-predictions to result in a non-parametric predicted fit of the data
+Although bullets are circular, the pressure they are subjected to in the
+process of being fired out of a gun can often result in LEAs that are
+not perfectly circular. In addition, the angle at which the LEAs are
+scanned by operators can mean crosscuts are tilted or misshapen. A
+quadratic model may then be unreasonable to remove the structure
+accurately across a whole crosscut. Thus, non-parametric locally
+weighted regression (LOESS) is a natural choice for removing the
 structure.
 
-However, since LOESS is still rooted in traditional regression
-techniques, it is unable to adequately identify and address the
-separation between GEA and LEA data structures. To address this, we
-implement a robust version of LOESS which iteratively downweights
-unusual data points and re-fits a LOESS model to each land. This robust
-LOESS is an adapted version of the robust LOESS proposed by
-\cite{Cleveland1}.
+To mitigate boundary effects when applying LOESS, we employ a robust
+version \citep{Cleveland1}. Robust LOESS fits models by iteratively
+downweighting high residual values to reduce the influence of outliers
+which deviate the most from the main data structure. In the context of
+LEA crosscuts, robust LOESS will iteratively downweight data points with
+high residuals, typically those from the GEA which deviate most severely
+from the overall bullet curvature.
 
-This model is fit as follows: (add more formulaic language here\ldots{})
+Traditional robust LOESS can be implemented using the
+\texttt{locfit.robust} function in the \texttt{locfit} package in
+\texttt{R} \cite{locfit}. An example of the difference in both predicted
+values and residual structure between \texttt{loess} and
+\texttt{locfit.robust} can be seen in \autoref{loess-vs-locfit}.
+
+\begin{figure}
+\centering
+\includegraphics{writeup_files/figure-latex/loess-vs-locfit-1.pdf}
+\caption{\label{loess-vs-locfit}An example of the difference between
+traditional LOESS fit and robust LOESS fit to an LEA crosscut from Hamby
+set 44. While the GEA structure present is relatively minor, even the
+small improvement in model fit with robust LOESS results in
+significantly different residual structures.}
+\end{figure}
+
+When applied to LEAs from Hamby set 44, the traditional robust LOESS
+procedure appears to work well. However, the method fails to mitigate
+effects when striations are deeper or GEA structures are more
+pronounced, such as those in the Houston-test set, seen in
+\autoref{houston-locfit}.
+
+\begin{figure}
+\centering
+\includegraphics{writeup_files/figure-latex/houston-locfit-1.pdf}
+\caption{\label{houston-locfit}An example of the difference between
+traditional LOESS fit and robust LOESS fit to an LEA crosscut from the
+Houston-test set. While the smaller GEA structure on the right side is
+accounted for using the robust procedure, the larger GEA structure on
+the left is still problematic.}
+\end{figure}
+
+Thus, we instead apply an adapted version of the traditional robust
+LOESS procedure which focuses on iteratively reducing the influence of
+only positive residuals. The procedure is as follows:
 
 \begin{enumerate}
 
-\item Fit a LOESS model (span = 1) to an entire crosscut to predict y using values of x. Assign weights of 1 to each data point for this fitting procedure.  
-\item Obtain predicted values of y from the model fit in step 1.  
-\item Calculate residual values using the predicted y values.  
+\item Fit a LOESS model with $span = 1$ to an entire LEA crosscut to predict $height$ using values of $x$. Assign weights of $1$ to each data point for this fitting procedure.  
+\item Obtain predicted values of $height$ from the model fit in step 1.  
+\item Calculate residual values using the predicted $height$ values.  
 \item Calculate bisquare weights for each residual value using the following formula:  
 $$\max(1 - (residual/(6*MAR))^2, 0)^2,$$   where MAR is the median absolute residual for the crosscut.  
 \item Assign weights to each data point according to its residual value. If the residual value is positive, assign the bisquare downweight. If the residual is zero or negative, leave the weight at 1.  
 \item Repeat steps 1-5 with updated weights at each iteration for $k$ iterations, with 20 iterations as the default.  
-\item After $k$ iterations of updating the weight vector, fit a LOESS model (span = 1) and obtained predicted and residual values.  
+\item After $k$ iterations of updating the weight vector, fit a LOESS model with $span = 1$ and obtained predicted and residual values for $height$.  
 
 \end{enumerate}
+
+This procedure is attractive in the LEA crosscut context because the
+main influence of GEA data is to pull predictions up towards the higher
+GEA height values. Downweighting high residuals for only those that fall
+above the fitted line will iteratively bring the fitted line down
+towards the LEA structure. While this is a small procedural difference,
+the results are dramatic. The same LEA pictured in
+\autoref{houston-locfit} can be seen again with updated predictions in
+\autoref{houston-adapted-rlo}.
+
+\begin{figure}
+\centering
+\includegraphics{writeup_files/figure-latex/houston-adapted-rlo-1.pdf}
+\caption{\label{houston-adapted-rlo}An example of the difference between
+robust LOESS fit and adapted robust LOESS fit to an LEA crosscut from
+the Houston-test set. Iteratively downweighting only positive residuals
+results in a significantly different fit which accounts for GEA
+structures on both the left and right.}
+\end{figure}
+
+The utility of this adaptation can be seen in
+\autoref{adapted-rlo-shift}, which shows the mean shift in predicted
+values from the robust LOESS to the adapted robust LOESS for our three
+different test sets of interest. While the difference is almost
+imperceptible for Hamby set 44, the Phoenix PD and Houston-test sets
+demonstrate visible downward shifts near both the left and right
+boundaries.
+
+\begin{figure}
+\centering
+\includegraphics{writeup_files/figure-latex/adapted-rlo-shift-1.pdf}
+\caption{\label{adapted-rlo-shift}Mean shift in predictions when
+applying the adapted robust LOESS procedure in place of the traditional
+robust LOESS procedure. For Hamby set 44, predictions are, on average,
+very similar. The Phoenix PD and Houston-test sets have more significant
+downwards shifts in predictions near the left and right boundaries.}
+\end{figure}
+
+Once the adapted robust LOESS procedure has been applied to remove the
+bullet curvature of the LEA, the resulting residuals should have
+relatively different distributions. Points in the LEA will fall more
+closely to the fitted line, while points in the GEA will typically have
+high, positive residuals.
 
 The subsequent prediction methods for shoulder location are based on the
 residuals calculated from the fit to the global structure of each land.
@@ -319,74 +421,135 @@ Shoulder location can be predicted by classifying data points as one of
 two classes: ``LEA'' or ``GEA''. A shoulder location prediction can then
 be found by gathering the range of values classified as ``LEA'' points.
 
-Classification into ``LEA'' or ``GEA'' was accomplished by a process of
-feature engineering (calculating new variables based on the residuals)
-and LASSO regression, a statistical learning method which penalizes the
-model for having many large parameters, and thus works to reduce the
-overall number of model parameters needed.
+Classification into ``LEA'' or ``GEA'' is first approached by a process
+of feature engineering based on adapted robust LOESS residuals. While
+the residuals themselves should have different height patterns,
+residuals alone are not enough to classify data with high accuracy.
 
-The following features are used in the LASSO model:
+As already demonstrated by the differences in \autoref{loess-vs-locfit}
+and \autoref{houston-locfit}, certain ammunition or barrel types may
+result in more pronounced striae on an LEA. Thus, standardization of
+features is imperative for transferability of fitted model parameters.
+The LEA scan context requires some non-traditional standardization
+practices.
+
+For example, consider the distribution of residual values resulting from
+adapted robust LOESS. There is reason to believe that the distribution
+will be quite skewed, which means a standard deviation will not be a
+good proxy for the spread of the distribution. Thus, rather than the
+standard deviation, we consider instead the standard deviation of
+residual values from the middle 50\% of \(x\) values present on the
+scan. This alternative acts as a proxy for the depth of striae on each
+LEA, with higher standard deviations found for lands with deeper striae.
+Standardizing residual values by this proxy puts all residuals on a
+similar scale.
+
+For variables which instead deal with differences in the \(x\)
+direction, such as depth from the center of a scan, values will be
+mapped to a \((0, 1)\) range, with the maximum \(x\) location on the
+scan acting as the divisor.
+
+The full list of features developed are as follows:
 
 \begin{itemize}
 
-\item[] \textbf{rlo\_resid\_std}: Robust LOESS residual value, standardized by dividing by standard deviation of residual values from middle 50\% of \textbf{x} values.  
+\item[] \texttt{rlo\_resid\_std}: Robust LOESS residual value, standardized by dividing by standard deviation of residual values from middle 50\% of \textbf{x} values.  
 
-\item[] \textbf{(rlo\_resid\_std$\mathbf{)^2}$}: Squared term of \textbf{rlo\_resid\_std}.  
+\item[] \texttt{(rlo\_resid\_std$\mathbf{)^2}$}: Squared term of \texttt{rlo\_resid\_std}.  
 
-\item[] \textbf{side}: Whether data point is to left or right of median \textbf{x} value.  
+\item[] \texttt{side}: Whether data point is to left or right of median $x$ value.  
 
-\item[] \textbf{depth\_std}: Distance of data point from median \textbf{x} value, standardized by dividing by maximum \textbf{x} value (a proxy for the range of \textbf{x}).  
+\item[] \texttt{depth\_std}: Distance of data point from median $x$ value, standardized by dividing by maximum $x$ value (a proxy for the range of $x$).  
 
-\item[] \textbf{side:depth\_std}: Interaction between \textbf{side} and \textbf{depth\_std} variables.  
+\item[] \texttt{side:depth\_std}: Interaction between \texttt{side} and \texttt{depth\_std} variables.  
 
-\item[] \textbf{xint1\_std}: Predicted x intercept of robust LOESS on left side of land, standardized by dividing by maximum \textbf{x} value (a proxy for the range of \textbf{x}).  
+\item[] \texttt{xint1\_std}: Predicted x intercept of robust LOESS on left side of land, standardized by dividing by maximum $x$ value (a proxy for the range of $x$).  
 
-\item[] \textbf{xint2\_std}: Predicted x intercept of robust LOESS on right side of land, standardized by dividing by maximum \textbf{x} value (a proxy for the range of \textbf{x}).  
+\item[] \texttt{xint2\_std}: Predicted x intercept of robust LOESS on right side of land, standardized by dividing by maximum $x$ value (a proxy for the range of $x$).  
 
-\item[] \textbf{range\_50\_std}: Range of residual values within a 50-point window around data point, standardized by dividing by standard deviation of residual values from middle 50\% of \textbf{x} values.  
+\item[] \texttt{range\_50\_std}: Range of residual values within a 50-point window around data point, standardized by dividing by standard deviation of residual values from middle 50\% of $x$ values.  
 
-\item[] \textbf{numNA\_50}: Number of missing values within a 50-point window around data point.  
+\item[] \texttt{numNA\_50}: Number of missing values within a 50-point window around data point.  
 
-\item[] \textbf{ind\_2mad}: Indicator of whether \textbf{rlo\_resid} is greater than \textbf{2*MAD(rlo\_resid)}.  
+\item[] \texttt{ind\_2mad}: Indicator of whether \texttt{rlo\_resid} is greater than \texttt{2*MAD(rlo\_resid)}.  
 
-\item[] \textbf{numpos\_50}: Number of positive residual values within a 50-point window around data point.  
+\item[] \texttt{numpos\_50}: Number of positive residual values within a 50-point window around data point.  
 
-\item[] \textbf{ind\_edges}: Indicator of whether data point is to the left of \textbf{xint1} or to the right of \textbf{xint2}. Values between \textbf{xint1} and \textbf{xint2} receive a value of 0, while values on the outside of the two values receive a value of 1.  
+\item[] \texttt{ind\_edges}: Indicator of whether data point is to the left of \texttt{xint1} or to the right of \texttt{xint2}. Values between \texttt{xint1} and \texttt{xint2} receive a value of 0, while values on the outside of the two values receive a value of 1.  
 
 \end{itemize}
 
-Using these features, two separate models were fit: ``LASSO Simple'',
-which uses each of the features listed above, and ``LASSO
-Interactions'', which uses each of the features along with pairwise
-interactions for each of them.
+Examples of the distributions of some of these features can be seen in
+\autoref{lasso-features}.
 
-The resulting parameter values for the model fits were used to calculate
-predicted values between 0 and 1; the closer to 1, the higher
-probability of membership in the ``GEA'' class.
+\begin{figure}
+\centering
+\includegraphics{writeup_files/figure-latex/lasso-features-1.pdf}
+\caption{\label{lasso-features}Example distributions of features used in
+two-class classification. While depth shows the most clear separation
+between GEA and LEA data, it alone will not suffice to classify data
+correctly. While other distributions are relatively tight for LEA, there
+is still significant overlap with the wider GEA distributions.}
+\end{figure}
+
+The developed features can be used in the fit of a logistic LASSO model,
+which is a form of penalized regression. LASSO parameter values for
+\(p\) covariates are found by identifying:
+
+\[
+\hat{\beta}_{\lambda}^q = \stackrel{\arg\min}{\beta \in \mathbb{R}^p} \left\{  (Y - X\beta)'(Y - X\beta) + \lambda \sum_{j=1}^{p}|\beta_j|^q\right\}
+\] which adds a penalty to the traditional ordinary least squares
+minimization problem, and uses a tuning parameter \(\lambda\).
+
+Cross-validated LASSO models were fit using the \texttt{cv.glmnet}
+function in the \texttt{glmnet} package \cite{glmnet}. For each model,
+parameter values from the model with \(\lambda_{1se}\) were used.
+\(\lambda_{1se}\), a standard when using LASSO, is the tuning parameter
+which results in the simplest model that still has cross-validation
+error within one standard deviation of the best model.
+
+Two separate models were fit: ``LASSO Basic'', which uses each of the
+features listed above, and ``LASSO Full'', which uses each of the
+features along with pairwise interactions for each of them. These
+parameter values were trained on the Hamby set 44 data. The resulting
+parameter values were used to calculate predicted values between 0 and
+1; the closer to 1, the higher probability of membership in the ``GEA''
+class.
 
 Traditional two-class classification techniques call for finding an
-``equal error rate" cutoff to classify the predicted values for each
-data point into each of the two classes; i.e., values above a certain
-cutoff are classified as part of the ``GEA'' class, and values below the
-cutoff are classified as part of the ``LEA'' class. However, since scans
-are primarily of the land engraved area, there are many more responses
-in the ``LEA'' category than in the ``GEA'' category. This unbalanced
+\textbf{equal error rate cutoff} to classify the predicted values for
+each data point into each of the two classes; i.e., values above a
+certain cutoff are classified as part of the ``GEA'' class, and values
+below the cutoff are classified as part of the ``LEA'' class. However,
+since scans are primarily of the land engraved area, there is
+significant class imbalance in our response categories. This unbalanced
 response means that any criterion used to determine a reasonable cutoff
 value for classification needs to be adjusted to account for differences
-in the size of the response classes.
+in the size of the response classes. The larger class size of ``LEA''
+means an equal error rate would allow for more false negatives (i.e.,
+more ``GEA'' data points being classified as ``LEA'') - exactly what we
+are trying to avoid.
 
 Thus, instead of looking for the cutoff that gives raw equal error rate
-(where sensitivity and specificity are equal), we looked for an equal
-error rate based on the overall number of data points. This allows for
-an equal \emph{number} of errors in each category, rather than equal
-\emph{percentage} of errors. This tactic more fairly penalizes points
-that should be classified ``GEA'' but are predicted to be ``LEA''. Due
-to the larger class size of ``LEA'', an equal error rate would allow for
-more false negatives (i.e., more ``GEA'' data points being classified as
-``LEA'') - exactly what we are trying to avoid.
+(where sensitivity and specificity are equal), we found an equal error
+rate based on the overall number of data points. This allows for an
+equal \textbf{number} of errors in each category, rather than equal
+\textbf{percentage} of errors. This tactic more fairly penalizes points
+that should be classified ``GEA'' but are predicted to be ``LEA''.
 
-This process results in two methods for groove identification in the
-\texttt{bulletxtrctr} package: ``lassobasic'' and ``lassofull''.
+The final process for shoulder location identification is as follows:
+
+\begin{enumerate}
+\item Use \texttt{robust\_loess\_fit} to remove bullet curvature.
+\item Calculate features based on $x$ locations and residual height values from \texttt{robust\_loess\_fit}. 
+\item Use fit parameter values from either (a) lassobasic or (b) lassofull models to calculate probabilities of membership in GEA class.
+\item Apply cutoff of (a) .33 or (b) .34 to classify higher probabilities as GEA data points, and lower probabilities as LEA data points.
+\item Gather the $x$ range of points classified as LEA data points. These are the final shoulder location preditions.  
+\end{enumerate}
+
+This process results in two methods for shoulder location identification
+in the \texttt{R} package \texttt{bulletxtrctr}: ``lassobasic'' and
+``lassofull''.
 
 \subsection{Bayesian Changepoint Analysis}
 
@@ -756,55 +919,160 @@ found in the appendix.
 
 \section{Results}
 
-\subsection{Hamby set 44}
+To assess the degree of improvement in automated shoulder location
+identification, we want to quantify the impact each groove prediction
+method has on the automated bullet matching algorithm's accuracy. Five
+different shoulder location identification methods will be inserted into
+the automated bullet matching algorithm process:
+
+\begin{itemize}
+\item[(1)] rollapply, the method proposed by \cite{Hare1}, 
+\item[(2)] LASSO basic, 
+\item[(3)] LASSO full,
+\item[(4)] Bayesian changepoint, and
+\item[(5)] manual identifications, the "gold standard" for identification.  
+\end{itemize}
+
+Shoulder location predictions are found using each of these methods, and
+used to remove GEA data from each crosscut. This is followed by
+extracting a signature, and using extracted signatures for each land
+engraved area to calculate pairwise similarity scores for all LEA
+signatures in each test set. Pairwise similarity scores, calculated
+using the random forest algorithm in the \texttt{bulletxtrctr} packages,
+are based on pairwise features such as consecutively matching striae and
+cross-correlation function for two aligned signatures.
+
+Random forest scores should be high for land-to-land comparisons between
+signatures that originate from the same land, and lower for land-to-land
+comparisons between signatures from different lands.
+
+We will investigate these scores for each individual test set: Hamby set
+44, Phoenix PD set, and Houston-test set. All pairwise comparisons
+within a test set are completed. We can look at both visual
+representations of the random forest score distributions as well as
+investigate the random forest method's accuracy in determining whether
+two lands originate from the same source.
+
+There should be visual separation between ``same source'' and
+``different source'', as is seen for Manual ID predictions for all three
+test sets, seen in \autoref{hamby-groove-results},
+\autoref{phoenix-groove-results}, and \autoref{houston-groove-results}.
+LASSO basic, LASSO full, and Bayesian changepoint all show improvement
+in separation for all three test sets; however, there is still much room
+for improvement when compared to Manual ID distributions in the Phoenix
+PD and Houston-test sets.
+
+Quantitatively, there is also significant improvement in AUC values for
+all three test sets, as seen in \autoref{hamby-table},
+\autoref{phoenix-table}, and \autoref{houston-table}. Of interest is the
+classification accuracy with a fixed false positive rate. Since false
+positives - in this case identifying two land engraved areas as same
+source when they are different source - are the worst possible mistake,
+we set a cutoff rate for random forest scores based on a controlled
+false positive rate of .01.
+
+Accuracy is overall high regardless of shoulder location identification
+method; however, there was a significant reduction in number of false
+negatives for the LASSO basic, LASSO full, and Bayesian changepoint
+methods for both Hamby set 44 and Phoenix PD sets. Bayesian changepoint
+improves upon rollapply in the Houston-test set, but lags behind the
+LASSO basic and LASSO full methods in AUC and reduction of false
+negatives.
+
+\begin{figure}
+\centering
+\includegraphics{writeup_files/figure-latex/hamby-groove-results-1.pdf}
+\caption{\label{hamby-groove-results}Random forest score distributions
+for same source and different source land-to-land comparisons for Hamby
+set 44. Distributions should ideally separate between same source and
+different source pairs. LASSO Basic, LASSO Full and Bayesian changepoint
+all demonstrate significant improvement over Rollapply.}
+\end{figure}
 
 \begin{table}[]
 \centering
-\caption{Downstream results for Hamby set 44}
-\begin{tabular}{lllllll}
-& & \multicolumn{5}{c}{\textbf{Controlled FPR = .01}}\\
-\textbf{Method} & \textbf{AUC} & Cutoff & FN &TP & TN & Accuracy \\ \hline
-Rollapply & 0.8 &  0.92 & 332 & 420&42126 & 0.98 \\ \hline
-LASSO basic & 0.94 &  0.75 &126 & 626&42098 & 0.99\\ \hline
-LASSO full & 0.94 &  0.75 &126 &626 &42106 & 0.99 \\ \hline
-Bayesian Changepoint & 0.93 &  0.74 &152 & 600&42098 & 0.99\\ \hline
-Manual ID & 0.94 &  0.74 & 124& 628&42088 & 0.99\\ \hline 
+\begin{tabular}{llllllll}
+& & \multicolumn{5}{c}{\textbf{Controlled FPR = .01}} & \\
+\textbf{Method} & \textbf{AUC} & Cutoff & FN &TP & TN & Accuracy & \textbf{Time to Calculate} \\ \hline
+Rollapply & 0.8 &  0.92 & 332 & 420&42126 & 0.98 & 1 min.\\ \hline
+LASSO basic & 0.94 &  0.75 &126 & 626&42098 & 0.99 & 6 min. \\ \hline
+LASSO full & 0.94 &  0.75 &126 &626 &42106 & 0.99 & 6 min. \\ \hline
+Bayesian Changepoint & 0.93 &  0.74 &152 & 600&42098 & 0.99 & \\ \hline
+Manual ID & 0.94 & 0.74 & 124& 628&42088 & 0.99 & 45 min. \\ \hline 
 \end{tabular}
+\caption{Land-to-land comparison results for Hamby set 44.}
+\label{hamby-table}
 \end{table}
 
-\subsection{Phoenix PD}
+\begin{figure}
+\centering
+\includegraphics{writeup_files/figure-latex/phoenix-groove-results-1.pdf}
+\caption{\label{phoenix-groove-results}Random forest score distributions
+for same source and different source land-to-land comparisons for the
+Phoenix PD set. LASSO Basic, LASSO Full, and Bayesian changepoint all
+demonstrate significant improvement over Rollapply, but are still not as
+well separated as the Manual ID distributions.}
+\end{figure}
 
 \begin{table}[]
 \centering
-\caption{Downstream results for Phoenix PD set}
-\begin{tabular}{lllllll}
-& & \multicolumn{5}{c}{\textbf{Controlled FPR = .01}}\\
-\textbf{Method} & \textbf{AUC} & Cutoff & FN &TP & TN & Accuracy \\ \hline
-Rollapply & 0.818 &  0.9 & 364 & 378&38082 & 0.981 \\ \hline
-LASSO basic & 0.877 &  0.947 &256 & 486&38088 & 0.9839\\ \hline
-LASSO full & 0.893 &  0.953 &238 &504 &38082 & 0.9842 \\ \hline
-Bayesian Changepoint & 0.903 &  0.937 &256 & 486&38080 & 0.9837\\ \hline
-Manual ID & 0.953 &  0.853 & 96& 646&38084 & 0.9879\\ \hline 
+\begin{tabular}{llllllll}
+& & \multicolumn{5}{c}{\textbf{Controlled FPR = .01}} & \\
+\textbf{Method} & \textbf{AUC} & Cutoff & FN &TP & TN & Accuracy & \textbf{Time to Calculate} \\ \hline
+Rollapply & 0.818 &  0.9 & 364 & 378&38082 & 0.981& 1 min. \\ \hline
+LASSO basic & 0.877 &  0.947 &256 & 486&38088 & 0.9839 & 6 min. \\ \hline
+LASSO full & 0.893 &  0.953 &238 &504 &38082 & 0.9842  & 6 min. \\ \hline
+Bayesian Changepoint & 0.903 &  0.937 &256 & 486&38080 & 0.9837 &  \\ \hline
+Manual ID & 0.953 &  0.853 & 96& 646&38084 & 0.9879 & 45 min. \\ \hline 
 \end{tabular}
+\caption{Land-to-land comparison results for the Phoenix PD set.}
+\label{phoenix-table}
 \end{table}
 
-\subsection{Houston-test set}
+\begin{figure}
+\centering
+\includegraphics{writeup_files/figure-latex/houston-groove-results-1.pdf}
+\caption{\label{houston-groove-results}Random forest score distributions
+for same source and different source land-to-land comparisons for the
+Houston-test set. LASSO Basic and LASSO Full both demonstrate
+improvement over Rollapply, but are still not as well separated as the
+Manual ID distributions. Bayesian changepoint demonstrates minor
+improvement, but does not improve as much as the LASSO methods.}
+\end{figure}
 
 \begin{table}[]
 \centering
-\caption{Downstream results for Houston-test set}
-\begin{tabular}{lllllll}
-& & \multicolumn{5}{c}{\textbf{Controlled FPR = .01}}\\
-\textbf{Method} & \textbf{AUC} & Cutoff & FN &TP & TN & Accuracy \\ \hline
-Rollapply & 0.761 &  0.91 & 1652 & 1016&167118 & 0.981 \\ \hline
-LASSO basic & 0.852 &  0.88 &1274 & 1394&167136 & 0.9833\\ \hline
-LASSO full & 0.858 &  0.823 &1144 &1524 &167062 & 0.9836 \\ \hline
-Bayesian Changepoint & 0.795 &  0.863 &1552 & 1116&167096 & 0.9814\\ \hline
-Manual ID & 0.931 &  0.823 & 614& 2054&167098 & 0.9869\\ \hline 
+\begin{tabular}{llllllll}
+& & \multicolumn{5}{c}{\textbf{Controlled FPR = .01}} & \\
+\textbf{Method} & \textbf{AUC} & Cutoff & FN &TP & TN & Accuracy & \textbf{Time to Calculate} \\ \hline
+Rollapply & 0.761 &  0.91 & 1652 & 1016&167118 & 0.981 & 2 min. \\ \hline
+LASSO basic & 0.852 &  0.88 &1274 & 1394&167136 & 0.9833 & 12 min. \\ \hline
+LASSO full & 0.858 &  0.823 &1144 &1524 &167062 & 0.9836 & 12 min. \\ \hline
+Bayesian Changepoint & 0.795 &  0.863 &1552 & 1116&167096 & 0.9814 & \\ \hline
+Manual ID & 0.931 &  0.823 & 614& 2054&167098 & 0.9869 & 75 min. \\ \hline 
 \end{tabular}
+\caption{Land-to-land comparison results for the Houston-test set.}
+\label{houston-table}
 \end{table}
 
 \section{Conclusions}
+
+All three proposed approaches show significant improvement both visually
+and quantitatively over the ``rollapply'' method proposed by
+\cite{Hare1}. However, both LASSO methods show greater improvement than
+Bayesian changepoint on the Houston-test set. While manual
+identification of shoulder locations is still the most accurate method,
+and considered the ``gold standard'', the reduction in time to get
+predictions when using LASSO methods is advantageous and allows for less
+human involvement in the overall automated matching process.
+
+While improvement is apparent on all three test sets using the LASSO and
+Bayesian changepoint methods, future work on the LASSO methods should
+include re-training LASSO models on a wider variety of LEA types rather
+than just the Hamby set 44 to avoid over-fitting to a specific type of
+LEA.
+
+\kr{Nate, could you add some conclusions about BCP stuff here? A sentence or two?}
 
 \section{References}
 

@@ -1,43 +1,46 @@
 \begin{table}[]
 \centering
-\caption{Downstream results for Hamby set 44}
-\begin{tabular}{lllllll}
-& & \multicolumn{5}{c}{\textbf{Controlled FPR = .01}}\\
-\textbf{Method} & \textbf{AUC} & Cutoff & FN &TP & TN & Accuracy \\ \hline
-Rollapply & 0.8 &  0.92 & 332 & 420&42126 & 0.98 \\ \hline
-LASSO basic & 0.94 &  0.75 &126 & 626&42098 & 0.99\\ \hline
-LASSO full & 0.94 &  0.75 &126 &626 &42106 & 0.99 \\ \hline
-Bayesian Changepoint & 0.93 &  0.74 &152 & 600&42098 & 0.99\\ \hline
-Manual ID & 0.94 &  0.74 & 124& 628&42088 & 0.99\\ \hline
+\begin{tabular}{llllllll}
+& & \multicolumn{5}{c}{\textbf{Controlled FPR = .01}} & \\
+\textbf{Method} & \textbf{AUC} & Cutoff & FN &TP & TN & Accuracy & \textbf{Time to Calculate} \\ \hline
+Rollapply & 0.8 &  0.92 & 332 & 420&42126 & 0.98 & 1 min.\\ \hline
+LASSO basic & 0.94 &  0.75 &126 & 626&42098 & 0.99 & 6 min. \\ \hline
+LASSO full & 0.94 &  0.75 &126 &626 &42106 & 0.99 & 6 min. \\ \hline
+Bayesian Changepoint & 0.93 &  0.74 &152 & 600&42098 & 0.99 & \\ \hline
+Manual ID & 0.94 & 0.74 & 124& 628&42088 & 0.99 & 45 min. \\ \hline
 \end{tabular}
+\caption{Land-to-land comparison results for Hamby set 44.}
+\label{hamby-table}
 \end{table}
 \efloatseparator
  
 \begin{table}[]
 \centering
-\caption{Downstream results for Phoenix PD set}
-\begin{tabular}{lllllll}
-& & \multicolumn{5}{c}{\textbf{Controlled FPR = .01}}\\
-\textbf{Method} & \textbf{AUC} & Cutoff & FN &TP & TN & Accuracy \\ \hline
-Rollapply & 0.818 &  0.9 & 364 & 378&38082 & 0.981 \\ \hline
-LASSO basic & 0.877 &  0.947 &256 & 486&38088 & 0.9839\\ \hline
-LASSO full & 0.893 &  0.953 &238 &504 &38082 & 0.9842 \\ \hline
-Bayesian Changepoint & 0.903 &  0.937 &256 & 486&38080 & 0.9837\\ \hline
-Manual ID & 0.953 &  0.853 & 96& 646&38084 & 0.9879\\ \hline
+\begin{tabular}{llllllll}
+& & \multicolumn{5}{c}{\textbf{Controlled FPR = .01}} & \\
+\textbf{Method} & \textbf{AUC} & Cutoff & FN &TP & TN & Accuracy & \textbf{Time to Calculate} \\ \hline
+Rollapply & 0.818 &  0.9 & 364 & 378&38082 & 0.981& 1 min. \\ \hline
+LASSO basic & 0.877 &  0.947 &256 & 486&38088 & 0.9839 & 6 min. \\ \hline
+LASSO full & 0.893 &  0.953 &238 &504 &38082 & 0.9842  & 6 min. \\ \hline
+Bayesian Changepoint & 0.903 &  0.937 &256 & 486&38080 & 0.9837 &  \\ \hline
+Manual ID & 0.953 &  0.853 & 96& 646&38084 & 0.9879 & 45 min. \\ \hline
 \end{tabular}
+\caption{Land-to-land comparison results for the Phoenix PD set.}
+\label{phoenix-table}
 \end{table}
 \efloatseparator
  
 \begin{table}[]
 \centering
-\caption{Downstream results for Houston-test set}
-\begin{tabular}{lllllll}
-& & \multicolumn{5}{c}{\textbf{Controlled FPR = .01}}\\
-\textbf{Method} & \textbf{AUC} & Cutoff & FN &TP & TN & Accuracy \\ \hline
-Rollapply & 0.761 &  0.91 & 1652 & 1016&167118 & 0.981 \\ \hline
-LASSO basic & 0.852 &  0.88 &1274 & 1394&167136 & 0.9833\\ \hline
-LASSO full & 0.858 &  0.823 &1144 &1524 &167062 & 0.9836 \\ \hline
-Bayesian Changepoint & 0.795 &  0.863 &1552 & 1116&167096 & 0.9814\\ \hline
-Manual ID & 0.931 &  0.823 & 614& 2054&167098 & 0.9869\\ \hline
+\begin{tabular}{llllllll}
+& & \multicolumn{5}{c}{\textbf{Controlled FPR = .01}} & \\
+\textbf{Method} & \textbf{AUC} & Cutoff & FN &TP & TN & Accuracy & \textbf{Time to Calculate} \\ \hline
+Rollapply & 0.761 &  0.91 & 1652 & 1016&167118 & 0.981 & 2 min. \\ \hline
+LASSO basic & 0.852 &  0.88 &1274 & 1394&167136 & 0.9833 & 12 min. \\ \hline
+LASSO full & 0.858 &  0.823 &1144 &1524 &167062 & 0.9836 & 12 min. \\ \hline
+Bayesian Changepoint & 0.795 &  0.863 &1552 & 1116&167096 & 0.9814 & \\ \hline
+Manual ID & 0.931 &  0.823 & 614& 2054&167098 & 0.9869 & 75 min. \\ \hline
 \end{tabular}
+\caption{Land-to-land comparison results for the Houston-test set.}
+\label{houston-table}
 \end{table}
