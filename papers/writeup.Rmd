@@ -28,6 +28,10 @@ bibliography: bibliography
 abstract: null
 ---
 
+\newcommand{\hh}[1]{{\color{orange}{#1}}}
+\newcommand{\kr}[1]{{\color{teal}{#1}}}
+\newcommand{\ug}[1]{{\color{purple}{#1}}}
+\newcommand{\nate}[1]{{\color{olive}{#1}}}
 
 
 ```{r, echo = F, warning = F, message = F}
@@ -43,11 +47,9 @@ In forensic firearms analysis, visual feature comparison is used to analyze bull
 
 A cornerstone of forensic firearms analysis is that two bullets fired through the same barrel will bear more similar striation marks on their LEAs than two bullets fired from different barrels. The AFTE Theory of Identification [@AFTE] is used to make decisions when comparing two bullets under a comparison microscope: **add details here from AFTE Theory**.  
 
-Technological advances coupled with concerns about the objectivity of visual campirson have produced several image-analysis algorithms which aim to complete automated, quantitative analyses of bullet evidence.  
+Technological advances coupled with concerns about the objectivity of visual comparison have produced several image-analysis algorithms which aim to complete automated, quantitative analyses of bullet evidence.  
 
 Many of these efforts have capitalized on the introduction of high resolution 3D scanning technology to forensic science [see @DeKinder1; @DeKinder2; @Bachrach1]. 3D scans of land engraved areas have been used to develop several methods for the automated comparison of bullet lands [e.g. @Ma1; @Chu1; @Chu2; @Hare1].
-
-In the last several decades, advances in technology have led to an increase in research focused on developing image-analysis algorithms to complete automated, quantitative analyses of bullet evidence. The main technological development that has created a pathway for image-analysis techniques is the introduction of high resolution 3D scanning technology to the field of forensic science [e.g. @DeKinder1; @DeKinder2; @Bachrach1]. These 3D data have since been used in the development of several methods of varying complexity for automated comparison of land engraved areas [e.g. @Chu1; @Chu2; @Hare1].  
 
 One such method, proposed by @Hare1, is a random forest algorithm based on features calculated from 2D horizontal slides of the 3D images. These slices, called profiles, have a data structure which is dominated by the global structure of the bullet land: they are curved. Feature comparison in firearms analysis is concerned with the similarity of straitions impressed by the barrel; whether two bullets are both curved does not answer the forensic inquiry. As such, a crucial step is to remove the global structure and distill the information down the deviations from the curve. The remaining pattern of peaks and valleys - called a signature - is a much more useful representation of the striations.  
 
@@ -61,6 +63,23 @@ The method described in @Hare1, based on data smoothing and local minima, fails 
 
 \section{Data Source}  
 
+The data used consist of high resolution 3D scans of bullet LEAs from three separate test sets: Hamby Set 44 \citep{Hamby}, Phoenix PD set, and Houston-test set.  
+
+Hamby set 44 consists of 35 bullets fired from 10 consecutively rifled Ruger P85 barrels. There are two known bullets for each of the ten barrels, as well as 15 additional questioned bullets. Each fired bullet in Hamby Set 44 has 6 LEAs; every LEA was scanned for each of the 35 bullets, producing data for 210 individual land engraved areas.  Two lands -- Barrel 9, Bullet 2, Land 3 and Unknowns, Bullet L, Land 5 -- were removed from consideration due to "tank rash". Tank rash results from a bullet striking the bottom of a water recovery tank after exiting the barrel, thereby creating marks on the land that are not due to the contact with the barrel.  
+
+The Phoenix PD set consists of 33 bullets fired from 8 barrels \kr{more information on the type of barrels?}. There are three known bullets for each of the eight barrels, as well as 9 additional questioned bullets. There are 6 LEAs for each of the fired bullets, producing a total of 198 individual land engraved areas.  
+
+The Houston-test set consists of 45 bullets fired from at least 10 barrels \kr{more information on the type of barrels?}. There are three known bullets for each of the ten barrels, as well as 24 questioned bullets that are fired from a combination of the 10 known barrels and additional, out-of-set barrels. There are 6 LEAs for each of the fired bullets, producing a total of 414 individual land engraved areas.  
+
+\begin{figure}
+\includegraphics[width=\textwidth]{../images/3d_plot_top_context_breakoff.png}
+\caption{An example of an LEA scan from Hamby set 44. There are six LEAs on each bullet in all three test sets.}
+\label{LEA-scan}
+\end{figure}
+
+The 3D scans of each test set were captured with a Sensofar Confocal light microscope at 20x magnification resulting in a resolution of 0.645 microns per pixel. These LEAs were scanned at Iowa State University's High Resolution Microscopy Facility, and the scans are stored in 3D format as x3p files, conforming to the ISO5436-2 standard \citep{ISO5436}. A visualization of the data gathered for a single LEA is seen in \autoref{LEA-scan}. Physically, each land is approximately 2 millimeters in width; as such, data structures for a single LEA can contain more than 3 million individual data points.  
+
+A crosscut was extracted from each scan by identifying an optimal crosscut using `x3p_crosscut_optimize` in the `bulletxtrctr` package in `R`. Then, an averaged crosscut was calculated by averaging across ten consecutive crosscuts which fall directly to either side of the optimal crosscut identified.  Shoulder location methods are applied to these averaged crosscut, for a total of 820 crosscuts across the three test sets.  
 
 
 \section{Methodology}  

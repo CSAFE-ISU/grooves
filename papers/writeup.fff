@@ -1,0 +1,5 @@
+\begin{figure}
+\includegraphics[width=\textwidth]{../images/3d_plot_top_context_breakoff.png}
+\caption{An example of an LEA scan from Hamby set 44. There are six LEAs on each bullet in all three test sets.}
+\label{LEA-scan}
+\end{figure}
