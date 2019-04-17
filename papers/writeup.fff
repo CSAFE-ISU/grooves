@@ -1,6 +1,6 @@
 \begin{figure}
 \includegraphics[width=\textwidth]{../images/3d_plot_top_context_breakoff.png}
-\caption{An example of a high-resolution LEA scan captured on a Sensofar Confocal Light Microscope.}
+\caption{An example of a high-resolution LEA scan captured on a Confocal Light Microscope.}
 \label{LEA-scan}
 \end{figure}
 \efloatseparator
@@ -17,7 +17,7 @@
     \raggedright
     \includegraphics[width=\textwidth]{../images/Profile_1.png}
     \centering
-    Step 1: Horizontal crosscut
+    Step 1: Horizontal crosscut (profile)
 \end{minipage}
 \vspace{.6cm}
 
@@ -52,7 +52,7 @@ features are obfuscated in the signature by remaining GEA structure.}
 \centering
 \includegraphics{writeup_files/figure-latex/loess-vs-locfit-1.pdf}
 \caption{\label{loess-vs-locfit}An example of the difference between
-traditional LOESS fit and robust LOESS fit to an LEA crosscut from Hamby
+traditional LOESS fit and robust LOESS fit to an LEA profile from Hamby
 set 44. While the GEA structure present is relatively minor, even the
 small improvement in model fit with robust LOESS results in
 significantly different residual structures.}
@@ -63,7 +63,7 @@ significantly different residual structures.}
 \centering
 \includegraphics{writeup_files/figure-latex/houston-locfit-1.pdf}
 \caption{\label{houston-locfit}An example of the difference between
-traditional LOESS fit and robust LOESS fit to an LEA crosscut from the
+traditional LOESS fit and robust LOESS fit to an LEA profile from the
 Houston-test set. While the smaller GEA structure on the right side is
 accounted for using the robust procedure, the larger GEA structure on
 the left is still problematic.}
@@ -74,8 +74,8 @@ the left is still problematic.}
 \centering
 \includegraphics{writeup_files/figure-latex/houston-adapted-rlo-1.pdf}
 \caption{\label{houston-adapted-rlo}An example of the difference between
-robust LOESS fit and adapted robust LOESS fit to an LEA crosscut from
-the Houston-test set. Iteratively downweighting only positive residuals
+robust LOESS fit and adapted robust LOESS fit to an LEA profile from the
+Houston-test set. Iteratively downweighting only positive residuals
 results in a significantly different fit which accounts for GEA
 structures on both the left and right.}
 \end{figure}

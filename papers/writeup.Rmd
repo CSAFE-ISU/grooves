@@ -45,19 +45,18 @@ library(locfit)
 
 In forensic firearms analysis, visual feature comparison is used to analyze bullets to address the same source-difference source problem. Striation marks act as features which provide evidence to help determine whether two bullets were propelled through the same gun barrel. Land engraved areas (LEAs), alternating sections of the bullet that make the closest contact with the gun barrel, are the primary source of striation marks.  
 
-A cornerstone of forensic firearms analysis is that two bullets fired through the same barrel will bear more similar striation marks on their LEAs than two bullets fired from different barrels. The AFTE Theory of Identification [@AFTE] is used to make decisions when comparing two bullets under a comparison microscope: \kr{Add additional details from AFTE Theory of Identification here.}  
+A cornerstone of forensic firearms analysis is that two bullets fired through the same barrel will bear more similar striation marks on their LEAs than two bullets fired from different barrels. The guideline used to reach a same source determination, the AFTE Theory of Identification, suggests that if two sets of striae are sufficiently similar ``the likelihood another tool could have made the mark is so remote as to be considered a practical impossibility" [@AFTE].  
 
-Technological advances coupled with concerns about the objectivity of visual comparison have produced several image-analysis algorithms which aim to complete automated, quantitative analyses of bullet evidence.  
+The recent application of high resolution 3D scanning technology to bullet LEAs coupled with concerns about the objectivity of visual comparison have motivated the development of several image-analysis algorithms which aim to complete automated, quantitative analyses of bullet evidence [see @DeKinder1; @DeKinder2; @Bachrach1; @Ma1; @Chu1; @Chu2; @Hare1]. The data used in such algorithms are high resolution 3D scans of LEAs, such as that pictured in \autoref{LEA-scan}.  
 
-Many of these efforts have capitalized on the introduction of high resolution 3D scanning technology to forensic science [see @DeKinder1; @DeKinder2; @Bachrach1]. 3D scans of land engraved areas, such as the one seen in \autoref{LEA-scan}, have been used to develop several methods for the automated comparison of bullet lands [e.g. @Ma1; @Chu1; @Chu2; @Hare1].  
 
 \begin{figure}
 \includegraphics[width=\textwidth]{../images/3d_plot_top_context_breakoff.png}
-\caption{An example of a high-resolution LEA scan captured on a Sensofar Confocal Light Microscope.}
+\caption{An example of a high-resolution LEA scan captured on a Confocal Light Microscope.}
 \label{LEA-scan}
 \end{figure}
 
-One such method, proposed by @Hare1, is a random forest algorithm based on features calculated from 2D horizontal slices of the 3D images. These slices, called profiles, have a data structure which is dominated by the global structure of the bullet land: they are curved. Feature comparison in firearms analysis is concerned with the similarity of straitions impressed by the barrel; whether two bullets are both curved does not answer the forensic inquiry. As such, a crucial step is to remove the global structure and distill the information down to the deviations from the curve. The remaining pattern of peaks and valleys - called a signature - is a much more useful representation of the striations. The process of translating a 3D scan into a 2D signature is demonstrated in \autoref{processing-process}. 
+One such method, proposed by @Hare1, is a random forest algorithm based on features calculated from 2D horizontal slices of the 3D images. These slices, called profiles, have a data structure which is dominated by the global structure of the bullet land: they are curved. The random forest algorithm relies on processed versions of profiles which remove the global curvature. This remaining pattern of peaks and valleys - called a signature - is a much more useful representation of the striations. The process of translating a 3D scan into a 2D signature is demonstrated in \autoref{processing-process}.  
 
 \begin{figure}
 \begin{minipage}[b]{0.45\linewidth}
@@ -71,7 +70,7 @@ One such method, proposed by @Hare1, is a random forest algorithm based on featu
     \raggedright
     \includegraphics[width=\textwidth]{../images/Profile_1.png}
     \centering
-    Step 1: Horizontal crosscut
+    Step 1: Horizontal crosscut (profile)
 \end{minipage}
 \vspace{.6cm}
 
@@ -93,7 +92,7 @@ One such method, proposed by @Hare1, is a random forest algorithm based on featu
 \end{figure}
  
 
-While removal of a curve from data is typically a straightforward statistical problem, 3D scans of LEAs contain a unique data structure which obfuscates this task. Currently established best practice for collection of 3D images of bullet LEAs dictates that scanning begin and end slightly past the edges of the LEA, in the neighboring groove engraved areas (GEAs). This introduces a secondary structure that needs to be removed before algorithms can be reliably applied to data.  
+While removal of a curve from data is typically a straightforward statistical problem, 3D scans of LEAs contain a unique data structure which obfuscates this task. Currently accepted best practice for collection of 3D images of bullet LEAs dictates that scanning begin and end slightly past the edges of the LEA, in the neighboring groove engraved areas (GEAs). GEAs are a secondary structure that need to be removed before LEA signatures can be reliably extracted from data.  
 
 Correctly separating LEA and GEA data is one of the most challenging and important aspects of data pre-processing. Without removing GEA data, algorithms will be using extraneous data which can misrepresent the character of the striations present on a given LEA. This type of misrepresentation is demonstrated in \autoref{groove-no-groove}. In order to distinguish between LEA and GEA data, we aim to identify "shoulder locations", the locations at which the LEA ends and the GEAs begin.  
 
@@ -112,7 +111,7 @@ prof_1 <- bullet_sig %>%
   geom_line(aes(x = x, y = value)) + 
   theme_bw() + 
   labs(x = "Relative Location", y = "Relative Height", 
-       title = "Crosscut, groove data removed") + 
+       title = "Profile, groove data removed") + 
   theme(plot.title = element_text(size = 10), axis.title = element_text(size = 9))
 
 sig_1 <- bullet_sig %>% ggplot() + 
@@ -126,7 +125,7 @@ prof_2 <- bullet_sig_noremove %>% ggplot() +
   geom_line(aes(x = x, y = value)) + 
   theme_bw() + 
   labs(x = "Relative Location", y = "Relative Height",
-       title = "Crosscut, groove data remains") + 
+       title = "Profile, groove data remains") + 
   theme(plot.title = element_text(size = 10), axis.title = element_text(size = 9))
 
 sig_2 <- bullet_sig_noremove %>% ggplot() + 
@@ -139,7 +138,7 @@ sig_2 <- bullet_sig_noremove %>% ggplot() +
 grid.arrange(prof_1, sig_1, prof_2, sig_2, ncol = 2)
 ```
 
-The method for shoulder location identification described in @Hare1, based on data smoothing and local minima, fails to reliably separate the GEA data from LEA data. The following work first describes a robust methodology for fitting the global curvature of 2D profiles. Once global structure is removed, two different approaches to identify shouler locations are presented. Performance of both proposed shoulder location identification methods are then compared with current approaches.  
+The method for shoulder location identification described in @Hare1, based on data smoothing and local minima, fails to reliably separate the GEA data from LEA data. The following work first describes an improved methodology based on robust statistical methods for fitting the global curvature of 2D profiles. Once global structure is removed, two proposed approaches to identify shouler locations are presented. Performance of both proposed shoulder location identification methods are then compared with current approaches.  
 
 
 \section{Data Source}  
@@ -154,22 +153,22 @@ The Houston-test set consists of 45 bullets fired from at least 10 barrels \kr{m
 
 The 3D scans of each test set were captured with a Sensofar Confocal light microscope at 20x magnification resulting in a resolution of 0.645 microns per pixel. These LEAs were scanned at Iowa State University's High Resolution Microscopy Facility, and the scans are stored in 3D format as x3p files, conforming to the ISO5436-2 standard \citep{ISO5436}. A visualization of the data gathered for a single LEA is seen in \autoref{LEA-scan}. Physically, each land is approximately 2 millimeters in width; as such, data structures for a single LEA can contain more than 3 million individual data points.  
 
-A crosscut was extracted from each scan by identifying an optimal crosscut using `x3p_crosscut_optimize` in the `bulletxtrctr` package in `R` \cite{bulletxtrctr}. Then, an averaged crosscut was calculated by averaging across ten consecutive crosscuts which fall directly to either side of the optimal crosscut identified.  Shoulder location methods are applied to these averaged crosscut, for a total of 820 crosscuts across the three test sets.  
+A crosscut was extracted from each scan by identifying an optimal crosscut using `x3p_crosscut_optimize` in the `bulletxtrctr` package in `R` \cite{bulletxtrctr}. Then, an averaged profile was calculated by averaging across ten consecutive crosscuts which fall directly to either side of the optimal crosscut identified.  Shoulder location methods are applied to these averaged profile, for a total of 820 profiles across the three test sets.  
 
 
 \section{Methodology}  
 
 \subsection{Global Structure Removal}  
 
-The first stage of our GEA removal process focuses on removing the bullet curvature from each crosscut. GEAs on the edge of each LEA represent a change in the data structure, so removal of the primary structure will result in two distinct structures remaining in the residuals. These two structures can then be separated using features of the remaining residuals. 
+The first stage of our GEA removal process focuses on removing the bullet curvature from each profile. GEAs on the edge of each LEA represent a change in the data structure typically characterized by a sharp increase in measured height values (see \autoref{groove-no-groove}). Accurate removal of the primary structure should accentuate these characteristics, which can then be used to separate the LEA from the GEAs. 
 
-Although bullets are circular, the pressure they are subjected to in the process of being fired out of a gun can often result in LEAs that are not perfectly circular. In addition, the angle at which the LEAs are scanned by operators can mean crosscuts are tilted or misshapen. A quadratic model may then be unreasonable to remove the structure accurately across a whole crosscut. Thus, non-parametric locally weighted regression (LOESS) is a natural choice for removing the structure. 
+Although bullets are circular, the pressure they are subjected to in the process of being fired out of a gun can often result in LEAs that are not perfectly circular. In addition, the angle at which the LEAs are scanned by operators can mean profiles are tilted or misshapen. Directly modeling the data as if the bullet is circular may then be unreasonable to remove the structure accurately across a whole profile. Thus, more flexible non-parametric locally weighted regression (LOESS) is a natural choice for removing the structure.  
 
-To mitigate boundary effects when applying LOESS, we employ a robust version \citep{Cleveland1}. Robust LOESS fits models by iteratively downweighting high residual values to reduce the influence of outliers which deviate the most from the main data structure. In the context of LEA crosscuts, robust LOESS will iteratively downweight data points with high residuals, typically those from the GEA which deviate most severely from the overall bullet curvature. 
+The flexibility of LOESS methods, while attractive here, often results in an unduly large effect of GEA data on the estimated structure. To mitigate this problem we employ a robust LOESS \citep{Cleveland1}. Robust LOESS fits models by iteratively downweighting high residual values to reduce the influence of outliers which deviate the most from the main data structure. In the context of LEA profiles, robust LOESS will iteratively downweight data points with high residuals, typically those from the GEA which deviate most severely from the overall bullet curvature. 
 
 Traditional robust LOESS can be implemented using the `locfit.robust` function in the `locfit` package in `R` \cite{locfit}. An example of the difference in both predicted values and residual structure between `loess` and `locfit.robust` can be seen in \autoref{loess-vs-locfit}.   
 
-```{r loess-vs-locfit, echo = F, warning = F, message = F, fig.cap = "\\label{loess-vs-locfit}An example of the difference between traditional LOESS fit and robust LOESS fit to an LEA crosscut from Hamby set 44. While the GEA structure present is relatively minor, even the small improvement in model fit with robust LOESS results in significantly different residual structures.", fig.height=4, fig.width = 6}
+```{r loess-vs-locfit, echo = F, warning = F, message = F, fig.cap = "\\label{loess-vs-locfit}An example of the difference between traditional LOESS fit and robust LOESS fit to an LEA profile from Hamby set 44. While the GEA structure present is relatively minor, even the small improvement in model fit with robust LOESS results in significantly different residual structures.", fig.height=4, fig.width = 6}
 robust_loess_fit <- function(bullet, iter){
   n <- nrow(bullet)
   weights <- rep(1, n)
@@ -207,7 +206,7 @@ loess_fit <- bullet$ccdata_w_resid[[1]] %>%
   geom_line(aes(x = x, y = lo_pred), color = "red") + 
   theme_bw() + 
   labs(x = "Relative Location", y = "Relative Height", 
-       title = "Crosscut with LOESS fit") + 
+       title = "Profile with LOESS fit") + 
   theme(plot.title = element_text(size = 10), axis.title = element_text(size = 9))
 
 loess_resid <- bullet$ccdata_w_resid[[1]] %>%
@@ -225,7 +224,7 @@ locfit_fit <- bullet$ccdata_w_resid[[1]] %>%
   geom_line(aes(x = x, y = locfit_pred), color = "red") + 
   theme_bw() + 
   labs(x = "Relative Location", y = "Relative Height", 
-       title = "Crosscut with robust LOESS fit")+ 
+       title = "Profile with robust LOESS fit")+ 
   theme(plot.title = element_text(size = 10), axis.title = element_text(size = 9))
   
 locfit_resid <- bullet$ccdata_w_resid[[1]] %>%
@@ -243,7 +242,7 @@ grid.arrange(loess_fit, loess_resid, locfit_fit, locfit_resid, ncol = 2)
 
 When applied to LEAs from Hamby set 44, the traditional robust LOESS procedure appears to work well. However, the method fails to mitigate effects when striations are deeper or GEA structures are more pronounced, such as those in the Houston-test set, seen in \autoref{houston-locfit}.  
 
-```{r houston-locfit, echo = F, warning = F, message = F, fig.cap = "\\label{houston-locfit}An example of the difference between traditional LOESS fit and robust LOESS fit to an LEA crosscut from the Houston-test set. While the smaller GEA structure on the right side is accounted for using the robust procedure, the larger GEA structure on the left is still problematic.", fig.height=4, fig.width = 6}
+```{r houston-locfit, echo = F, warning = F, message = F, fig.cap = "\\label{houston-locfit}An example of the difference between traditional LOESS fit and robust LOESS fit to an LEA profile from the Houston-test set. While the smaller GEA structure on the right side is accounted for using the robust procedure, the larger GEA structure on the left is still problematic.", fig.height=4, fig.width = 6}
 
 houston <- readRDS("../data/houston-test/houstontest_paper.rda")
 bullet_h <- houston[1,]
@@ -268,7 +267,7 @@ loess_fit_h <- bullet_h$ccdata_w_resid[[1]] %>%
   geom_line(aes(x = x, y = lo_pred), color = "red") + 
   theme_bw() + 
   labs(x = "Relative Location", y = "Relative Height", 
-       title = "Crosscut with LOESS fit")+ 
+       title = "Profile with LOESS fit")+ 
   theme(plot.title = element_text(size = 10), axis.title = element_text(size = 9))
 
 loess_resid_h <- bullet_h$ccdata_w_resid[[1]] %>%
@@ -286,7 +285,7 @@ locfit_fit_h <- bullet_h$ccdata_w_resid[[1]] %>%
   geom_line(aes(x = x, y = locfit_pred), color = "red") + 
   theme_bw() + 
   labs(x = "Relative Location", y = "Relative Height", 
-       title = "Crosscut with robust LOESS fit")+ 
+       title = "Profile with robust LOESS fit")+ 
   theme(plot.title = element_text(size = 10), axis.title = element_text(size = 9))
   
 locfit_resid_h <- bullet_h$ccdata_w_resid[[1]] %>%
@@ -305,21 +304,21 @@ Thus, we instead apply an adapted version of the traditional robust LOESS proced
 
 \begin{enumerate}
 
-\item Fit a LOESS model with $span = 1$ to an entire LEA crosscut to predict $height$ using values of $x$. Assign weights of $1$ to each data point for this fitting procedure.  
+\item Fit a LOESS model with $span = 1$ to an entire LEA profile to predict $height$ using values of $x$. Assign weights of $1$ to each data point for this fitting procedure.  
 \item Obtain predicted values of $height$ from the model fit in step 1.  
 \item Calculate residual values using the predicted $height$ values.  
 \item Calculate bisquare weights for each residual value using the following formula:  
-$$\max(1 - (residual/(6*MAR))^2, 0)^2,$$   where MAR is the median absolute residual for the crosscut.  
+$$\max(1 - (residual/(6*MAR))^2, 0)^2,$$   where MAR is the median absolute residual for the profile.  
 \item Assign weights to each data point according to its residual value. If the residual value is positive, assign the bisquare downweight. If the residual is zero or negative, leave the weight at 1.  
 \item Repeat steps 1-5 with updated weights at each iteration for $k$ iterations, with 20 iterations as the default.  
 \item After $k$ iterations of updating the weight vector, fit a LOESS model with $span = 1$ and obtained predicted and residual values for $height$.  
 
 \end{enumerate} 
 
-This procedure is attractive in the LEA crosscut context because the main influence of GEA data is to pull predictions up towards the higher GEA height values. Downweighting high residuals for only those that fall above the fitted line will iteratively bring the fitted line down towards the LEA structure. While this is a small procedural difference, the results are dramatic. The same LEA pictured in \autoref{houston-locfit} can be seen again with updated predictions in \autoref{houston-adapted-rlo}.  
+This procedure is attractive in the LEA profile context because the main influence of GEA data is to pull predictions up towards the higher GEA height values. Downweighting high residuals for only those that fall above the fitted line will iteratively bring the fitted line down towards the LEA structure. While this is a small procedural difference, the results are dramatic. The same LEA pictured in \autoref{houston-locfit} can be seen again with updated predictions in \autoref{houston-adapted-rlo}.  
 
 
-```{r houston-adapted-rlo, echo = F, warning = F, message = F, fig.cap = "\\label{houston-adapted-rlo}An example of the difference between robust LOESS fit and adapted robust LOESS fit to an LEA crosscut from the Houston-test set. Iteratively downweighting only positive residuals results in a significantly different fit which accounts for GEA structures on both the left and right.", fig.height=4, fig.width = 6}
+```{r houston-adapted-rlo, echo = F, warning = F, message = F, fig.cap = "\\label{houston-adapted-rlo}An example of the difference between robust LOESS fit and adapted robust LOESS fit to an LEA profile from the Houston-test set. Iteratively downweighting only positive residuals results in a significantly different fit which accounts for GEA structures on both the left and right.", fig.height=4, fig.width = 6}
 
 locfit_fit_h <- bullet_h$ccdata_w_resid[[1]] %>% 
   ggplot() + 
@@ -327,7 +326,7 @@ locfit_fit_h <- bullet_h$ccdata_w_resid[[1]] %>%
   geom_line(aes(x = x, y = locfit_pred), color = "red") + 
   theme_bw() + 
   labs(x = "Relative Location", y = "Relative Height", 
-       title = "Crosscut with robust LOESS fit")+ 
+       title = "Profile with robust LOESS fit")+ 
   theme(plot.title = element_text(size = 10), axis.title = element_text(size = 9))
   
 locfit_resid_h <- bullet_h$ccdata_w_resid[[1]] %>%
@@ -345,7 +344,7 @@ rlo_fit_h <- bullet_h$ccdata_w_resid[[1]] %>%
   geom_line(aes(x = x, y = rlo_pred), color = "red") + 
   theme_bw() + 
   labs(x = "Relative Location", y = "Relative Height", 
-       title = "Crosscut with adapted robust LOESS fit")+ 
+       title = "Profile with adapted robust LOESS fit")+ 
   theme(plot.title = element_text(size = 10), axis.title = element_text(size = 9))
   
 rlo_resid_h <- bullet_h$ccdata_w_resid[[1]] %>%
@@ -391,15 +390,15 @@ adapted_rlo %>%
   theme(plot.title = element_text(size = 10), axis.title = element_text(size = 9))
 ```
 
-Once the adapted robust LOESS procedure has been applied to remove the bullet curvature of the LEA, the resulting residuals should have relatively different distributions. Points in the LEA will fall more closely to the fitted line, while points in the GEA will typically have high, positive residuals.  
+Once the adapted robust LOESS procedure has been applied to remove the bullet curvature of the LEA, the resulting residuals should have relatively different distributions between LEA and GEA data. Points in the LEA will fall more closely to the fitted line, while points in the GEA will typically have high, positive residuals.  
 
-The subsequent prediction methods for shoulder location are based on the residuals calculated from the fit to the global structure of each land. One method uses penalized two-class classification techniques to classify each data point into "LEA" or "GEA", while the second uses Bayesian changepoint analysis to predict the data points at which the shoulders begin on either side.  
+The subsequent prediction methods for shoulder location are based on the residuals calculated from the adapted robust LOESS fit to the global structure of each profile. One method, using supervised two-class classification techniques, aims to classify each data point as being part of the LEA or GEA. The second approach is an unsupervised method based on changepoint analysis that seeks to identify data points where the distribution of the residuals changes.  
 
 \subsection{Two-Class Classification}  
 
-Shoulder location can be predicted by classifying data points as one of two classes: "LEA" or "GEA". A shoulder location prediction can then be found by gathering the range of values classified as "LEA" points.  
+Shoulder location can be predicted by first classifying data points as one of two classes ("LEA" or "GEA"), and subsequently gathering the range of values classified as "LEA" points.  
 
-Classification into "LEA" or "GEA" is first approached by a process of feature engineering based on adapted robust LOESS residuals. While the residuals themselves should have different height patterns, residuals alone are not enough to classify data with high accuracy.  
+Classification into "LEA" or "GEA" is first approached by a process of feature engineering based on adapted robust LOESS residuals. While the residuals themselves should have different distributions, residuals alone are not enough to classify data with high accuracy.  
 
 As already demonstrated by the differences in  \autoref{loess-vs-locfit} and \autoref{houston-locfit}, certain ammunition or barrel types may result in more pronounced striae on an LEA. Thus, standardization of features is imperative for transferability of fitted model parameters. The LEA scan context requires some non-traditional standardization practices.  
 
@@ -440,7 +439,7 @@ The full list of features developed are as follows:
 
 Examples of the distributions of some of these features can be seen in \autoref{lasso-features}.  
 
-```{r lasso-features, echo = F, warning = F, message = F, fig.cap = "\\label{lasso-features}Example distributions of features used in two-class classification. While depth shows the most clear separation between GEA and LEA data, it alone will not suffice to classify data correctly. While other distributions are relatively tight for LEA, there is still significant overlap with the wider GEA distributions.", fig.height=6, fig.width = 6}
+```{r lasso-features, echo = F, warning = F, message = F, fig.cap = "\\label{lasso-features}Example distributions of features used in two-class classification from Hamby set 44. While depth shows the most clear separation between GEA and LEA data, it alone will not suffice to classify data correctly. While other distributions are relatively tight for LEA, there is still significant overlap with the wider GEA distributions.", fig.height=6, fig.width = 6}
 lasso_features <- readRDS("../data/hamby44/hamby44_lasso_features.rda")
 feat_resid <- lasso_features %>% 
   ggplot() + geom_density(aes(x = rlo_resid, y = ..scaled.., fill = factor(response)), alpha = 0.6) + 
@@ -475,7 +474,7 @@ grid.arrange(feat_resid, feat_depth, feat_range, ncol = 1)
 The developed features can be used in the fit of a logistic LASSO model, which is a form of penalized regression. LASSO parameter values for $p$ covariates are found by identifying:  
 
 $$
-\hat{\beta}_{\lambda}^q = \stackrel{\arg\min}{\beta \in \mathbb{R}^p} \left\{  (Y - X\beta)'(Y - X\beta) + \lambda \sum_{j=1}^{p}|\beta_j|^q\right\}
+\hat{\beta}_{\lambda} = \stackrel{\arg\min}{\beta \in \mathbb{R}^p} \left\{  (Y - X\beta)'(Y - X\beta) + \lambda \sum_{j=1}^{p}|\beta_j|\right\}
 $$
 which adds a penalty to the traditional ordinary least squares minimization problem, and uses a tuning parameter $\lambda$.  
 
@@ -483,25 +482,30 @@ Cross-validated LASSO models were fit using the `cv.glmnet` function in the `glm
 
 Two separate models were fit: "LASSO Basic", which uses each of the features listed above, and "LASSO Full", which uses each of the features along with pairwise interactions for each of them. These parameter values were trained on the Hamby set 44 data. The resulting parameter values were used to calculate predicted values between 0 and 1; the closer to 1, the higher probability of membership in the "GEA" class.  
 
-Traditional two-class classification techniques call for finding an \textbf{equal error rate cutoff} to classify the predicted values for each data point into each of the two classes; i.e., values above a certain cutoff are classified as part of the "GEA" class, and values below the cutoff are classified as part of the "LEA" class. However, since scans are primarily of the land engraved area, there is significant class imbalance in our response categories. This unbalanced response means that any criterion used to determine a reasonable cutoff value for classification needs to be adjusted to account for differences in the size of the response classes. The larger class size of "LEA" means an equal error rate would allow for more false negatives (i.e., more "GEA" data points being classified as "LEA") - exactly what we are trying to avoid.
+\kr{Do we even need this paragraph?:} Traditional two-class classification techniques call for finding an equal error rate cutoff to classify the predicted values for each data point into each of the two classes; i.e., values above a certain cutoff are classified as part of the "GEA" class, and values below the cutoff are classified as part of the "LEA" class. However, since scans are primarily of the land engraved area, there is significant class imbalance in our response categories. This unbalanced response means that any criterion used to determine a reasonable cutoff value for classification needs to be adjusted to account for differences in the size of the response classes. The larger class size of "LEA" means an equal error rate would allow for more false negatives (i.e., more "GEA" data points being classified as "LEA") - exactly what we are trying to avoid.
 
-Thus, instead of looking for the cutoff that gives raw equal error rate (where sensitivity and specificity are equal), we found an equal error rate based on the overall number of data points. This allows for an equal \textbf{number} of errors in each category, rather than equal \textbf{percentage} of errors. This tactic more fairly penalizes points that should be classified "GEA" but are predicted to be "LEA".  
+\kr{Thus,} Instead of looking for thecutoff that gives raw equal error rate (where sensitivity and specificity are equal), we found an equal error rate based on the overall number of data points. This allows for an equal number of errors in each category, rather than equal percentage of errors. This tactic more fairly penalizes points that should be classified "GEA" but are predicted to be "LEA".  
 
 The final process for shoulder location identification is as follows: 
 
 \begin{enumerate}
-\item Use \texttt{robust\_loess\_fit} to remove bullet curvature.
-\item Calculate features based on $x$ locations and residual height values from \texttt{robust\_loess\_fit}. 
+\item Use adapted robust LOESS procedure to remove bullet curvature.
+\item Calculate features based on $x$ locations and residual height values from Step 1. 
 \item Use fit parameter values from either (a) lassobasic or (b) lassofull models to calculate probabilities of membership in GEA class.
 \item Apply cutoff of (a) .33 or (b) .34 to classify higher probabilities as GEA data points, and lower probabilities as LEA data points.
-\item Gather the $x$ range of points classified as LEA data points. These are the final shoulder location preditions.  
+\item Gather the $x$ range of data points predicted as members of the LEA class. These are the final shoulder location predictions. \kr{Make this more mathematically formulated?}  
 \end{enumerate}
 
 This process results in two methods for shoulder location identification in the `R` package `bulletxtrctr`: "lassobasic" and "lassofull". 
 
 
 \subsection{Bayesian Changepoint Analysis}
-The idea behind the changepoint approach is that within either the left GEA, right GEA, or the LEA, the global structure is consistent and can either be described by a line with zero slope, a line with positive slope for the right GEA, or a line with negative slope for the left GEA. Finding the points where the GEAs and LEA meet is treated as a problem of model selection. That is, the best fitting statistical model, in terms of the magnitude of the likelihood, should be the one which assumes that the points at which the global structure changes align with where the GEAs and LEA meet. This approach was proposed in the more general context of Bayesian changepoint detection in @stephens1994. Thus, the points of global structural change are what we will call changepoints. Thus, our model will be defined in a piecewise fashion. In practice there are also complex additional patterns which may exist for a number of reasons, but this large scale structural assumption remains generally reasonable. The complex smaller scale patterns can be thought of as the dependence in the data after accounting for the global structure. Because of the nature of the model which we consider, it becomes necessary for computational reasons to perform a couple of additional data preprocessing steps. Specifically, we will scale the residuals from the robust LOESS procedure, and we will impute missing values. In the next section, we describe the model that we will use to identify changepoints, after which we will describe the estimation procedure which we use. Details of the additional data preprocessing steps can be found in the appendix.
+The idea behind the changepoint approach is that within either the left GEA, right GEA, or the LEA, there are consistent patterns which can either be described by a line with negative slope for the left GEA, a line with zero slope for the LEA, or a line with positive slope for the right GEA. Our model will be therefore be defined in a piecewise fashion. The points of global structural change are what we will call changepoints. Changepoint locations can be treated as parameters and estimated in the same manner as any other parameter in a statistical model. 
+
+This approach was proposed in the more general context of Bayesian changepoint detection in @stephens1994. In practice there are also complex additional patterns (e.g., striae), but assuming the aforementioned large linear structures remains generally reasonable. The complex smaller scale patterns can be thought of as the dependence in the data after accounting for the larger structures.  
+
+Because of the nature of the model which we consider, it becomes necessary for computational reasons to perform a couple of additional data preprocessing steps. Specifically, we will scale the residuals from the robust LOESS procedure, and we will impute missing values. In the next section, we describe the model that we will use to identify changepoints, after which we will describe the estimation procedure which we use. Details of the additional data preprocessing steps can be found in the appendix.  
+
 
 \subsubsection{Bayesian Model Formulation}
 Before introducing the model, we introduce some notation. First, let $\{Y(x_i): i = 1,2, ..., n\}$ denote the set of random variables representing the residuals from the robust LOESS procedure at the values $x_i$. For simplicity, also assume that $x_1 < x_2 < ... < x_n$. Also, let $c_l$ be the value of the left changepoint and $c_r$ be the value of the right changepoint. Here, the left changepoint is where the left GEA meets the LEA, and the right changepoint is where the right GEA meets the LEA. Also, denote the median centered $x$ values as $x'_i = x_i - \tilde{x}$ where $\tilde{x}$ is the median $x$ value. As mentioned in the previous paragraph, the complex small scale patterns, such as the striae, will be modeled through a covariance structure on the data that will be allowed to differ between each GEA and between the GEAs and LEA. We will construct the covariance matrices from the exponential covariance function $K(x, x';\sigma, \ell) = \sigma^2 e^{-\frac{|x - x'|}{\ell}} = cov(Y(x), Y(x'))$. The differences in covariance matrices for the GEAs and LEA will be reflected in the parameters $\sigma$ and $\ell$. The data model that we consider is then, 
@@ -534,7 +538,7 @@ The above model encapsulates the essence of the approach. However, there are a f
 (Y(x_{1}), Y(x_{2}), ..., Y(x_{n}))^{\top} &\sim N(0, \Sigma(\sigma, \ell)).
 \end{align}
 
-We see that estimating the changepoint locations also involves selecting the most appropriate model. In order to avoid confusion, we have slightly abused notation and, for example, $\Sigma_1(\sigma_1, \ell_1)$ as it is estimated in the two changepoint model is *not* the same as $\Sigma_1(\sigma_1, \ell_1)$ from either of the one changepoint models, and $\Sigma_1(\sigma_1, \ell_1)$ is also *not* the same between the two one changepoint models. As another example, $\beta_0$ is *not* the same between each of the one changepoint models. So, to be clear, duplication of notation in *different* models is not meant to imply that those parameters are shared between models.
+We see that estimating the changepoint locations also involves selecting the most appropriate model from these four. In order to avoid confusion, we have slightly abused notation and, for example, $\Sigma_1(\sigma_1, \ell_1)$ as it is estimated in the two changepoint model is *not* the same as $\Sigma_1(\sigma_1, \ell_1)$ from either of the one changepoint models, and $\Sigma_1(\sigma_1, \ell_1)$ is also *not* the same between the two one changepoint models. As another example, $\beta_0$ is *not* the same between each of the one changepoint models. So, to be clear, duplication of notation in *different* models is not meant to imply that those parameters are shared between models.
 
 Ultimately, these above four models are each individually fitted, and each model above is given a prior. From there, we do model selection in the formal Bayesian way, selecting number and location of changepoints by maximizing the estimated posterior distribution. 
 
@@ -543,65 +547,17 @@ In order to complete a Bayesian model specification, we need priors on each of t
 \subsubsection{Bayesian Model Estimation}
 As was noted in @stephens1994, for any model including a changepoint, the likelihood is not a smooth function of the changepoint location. This is because, holding all other parameters fixed, shifting the changepoint value will result in zero change to the likelihood until it crosses the nearest point to the right or left, at which point the likelihood makes a jump. This makes maximum likelihood estimation in the standard way infeasible, but Bayesian estimation can be done in a fairly straightforward way via Markov chain Monte Carlo (MCMC). The basic idea is that, for each model, we can construct a two step Gibbs sampler. In step 1 we sample from the posterior distribution of the mean and covariance parameters given the changepoint locations, and in step 2 we sample from the changepoint locations given the mean and covariance parameters. Because of the non-conjugacy in our model, we perform both sampling steps using a random walk Metropolis-Hastings (RWMH) step with Gaussian proposals. For details on Gibbs sampling and the Metropolis-Hastings algorithm see @gelman2013. It is also worth mentioning that the zero changepoint model does not require Gibbs sampling at all, and we perform estimation there using a RWMH algorithm. 
 
-We now provide the two basic steps of the Gibbs sampler for the two changepoint case. The algorithms to sample from the other three models are omitted, and are nearly identical except for the a smaller number of parameters need to be sampled. Denote collection of mean and covariance parameters for the left GEA as $\theta_1$, the LEA as $\theta_2$, and the right GEA as $\theta_3$. Then, at iteration $t$ after warmup
+We now provide the two basic steps of the Gibbs sampler for the two changepoint case. The algorithms to sample from the other three models are omitted, and are nearly identical except for the smaller number of parameters that need to be sampled. Denote collection of mean and covariance parameters for the left GEA as $\theta_1$, the LEA as $\theta_2$, and the right GEA as $\theta_3$. Then, at iteration $t$ after warmup
 
 1. given changepoint locations $(c_l^{(t - 1)}, c_r^{(t - 1)})$, sample $(\theta_1^{(t)}, \theta_2^{(t)}, \theta_3^{(t)})$ using independent RWMH steps for each $\theta_i$
 2. given $(\theta_1^{(t)}, \theta_2^{(t)}, \theta_3^{(t)})$, sample $(c_l^{(t)}, c_r^{(t)})$ using a single RWMH step.
 
 After running the MCMC for each model, parameter estimates and the most likely model are jointly chosen according to the largest joint posterior value. That is, we arrive at estimates $(\hat{\theta}, \hat{M}) = \underset{(\theta, M)}{\operatorname{argmax}}{\log(p(\theta, M | Y))}$, where $M$ is the random variable associated with the choice of model, $\theta$ is the associated parameter vector for the appropriate model, and $Y$ is all of the available data. Additional MCMC details can be found in the appendix.
 
-The idea behind the changepoint approach is that within either the left GEA, right GEA, or the LEA, the global structure is consistent and can either be described by a line with zero slope, a line with positive slope for the right GEA, or a line with negative slope for the left GEA. Finding the points where the GEAs and LEA meet is treated as a problem of model selection. That is, the best fitting statistical model, in terms of the magnitude of the likelihood, should be the one which assumes that the points at which the global structure changes align with where the GEAs and LEA meet. This approach was proposed in the more general context of Bayesian changepoint detection in @stephens1994. Thus, the points of global structural change are what we will call changepoints. Thus, our model will be defined in a piecewise fashion. In practice there are also complex additional patterns which may exist for a number of reasons, but this large scale structural assumption remains generally reasonable. The complex smaller scale patterns can be thought of as the dependence in the data after accounting for the global structure. Because of the nature of the model which we consider, it becomes necessary for computational reasons to perform a couple of additional data preprocessing steps. Specifically, we will scale the residuals from the robust LOESS procedure, and we will impute missing values. In the next section, we describe the model that we will use to identify changepoints, after which we will describe the estimation procedure which we use. Details of the additional data preprocessing steps can be found in the appendix.
-
-\subsubsection{Bayesian Model Formulation}
-Before introducing the model, we introduce some notation. First, let $\{Y(x_i): i = 1,2, ..., n\}$ denote the set of random variables representing the residuals from the robust LOESS procedure at the values $x_i$. For simplicity, also assume that $x_1 < x_2 < ... < x_n$. Also, let $c_l$ be the value of the left changepoint and $c_r$ be the value of the right changepoint. Here, the left changepoint is where the left GEA meets the LEA, and the right changepoint is where the right GEA meets the LEA. Also, denote the median centered $x$ values as $x'_i = x_i - \tilde{x}$ where $\tilde{x}$ is the median $x$ value. As mentioned in the previous paragraph, the complex small scale patterns, such as the striae, will be modeled through a covariance structure on the data that will be allowed to differ between each GEA and between the GEAs and LEA. We will construct the covariance matrices from the exponential covariance function $K(x, x';\sigma, \ell) = \sigma^2 e^{-\frac{|x - x'|}{\ell}} = cov(Y(x), Y(x'))$. The differences in covariance matrices for the GEAs and LEA will be reflected in the parameters $\sigma$ and $\ell$. The data model that we consider is then, 
-
-\begin{align}
-(Y(x_1), Y(x_2), ..., Y(x_{k_1}))^{\top} &\sim N(\beta_{01}\mathbbm{1} + \beta_{11} x_{1:k_1}, \Sigma_1(\sigma_1, \ell_1)) \\
-(Y(x_{k_1 + 1}), Y(x_{k_1 + 2}), ..., Y(x_{k_2}))^{\top} &\sim N(0, \Sigma_2(\sigma_2, \ell_2)) \\ 
-(Y(x_{k_2 + 1}), Y(x_{k_2 + 2}), ..., Y(x_n))^{\top} &\sim N(\beta_{02}\mathbbm{1} + \beta_{12} x_{k_2 + 1:n}, \Sigma_3(\sigma_3, \ell_3)),
-\end{align}
-
-\noindent where $x_{k_1} < c_l \leq x_{k_1 + 1}$ and $x_{k_2} < c_r \leq x_{k_2 + 1}$  Here, $x_{1:k}$ denotes the column vector $(x_1, x_2, ..., x_k)^\top$, and $\mathbbm{1}$ denotes the vector of ones. Indpendence is assumed between each of these three distributions for simplicity. The parameters that need to be estimated include the four mean parameters in the GEAs, the six covariance parameters (two for each of the three areas), and the two changepoint parameters, $c_l$ and $c_r$. 
-
-The above model encapsulates the essence of the approach. However, there are a few difficulties. The first difficulty is that there are not always two GEAs in a particular land. There may be one GEA, or the land may only consist of the LEA. Thus, the above model is actually conditional on there being two GEAs in the data. We also define models for when there is one GEA on the left, one GEA on the right, or no GEAs. The models are defined in an essentially identical way. Conditional on there being only one GEA, the left GEA model is defined as, 
-
-\begin{align}
-(Y(x_1), Y(x_2), ..., Y(x_{k}))^{\top} &\sim N(\beta_{0}\mathbbm{1} + \beta_{1} x_{1:k}, \Sigma_1(\sigma_1, \ell_1)) \\
-(Y(x_{k + 1}), Y(x_{k + 2}), ..., Y(x_{n}))^{\top} &\sim N(0, \Sigma_2(\sigma_2, \ell_2)),
-\end{align}
-
-\noindent and the right GEA model is defined as, 
-
-\begin{align}
-(Y(x_{1}), Y(x_{2}), ..., Y(x_{k}))^{\top} &\sim N(0, \Sigma_1(\sigma_1, \ell_1)) \\ 
-(Y(x_{k + 1}), Y(x_{k + 2}), ..., Y(x_n))^{\top} &\sim N(\beta_{0}\mathbbm{1} + \beta_{1} x_{k + 1:n} \Sigma_2(\sigma_2, \ell_2)).
-\end{align}
-
-\noindent Finally, conditional on there being no GEAs in the data, the model is simply 
-
-\begin{align}
-(Y(x_{1}), Y(x_{2}), ..., Y(x_{n}))^{\top} &\sim N(0, \Sigma(\sigma, \ell)).
-\end{align}
-
-We see that estimating the changepoint locations also involves selecting the most appropriate model. In order to avoid confusion, we have slightly abused notation and, for example, $\Sigma_1(\sigma_1, \ell_1)$ as it is estimated in the two changepoint model is *not* the same as $\Sigma_1(\sigma_1, \ell_1)$ from either of the one changepoint models, and $\Sigma_1(\sigma_1, \ell_1)$ is also *not* the same between the two one changepoint models. As another example, $\beta_0$ is *not* the same between each of the one changepoint models. So, to be clear, duplication of notation in *different* models is not meant to imply that those parameters are shared between models.
-
-Ultimately, these above four models are each individually fitted, and each model above is given a prior. From there, we do model selection in the formal Bayesian way, selecting number and location of changepoints by maximizing the estimated posterior distribution. 
-
-In order to complete a Bayesian model specification, we need priors on each of the parameters in each model as well as each model itself. We will assume independence between each parameter a priori. For each length scale $\ell$, we will assume $\ell \sim \text{Gamma}(3,5)$. For each standard deviation, we will assume $\sigma \sim \text{Half-Normal}^{+}(0,1)$, where $\text{Half-Normal}^{+}(\cdot,\cdot)$ is notation for the normal distribution restricted to the positive real numbers. For intercept parameters, $\beta_{01}, \beta_{02}, \beta_0 \sim N(0, 10)$. For the slope parameters, the preceding trend deviates slightly. For any slope that corresponds to the *left* GEA, $\beta_1$ or $\beta_{01}$, we will assume that the slope can not be positive. That is, $\beta_1, \beta_{01} \sim \text{Half-Normal}^{-}(0,10)$, where $\text{Half-Normal}^{-}(\cdot, \cdot)$ is notation for the normal distribution restricted to the negative real numbers. Contrastingly, for any slope that corresponds to the *right* GEA, $\beta_1$ or $\beta_{02}$, we will assume that the slope can not be negative. That is, $\beta_1, \beta_{01} \sim \text{Half-Normal}^{+}(0,10)$. For the changepoint locations, we assume a uniform prior $\pi(c_l, c_r) \propto I(a < c_l < c_r - \gamma < b - \gamma)$. Here, $a$ and $b$ are some values close to the edges of the data. How close those values are to the edges is a parameter that is set manually. Further, we include another hyperparameter, $\gamma$, which can be set so that the changepoints are not allowed to be too close to each other. This is also a parameter that is set manually. Lastly, we assume a uniform prior over all four models.
-
-\subsubsection{Bayesian Model Estimation}
-As was noted in @stephens1994, for any model including a changepoint, the likelihood is not a smooth function of the changepoint location. This is because, holding all other parameters fixed, shifting the changepoint value will result in zero change to the likelihood until it crosses the nearest point to the right or left, at which point the likelihood makes a jump. This makes maximum likelihood estimation in the standard way infeasible, but Bayesian estimation can be done in a fairly straightforward way via Markov chain Monte Carlo (MCMC). The basic idea is that, for each model, we can construct a two step Gibbs sampler. In step 1 we sample from the posterior distribution of the mean and covariance parameters given the changepoint locations, and in step 2 we sample from the changepoint locations given the mean and covariance parameters. Because of the non-conjugacy in our model, we perform both sampling steps using a random walk Metropolis-Hastings (RWMH) step with Gaussian proposals. For details on Gibbs sampling and the Metropolis-Hastings algorithm see @gelman2013. It is also worth mentioning that the zero changepoint model does not require Gibbs sampling at all, and we perform estimation there using a RWMH algorithm. 
-
-We now provide the two basic steps of the Gibbs sampler for the two changepoint case. The algorithms to sample from the other three models are omitted, and are nearly identical except for the a smaller number of parameters need to be sampled. Denote collection of mean and covariance parameters for the left GEA as $\theta_1$, the LEA as $\theta_2$, and the right GEA as $\theta_3$. Then, at iteration $t$ after warmup  
-
-1. given changepoint locations $(c_l^{(t - 1)}, c_r^{(t - 1)})$, sample $(\theta_1^{(t)}, \theta_2^{(t)}, \theta_3^{(t)})$ using independent RWMH steps for each $\theta_i$  
-2. given $(\theta_1^{(t)}, \theta_2^{(t)}, \theta_3^{(t)})$, sample $(c_l^{(t)}, c_r^{(t)})$ using a single RWMH step.  
-
-After running the MCMC for each model, parameter estimates and the most likely model are jointly chosen according to the largest joint posterior value. That is, we arrive at estimates $(\hat{\theta}, \hat{M}) = \underset{(\theta, M)}{\operatorname{argmax}}{\log(p(\theta, M | Y))}$, where $M$ is the random variable associated with the choice of model, $\theta$ is the associated parameter vector for the appropriate model, and $Y$ is all of the available data. Additional MCMC details can be found in the appendix.  
 
 \section{Results}  
 
-To assess the degree of improvement in automated shoulder location identification, we want to quantify the impact each groove prediction method has on the automated bullet matching algorithm's accuracy. Five different shoulder location identification methods will be inserted into the automated bullet matching algorithm process:  
+To assess the degree of improvement in automated shoulder location identification, we want to quantify the impact each prediction method has on an automated bullet matching algorithm's accuracy. Five different shoulder location identification methods will be inserted into the automated bullet matching algorithm process:  
 
 \begin{itemize}
 \item[(1)] rollapply, the method proposed by \cite{Hare1}, 
@@ -611,17 +567,17 @@ To assess the degree of improvement in automated shoulder location identificatio
 \item[(5)] manual identifications, the "gold standard" for identification.  
 \end{itemize}
 
-Shoulder location predictions are found using each of these methods, and used to remove GEA data from each crosscut. This is followed by extracting a signature, and using extracted signatures for each land engraved area to calculate pairwise similarity scores for all LEA signatures in each test set. Pairwise similarity scores, calculated using the random forest algorithm in the `bulletxtrctr` packages, are based on pairwise features such as consecutively matching striae and cross-correlation function for two aligned signatures.  
+Shoulder location predictions were found using each of these methods, and used to remove GEA data from each profile. This is followed by extracting a signature, and using extracted signatures for each land engraved area to calculate pairwise similarity scores for all LEA signatures within each test set. Pairwise similarity scores were calculated using the random forest algorithm in the `bulletxtrctr` package.  
 
-Random forest scores should be high for land-to-land comparisons between signatures that originate from the same land, and lower for land-to-land comparisons between signatures from different lands.  
+Random forest scores should be close to 1 for land-to-land comparisons between signatures that originate from the same land, and closer to 0 for land-to-land comparisons between signatures from different lands.  
 
 We will investigate these scores for each individual test set: Hamby set 44, Phoenix PD set, and Houston-test set. All pairwise comparisons within a test set are completed. We can look at both visual representations of the random forest score distributions as well as investigate the random forest method's accuracy in determining whether two lands originate from the same source.  
 
-There should be visual separation between "same source" and "different source", as is seen for Manual ID predictions for all three test sets, seen in \autoref{hamby-groove-results}, \autoref{phoenix-groove-results}, and \autoref{houston-groove-results}. LASSO basic, LASSO full, and Bayesian changepoint all show improvement in separation for all three test sets; however, there is still much room for improvement when compared to Manual ID distributions in the Phoenix PD and Houston-test sets.  
+There should be visual separation between "same source" and "different source", as is present for Manual ID predictions for all three test sets, seen in \autoref{hamby-groove-results}, \autoref{phoenix-groove-results}, and \autoref{houston-groove-results}. LASSO basic, LASSO full, and Bayesian changepoint all show improvement in separation for all three test sets; however, there is still much room for improvement when compared to Manual ID distributions in the Phoenix PD and Houston-test sets.  
 
 Quantitatively, there is also significant improvement in AUC values for all three test sets, as seen in \autoref{hamby-table}, \autoref{phoenix-table}, and \autoref{houston-table}. Of interest is the classification accuracy with a fixed false positive rate. Since false positives - in this case identifying two land engraved areas as same source when they are different source - are the worst possible mistake, we set a cutoff rate for random forest scores based on a controlled false positive rate of .01.  
 
-Accuracy is overall high regardless of shoulder location identification method; however, there was a significant reduction in number of false negatives for the LASSO basic, LASSO full, and Bayesian changepoint methods for both Hamby set 44 and Phoenix PD sets. Bayesian changepoint improves upon rollapply in the Houston-test set, but lags behind the LASSO basic and LASSO full methods in AUC and reduction of false negatives.  
+Accuracy is overall high regardless of shoulder location identification method; however, there was a significant reduction in number of false negatives for the LASSO basic, LASSO full, and Bayesian changepoint methods for both Hamby set 44 and Phoenix PD sets. For the Houston-test set, Bayesian changepoint improves upon rollapply, but lags behind the LASSO basic and LASSO full methods in AUC and reduction of false negatives.  
 
 
 
@@ -921,9 +877,14 @@ All three proposed approaches show significant improvement both visually and qua
 
 While improvement is apparent on all three test sets using the LASSO and Bayesian changepoint methods, future work on the LASSO methods should include re-training LASSO models on a wider variety of LEA types rather than just the Hamby set 44 to avoid over-fitting to a specific type of LEA.  
 
+The initial appeal of unsupervised methods such as Bayesian changepoint was the lack of dependence on training data and hence, potential generalizability advantages.  
+
+
+
+
 \kr{Nate, could you add some conclusions about BCP stuff here? A sentence or two?}
 
-\section{References}  
+\section{References}  an changepoint was the lack of dependence on training data and hence, potential generalizability advanc
 
 \section{Appendix}  
 
