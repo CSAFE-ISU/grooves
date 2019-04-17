@@ -779,11 +779,11 @@ pho_manual_table <- controlfp_fun(phoenix_results$rfscore_manual, phoenix_result
 \begin{tabular}{llllllll}
 & & \multicolumn{5}{c}{\textbf{Controlled FPR = .01}} & \\
 \textbf{Method} & \textbf{AUC} & Cutoff & FN &TP & TN & Accuracy & \textbf{Time to Calculate} \\ \hline
-Rollapply & `r round(auc_roll_p, 3)` &  `r round(pho_roll_table$cutoff, 3)` & `r pho_roll_table$fn` & `r pho_roll_table$tp`&`r pho_roll_table$tn` & `r round(pho_roll_table$acc, 4)`& 1 min. \\ \hline
-LASSO basic & `r round(auc_lb_p, 3)` &  `r round(pho_lb_table$cutoff, 3)` &`r pho_lb_table$fn` & `r pho_lb_table$tp`&`r pho_lb_table$tn` & `r round(pho_lb_table$acc, 4)` & 6 min. \\ \hline
-LASSO full & `r round(auc_lf_p, 3)` &  `r round(pho_lf_table$cutoff, 3)` &`r pho_lf_table$fn` &`r pho_lf_table$tp` &`r pho_lf_table$tn` & `r round(pho_lf_table$acc, 4)`  & 6 min. \\ \hline
-Bayesian Changepoint & `r round(auc_bcp_p, 3)` &  `r round(pho_bcp_table$cutoff, 3)` &`r pho_bcp_table$fn` & `r pho_bcp_table$tp`&`r pho_bcp_table$tn` & `r round(pho_bcp_table$acc, 4)` &  \\ \hline
-Manual ID & `r round(auc_manual_p, 3)` &  `r round(pho_manual_table$cutoff, 3)` & `r pho_manual_table$fn`& `r pho_manual_table$tp`&`r pho_manual_table$tn` & `r round(pho_manual_table$acc, 4)` & 45 min. \\ \hline 
+Rollapply & `r round(auc_roll_p, 3)` &  `r round(pho_roll_table$cutoff, 3)` & `r pho_roll_table$fn` & `r pho_roll_table$tp`&`r pho_roll_table$tn` & `r round(pho_roll_table$acc, 2)`& 1 min. \\ \hline
+LASSO basic & `r round(auc_lb_p, 3)` &  `r round(pho_lb_table$cutoff, 3)` &`r pho_lb_table$fn` & `r pho_lb_table$tp`&`r pho_lb_table$tn` & `r round(pho_lb_table$acc, 2)` & 6 min. \\ \hline
+LASSO full & `r round(auc_lf_p, 3)` &  `r round(pho_lf_table$cutoff, 3)` &`r pho_lf_table$fn` &`r pho_lf_table$tp` &`r pho_lf_table$tn` & `r round(pho_lf_table$acc, 2)`  & 6 min. \\ \hline
+Bayesian Changepoint & `r round(auc_bcp_p, 3)` &  `r round(pho_bcp_table$cutoff, 3)` &`r pho_bcp_table$fn` & `r pho_bcp_table$tp`&`r pho_bcp_table$tn` & `r round(pho_bcp_table$acc, 2)` &  \\ \hline
+Manual ID & `r round(auc_manual_p, 3)` &  `r round(pho_manual_table$cutoff, 3)` & `r pho_manual_table$fn`& `r pho_manual_table$tp`&`r pho_manual_table$tn` & `r round(pho_manual_table$acc, 2)` & 45 min. \\ \hline 
 \end{tabular}
 \caption{Land-to-land comparison results for the Phoenix PD set.}
 \label{phoenix-table}
@@ -861,11 +861,11 @@ hou_manual_table <- controlfp_fun(houston_results$rfscore_manual, houston_result
 \begin{tabular}{llllllll}
 & & \multicolumn{5}{c}{\textbf{Controlled FPR = .01}} & \\
 \textbf{Method} & \textbf{AUC} & Cutoff & FN &TP & TN & Accuracy & \textbf{Time to Calculate} \\ \hline
-Rollapply & `r round(auc_roll_h, 3)` &  `r round(hou_roll_table$cutoff, 3)` & `r hou_roll_table$fn` & `r hou_roll_table$tp`&`r hou_roll_table$tn` & `r round(hou_roll_table$acc, 4)` & 2 min. \\ \hline
-LASSO basic & `r round(auc_lb_h, 3)` &  `r round(hou_lb_table$cutoff, 3)` &`r hou_lb_table$fn` & `r hou_lb_table$tp`&`r hou_lb_table$tn` & `r round(hou_lb_table$acc, 4)` & 12 min. \\ \hline
-LASSO full & `r round(auc_lf_h, 3)` &  `r round(hou_lf_table$cutoff, 3)` &`r hou_lf_table$fn` &`r hou_lf_table$tp` &`r hou_lf_table$tn` & `r round(hou_lf_table$acc, 4)` & 12 min. \\ \hline
-Bayesian Changepoint & `r round(auc_bcp_h, 3)` &  `r round(hou_bcp_table$cutoff, 3)` &`r hou_bcp_table$fn` & `r hou_bcp_table$tp`&`r hou_bcp_table$tn` & `r round(hou_bcp_table$acc, 4)` & \\ \hline
-Manual ID & `r round(auc_manual_h, 3)` &  `r round(hou_manual_table$cutoff, 3)` & `r hou_manual_table$fn`& `r hou_manual_table$tp`&`r hou_manual_table$tn` & `r round(hou_manual_table$acc, 4)` & 75 min. \\ \hline 
+Rollapply & `r round(auc_roll_h, 3)` &  `r round(hou_roll_table$cutoff, 3)` & `r hou_roll_table$fn` & `r hou_roll_table$tp`&`r hou_roll_table$tn` & `r round(hou_roll_table$acc, 2)` & 2 min. \\ \hline
+LASSO basic & `r round(auc_lb_h, 3)` &  `r round(hou_lb_table$cutoff, 3)` &`r hou_lb_table$fn` & `r hou_lb_table$tp`&`r hou_lb_table$tn` & `r round(hou_lb_table$acc, 2)` & 12 min. \\ \hline
+LASSO full & `r round(auc_lf_h, 3)` &  `r round(hou_lf_table$cutoff, 3)` &`r hou_lf_table$fn` &`r hou_lf_table$tp` &`r hou_lf_table$tn` & `r round(hou_lf_table$acc, 2)` & 12 min. \\ \hline
+Bayesian Changepoint & `r round(auc_bcp_h, 3)` &  `r round(hou_bcp_table$cutoff, 3)` &`r hou_bcp_table$fn` & `r hou_bcp_table$tp`&`r hou_bcp_table$tn` & `r round(hou_bcp_table$acc, 2)` & \\ \hline
+Manual ID & `r round(auc_manual_h, 3)` &  `r round(hou_manual_table$cutoff, 3)` & `r hou_manual_table$fn`& `r hou_manual_table$tp`&`r hou_manual_table$tn` & `r round(hou_manual_table$acc, 2)` & 75 min. \\ \hline 
 \end{tabular}
 \caption{Land-to-land comparison results for the Houston-test set.}
 \label{houston-table}
@@ -875,12 +875,12 @@ Manual ID & `r round(auc_manual_h, 3)` &  `r round(hou_manual_table$cutoff, 3)` 
 
 All three proposed approaches show significant improvement both visually and quantitatively over the "rollapply" method proposed by \cite{Hare1}. However, both LASSO methods show greater improvement than Bayesian changepoint on the Houston-test set. While manual identification of shoulder locations is still the most accurate method, and considered the "gold standard", the reduction in time to get predictions when using LASSO methods is advantageous and allows for less human involvement in the overall automated matching process.  
 
+The initial appeal of unsupervised methods such as Bayesian changepoint was the lack of dependence on training data and hence, potential generalizability advantages. This advantage did not bear out in the test sets presented here, and it appears the LASSO methods trained on Hamby set 44 generalized effectively to new data.  
+
 While improvement is apparent on all three test sets using the LASSO and Bayesian changepoint methods, there is clear room for additional precision. Future work on the LASSO methods should include re-training LASSO models on a wider variety of LEA types rather than just the Hamby set 44 to avoid over-fitting to a specific type of LEA.  
 
-The initial appeal of unsupervised methods such as Bayesian changepoint was the lack of dependence on training data and hence, potential generalizability advantages. This advantage did not bear out in experiments presented here, and it appears the LASSO methods trained on Hamby set 44 generalized effectively to new data. 
 
-
-\section{References}  an changepoint was the lack of dependence on training data and hence, potential generalizability advanc
+\section{References}  
 
 \section{Appendix}  
 

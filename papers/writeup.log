@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.19 (TeX Live 2018) (preloaded format=pdflatex 2018.4.16)  17 APR 2019 14:21
+This is pdfTeX, Version 3.14159265-2.6-1.40.19 (TeX Live 2018) (preloaded format=pdflatex 2018.4.16)  17 APR 2019 14:34
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -725,15 +725,15 @@ Overfull \hbox (47.17851pt too wide) in paragraph at lines 35--44
  []
 
 ) [37]
-Package atveryend Info: Empty hook `BeforeClearDocument' on input line 1024.
-Package atveryend Info: Empty hook `AfterLastShipout' on input line 1024.
+Package atveryend Info: Empty hook `BeforeClearDocument' on input line 1021.
+Package atveryend Info: Empty hook `AfterLastShipout' on input line 1021.
 (./writeup.aux)
-Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 1024.
-Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 1024.
+Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 1021.
+Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 1021.
 
 Package rerunfilecheck Info: File `writeup.out' has not changed.
 (rerunfilecheck)             Checksum: A4D1464C5EC834CDB41DC571980D6492;848.
-Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 1024.
+Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 1021.
  ) 
 Here is how much of TeX's memory you used:
  10919 strings out of 492649
@@ -742,7 +742,7 @@ Here is how much of TeX's memory you used:
  14483 multiletter control sequences out of 15000+600000
  15188 words of font info for 60 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 61i,12n,96p,901b,442s stack positions out of 5000i,500n,10000p,200000b,80000s
+ 61i,12n,96p,901b,444s stack positions out of 5000i,500n,10000p,200000b,80000s
  </Users/crazykiwi7/Library/texlive/2018/texmf-var/fonts/pk/ljfour/public/bbm
 /bbm12.600pk></usr/local/texlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm
 /cmbx10.pfb></usr/local/texlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/
@@ -762,7 +762,7 @@ texlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy8.pfb></usr/local/te
 xlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmti12.pfb></usr/local/tex
 live/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt12.pfb></usr/local/texl
 ive/2018/texmf-dist/fonts/type1/public/amsfonts/symbols/msbm10.pfb>
-Output written on writeup.pdf (37 pages, 2724164 bytes).
+Output written on writeup.pdf (37 pages, 2724034 bytes).
 PDF statistics:
  573 PDF objects out of 1000 (max. 8388607)
  473 compressed objects within 5 object streams
