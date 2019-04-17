@@ -875,14 +875,10 @@ Manual ID & `r round(auc_manual_h, 3)` &  `r round(hou_manual_table$cutoff, 3)` 
 
 All three proposed approaches show significant improvement both visually and quantitatively over the "rollapply" method proposed by \cite{Hare1}. However, both LASSO methods show greater improvement than Bayesian changepoint on the Houston-test set. While manual identification of shoulder locations is still the most accurate method, and considered the "gold standard", the reduction in time to get predictions when using LASSO methods is advantageous and allows for less human involvement in the overall automated matching process.  
 
-While improvement is apparent on all three test sets using the LASSO and Bayesian changepoint methods, future work on the LASSO methods should include re-training LASSO models on a wider variety of LEA types rather than just the Hamby set 44 to avoid over-fitting to a specific type of LEA.  
+While improvement is apparent on all three test sets using the LASSO and Bayesian changepoint methods, there is clear room for additional precision. Future work on the LASSO methods should include re-training LASSO models on a wider variety of LEA types rather than just the Hamby set 44 to avoid over-fitting to a specific type of LEA.  
 
-The initial appeal of unsupervised methods such as Bayesian changepoint was the lack of dependence on training data and hence, potential generalizability advantages.  
+The initial appeal of unsupervised methods such as Bayesian changepoint was the lack of dependence on training data and hence, potential generalizability advantages. This advantage did not bear out in experiments presented here, and it appears the LASSO methods trained on Hamby set 44 generalized effectively to new data. 
 
-
-
-
-\kr{Nate, could you add some conclusions about BCP stuff here? A sentence or two?}
 
 \section{References}  an changepoint was the lack of dependence on training data and hence, potential generalizability advanc
 

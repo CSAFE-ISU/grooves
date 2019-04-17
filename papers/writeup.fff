@@ -96,10 +96,11 @@ downwards shifts in predictions near the left and right boundaries.}
 \centering
 \includegraphics{writeup_files/figure-latex/lasso-features-1.pdf}
 \caption{\label{lasso-features}Example distributions of features used in
-two-class classification. While depth shows the most clear separation
-between GEA and LEA data, it alone will not suffice to classify data
-correctly. While other distributions are relatively tight for LEA, there
-is still significant overlap with the wider GEA distributions.}
+two-class classification from Hamby set 44. While depth shows the most
+clear separation between GEA and LEA data, it alone will not suffice to
+classify data correctly. While other distributions are relatively tight
+for LEA, there is still significant overlap with the wider GEA
+distributions.}
 \end{figure}
 \efloatseparator
  

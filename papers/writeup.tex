@@ -423,8 +423,8 @@ range of values classified as ``LEA'' points.
 
 Classification into ``LEA'' or ``GEA'' is first approached by a process
 of feature engineering based on adapted robust LOESS residuals. While
-the residuals themselves should have different height patterns,
-residuals alone are not enough to classify data with high accuracy.
+the residuals themselves should have different distributions, residuals
+alone are not enough to classify data with high accuracy.
 
 As already demonstrated by the differences in \autoref{loess-vs-locfit}
 and \autoref{houston-locfit}, certain ammunition or barrel types may
@@ -486,10 +486,11 @@ Examples of the distributions of some of these features can be seen in
 \centering
 \includegraphics{writeup_files/figure-latex/lasso-features-1.pdf}
 \caption{\label{lasso-features}Example distributions of features used in
-two-class classification. While depth shows the most clear separation
-between GEA and LEA data, it alone will not suffice to classify data
-correctly. While other distributions are relatively tight for LEA, there
-is still significant overlap with the wider GEA distributions.}
+two-class classification from Hamby set 44. While depth shows the most
+clear separation between GEA and LEA data, it alone will not suffice to
+classify data correctly. While other distributions are relatively tight
+for LEA, there is still significant overlap with the wider GEA
+distributions.}
 \end{figure}
 
 The developed features can be used in the fit of a logistic LASSO model,
@@ -497,7 +498,7 @@ which is a form of penalized regression. LASSO parameter values for
 \(p\) covariates are found by identifying:
 
 \[
-\hat{\beta}_{\lambda}^q = \stackrel{\arg\min}{\beta \in \mathbb{R}^p} \left\{  (Y - X\beta)'(Y - X\beta) + \lambda \sum_{j=1}^{p}|\beta_j|^q\right\}
+\hat{\beta}_{\lambda} = \stackrel{\arg\min}{\beta \in \mathbb{R}^p} \left\{  (Y - X\beta)'(Y - X\beta) + \lambda \sum_{j=1}^{p}|\beta_j|\right\}
 \] which adds a penalty to the traditional ordinary least squares
 minimization problem, and uses a tuning parameter \(\lambda\).
 
@@ -516,35 +517,35 @@ parameter values were used to calculate predicted values between 0 and
 1; the closer to 1, the higher probability of membership in the ``GEA''
 class.
 
-Traditional two-class classification techniques call for finding an
-\textbf{equal error rate cutoff} to classify the predicted values for
-each data point into each of the two classes; i.e., values above a
-certain cutoff are classified as part of the ``GEA'' class, and values
-below the cutoff are classified as part of the ``LEA'' class. However,
-since scans are primarily of the land engraved area, there is
-significant class imbalance in our response categories. This unbalanced
-response means that any criterion used to determine a reasonable cutoff
-value for classification needs to be adjusted to account for differences
-in the size of the response classes. The larger class size of ``LEA''
-means an equal error rate would allow for more false negatives (i.e.,
-more ``GEA'' data points being classified as ``LEA'') - exactly what we
-are trying to avoid.
+\kr{Do we even need this paragraph?:} Traditional two-class
+classification techniques call for finding an equal error rate cutoff to
+classify the predicted values for each data point into each of the two
+classes; i.e., values above a certain cutoff are classified as part of
+the ``GEA'' class, and values below the cutoff are classified as part of
+the ``LEA'' class. However, since scans are primarily of the land
+engraved area, there is significant class imbalance in our response
+categories. This unbalanced response means that any criterion used to
+determine a reasonable cutoff value for classification needs to be
+adjusted to account for differences in the size of the response classes.
+The larger class size of ``LEA'' means an equal error rate would allow
+for more false negatives (i.e., more ``GEA'' data points being
+classified as ``LEA'') - exactly what we are trying to avoid.
 
-Thus, instead of looking for the cutoff that gives raw equal error rate
-(where sensitivity and specificity are equal), we found an equal error
-rate based on the overall number of data points. This allows for an
-equal \textbf{number} of errors in each category, rather than equal
-\textbf{percentage} of errors. This tactic more fairly penalizes points
-that should be classified ``GEA'' but are predicted to be ``LEA''.
+\kr{Thus,} Instead of looking for thecutoff that gives raw equal error
+rate (where sensitivity and specificity are equal), we found an equal
+error rate based on the overall number of data points. This allows for
+an equal number of errors in each category, rather than equal percentage
+of errors. This tactic more fairly penalizes points that should be
+classified ``GEA'' but are predicted to be ``LEA''.
 
 The final process for shoulder location identification is as follows:
 
 \begin{enumerate}
-\item Use \texttt{robust\_loess\_fit} to remove bullet curvature.
-\item Calculate features based on $x$ locations and residual height values from \texttt{robust\_loess\_fit}. 
+\item Use adapted robust LOESS procedure to remove bullet curvature.
+\item Calculate features based on $x$ locations and residual height values from Step 1. 
 \item Use fit parameter values from either (a) lassobasic or (b) lassofull models to calculate probabilities of membership in GEA class.
 \item Apply cutoff of (a) .33 or (b) .34 to classify higher probabilities as GEA data points, and lower probabilities as LEA data points.
-\item Gather the $x$ range of points classified as LEA data points. These are the final shoulder location preditions.  
+\item Gather the $x$ range of data points predicted as members of the LEA class. These are the final shoulder location predictions. \kr{Make this more mathematically formulated?}  
 \end{enumerate}
 
 This process results in two methods for shoulder location identification
@@ -554,29 +555,30 @@ in the \texttt{R} package \texttt{bulletxtrctr}: ``lassobasic'' and
 \subsection{Bayesian Changepoint Analysis}
 
 The idea behind the changepoint approach is that within either the left
-GEA, right GEA, or the LEA, the global structure is consistent and can
-either be described by a line with zero slope, a line with positive
-slope for the right GEA, or a line with negative slope for the left GEA.
-Finding the points where the GEAs and LEA meet is treated as a problem
-of model selection. That is, the best fitting statistical model, in
-terms of the magnitude of the likelihood, should be the one which
-assumes that the points at which the global structure changes align with
-where the GEAs and LEA meet. This approach was proposed in the more
-general context of Bayesian changepoint detection in
-\citet{stephens1994}. Thus, the points of global structural change are
-what we will call changepoints. Thus, our model will be defined in a
-piecewise fashion. In practice there are also complex additional
-patterns which may exist for a number of reasons, but this large scale
-structural assumption remains generally reasonable. The complex smaller
-scale patterns can be thought of as the dependence in the data after
-accounting for the global structure. Because of the nature of the model
-which we consider, it becomes necessary for computational reasons to
-perform a couple of additional data preprocessing steps. Specifically,
-we will scale the residuals from the robust LOESS procedure, and we will
-impute missing values. In the next section, we describe the model that
-we will use to identify changepoints, after which we will describe the
-estimation procedure which we use. Details of the additional data
-preprocessing steps can be found in the appendix.
+GEA, right GEA, or the LEA, there are consistent patterns which can
+either be described by a line with negative slope for the left GEA, a
+line with zero slope for the LEA, or a line with positive slope for the
+right GEA. Our model will be therefore be defined in a piecewise
+fashion. The points of global structural change are what we will call
+changepoints. Changepoint locations can be treated as parameters and
+estimated in the same manner as any other parameter in a statistical
+model.
+
+This approach was proposed in the more general context of Bayesian
+changepoint detection in \citet{stephens1994}. In practice there are
+also complex additional patterns (e.g., striae), but assuming the
+aforementioned large linear structures remains generally reasonable. The
+complex smaller scale patterns can be thought of as the dependence in
+the data after accounting for the larger structures.
+
+Because of the nature of the model which we consider, it becomes
+necessary for computational reasons to perform a couple of additional
+data preprocessing steps. Specifically, we will scale the residuals from
+the robust LOESS procedure, and we will impute missing values. In the
+next section, we describe the model that we will use to identify
+changepoints, after which we will describe the estimation procedure
+which we use. Details of the additional data preprocessing steps can be
+found in the appendix.
 
 \subsubsection{Bayesian Model Formulation}
 
@@ -643,8 +645,8 @@ model is simply
 \end{align}
 
 We see that estimating the changepoint locations also involves selecting
-the most appropriate model. In order to avoid confusion, we have
-slightly abused notation and, for example,
+the most appropriate model from these four. In order to avoid confusion,
+we have slightly abused notation and, for example,
 \(\Sigma_1(\sigma_1, \ell_1)\) as it is estimated in the two changepoint
 model is \emph{not} the same as \(\Sigma_1(\sigma_1, \ell_1)\) from
 either of the one changepoint models, and \(\Sigma_1(\sigma_1, \ell_1)\)
@@ -709,10 +711,11 @@ sampling at all, and we perform estimation there using a RWMH algorithm.
 
 We now provide the two basic steps of the Gibbs sampler for the two
 changepoint case. The algorithms to sample from the other three models
-are omitted, and are nearly identical except for the a smaller number of
-parameters need to be sampled. Denote collection of mean and covariance
-parameters for the left GEA as \(\theta_1\), the LEA as \(\theta_2\),
-and the right GEA as \(\theta_3\). Then, at iteration \(t\) after warmup
+are omitted, and are nearly identical except for the smaller number of
+parameters that need to be sampled. Denote collection of mean and
+covariance parameters for the left GEA as \(\theta_1\), the LEA as
+\(\theta_2\), and the right GEA as \(\theta_3\). Then, at iteration
+\(t\) after warmup
 
 \begin{enumerate}
 \def\labelenumi{\arabic{enumi}.}
@@ -735,38 +738,13 @@ where \(M\) is the random variable associated with the choice of model,
 and \(Y\) is all of the available data. Additional MCMC details can be
 found in the appendix.
 
-The idea behind the changepoint approach is that within either the left
-GEA, right GEA, or the LEA, the global structure is consistent and can
-either be described by a line with zero slope, a line with positive
-slope for the right GEA, or a line with negative slope for the left GEA.
-Finding the points where the GEAs and LEA meet is treated as a problem
-of model selection. That is, the best fitting statistical model, in
-terms of the magnitude of the likelihood, should be the one which
-assumes that the points at which the global structure changes align with
-where the GEAs and LEA meet. This approach was proposed in the more
-general context of Bayesian changepoint detection in
-\citet{stephens1994}. Thus, the points of global structural change are
-what we will call changepoints. Thus, our model will be defined in a
-piecewise fashion. In practice there are also complex additional
-patterns which may exist for a number of reasons, but this large scale
-structural assumption remains generally reasonable. The complex smaller
-scale patterns can be thought of as the dependence in the data after
-accounting for the global structure. Because of the nature of the model
-which we consider, it becomes necessary for computational reasons to
-perform a couple of additional data preprocessing steps. Specifically,
-we will scale the residuals from the robust LOESS procedure, and we will
-impute missing values. In the next section, we describe the model that
-we will use to identify changepoints, after which we will describe the
-estimation procedure which we use. Details of the additional data
-preprocessing steps can be found in the appendix.
-
 \section{Results}
 
 To assess the degree of improvement in automated shoulder location
-identification, we want to quantify the impact each groove prediction
-method has on the automated bullet matching algorithm's accuracy. Five
-different shoulder location identification methods will be inserted into
-the automated bullet matching algorithm process:
+identification, we want to quantify the impact each prediction method
+has on an automated bullet matching algorithm's accuracy. Five different
+shoulder location identification methods will be inserted into the
+automated bullet matching algorithm process:
 
 \begin{itemize}
 \item[(1)] rollapply, the method proposed by \cite{Hare1}, 
@@ -776,18 +754,17 @@ the automated bullet matching algorithm process:
 \item[(5)] manual identifications, the "gold standard" for identification.  
 \end{itemize}
 
-Shoulder location predictions are found using each of these methods, and
-used to remove GEA data from each crosscut. This is followed by
+Shoulder location predictions were found using each of these methods,
+and used to remove GEA data from each profile. This is followed by
 extracting a signature, and using extracted signatures for each land
 engraved area to calculate pairwise similarity scores for all LEA
-signatures in each test set. Pairwise similarity scores, calculated
-using the random forest algorithm in the \texttt{bulletxtrctr} packages,
-are based on pairwise features such as consecutively matching striae and
-cross-correlation function for two aligned signatures.
+signatures within each test set. Pairwise similarity scores were
+calculated using the random forest algorithm in the
+\texttt{bulletxtrctr} package.
 
-Random forest scores should be high for land-to-land comparisons between
-signatures that originate from the same land, and lower for land-to-land
-comparisons between signatures from different lands.
+Random forest scores should be close to 1 for land-to-land comparisons
+between signatures that originate from the same land, and closer to 0
+for land-to-land comparisons between signatures from different lands.
 
 We will investigate these scores for each individual test set: Hamby set
 44, Phoenix PD set, and Houston-test set. All pairwise comparisons
@@ -797,8 +774,8 @@ investigate the random forest method's accuracy in determining whether
 two lands originate from the same source.
 
 There should be visual separation between ``same source'' and
-``different source'', as is seen for Manual ID predictions for all three
-test sets, seen in \autoref{hamby-groove-results},
+``different source'', as is present for Manual ID predictions for all
+three test sets, seen in \autoref{hamby-groove-results},
 \autoref{phoenix-groove-results}, and \autoref{houston-groove-results}.
 LASSO basic, LASSO full, and Bayesian changepoint all show improvement
 in separation for all three test sets; however, there is still much room
@@ -817,8 +794,8 @@ false positive rate of .01.
 Accuracy is overall high regardless of shoulder location identification
 method; however, there was a significant reduction in number of false
 negatives for the LASSO basic, LASSO full, and Bayesian changepoint
-methods for both Hamby set 44 and Phoenix PD sets. Bayesian changepoint
-improves upon rollapply in the Houston-test set, but lags behind the
+methods for both Hamby set 44 and Phoenix PD sets. For the Houston-test
+set, Bayesian changepoint improves upon rollapply, but lags behind the
 LASSO basic and LASSO full methods in AUC and reduction of false
 negatives.
 
@@ -910,14 +887,21 @@ predictions when using LASSO methods is advantageous and allows for less
 human involvement in the overall automated matching process.
 
 While improvement is apparent on all three test sets using the LASSO and
-Bayesian changepoint methods, future work on the LASSO methods should
-include re-training LASSO models on a wider variety of LEA types rather
-than just the Hamby set 44 to avoid over-fitting to a specific type of
-LEA.
+Bayesian changepoint methods, there is clear room for additional
+precision. Future work on the LASSO methods should include re-training
+LASSO models on a wider variety of LEA types rather than just the Hamby
+set 44 to avoid over-fitting to a specific type of LEA.
 
-\kr{Nate, could you add some conclusions about BCP stuff here? A sentence or two?}
+The initial appeal of unsupervised methods such as Bayesian changepoint
+was the lack of dependence on training data and hence, potential
+generalizability advantages. This advantage did not bear out in
+experiments presented here, and it appears the LASSO methods trained on
+Hamby set 44 generalized effectively to new data.
 
 \section{References}
+
+an changepoint was the lack of dependence on training data and hence,
+potential generalizability advanc
 
 \section{Appendix}
 
