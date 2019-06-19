@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.19 (TeX Live 2018) (preloaded format=pdflatex 2018.4.16)  17 APR 2019 14:34
+This is pdfTeX, Version 3.14159265-2.6-1.40.19 (TeX Live 2018) (preloaded format=pdflatex 2018.4.16)  19 JUN 2019 00:13
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -549,138 +549,162 @@ Non-PDF special ignored!
 <special> header=psfrag.pro
 
 {/usr/local/texlive/2018/texmf-var/fonts/map/pdftex/updmap/pdftex.map}]
+LaTeX Font Info:    Font shape `OMS/cmr/m/n' in size <12> not available
+(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 135.
+
+Underfull \hbox (badness 10000) in paragraph at lines 135--137
+
+ []
+
+[2]
 \openout4 = `writeup.fff'.
 
-(writeup.fff) [2] [3] [4] [5] [6] [7] [8] [9] [10]
-LaTeX Font Info:    Try loading font information for U+bbm on input line 608.
+(writeup.fff) [3] [4] [5] [6] [7] [8] [9] [10]
+LaTeX Font Info:    Try loading font information for U+bbm on input line 641.
 (/usr/local/texlive/2018/texmf-dist/tex/latex/bbm-macros/ubbm.fd
 File: ubbm.fd 1999/03/15 V 1.2 Font definition for bbm font - TH
 ) [11] [12] [13] [14]
 \openout5 = `writeup.ttt'.
 
-(writeup.ttt) [15] [16] [17] (./writeup.bbl [18] [19]) AED endfloat: Processing
- end Figures and Tables [20] (./writeup.lof)
+(writeup.ttt) [15] [16] [17] [18] (./writeup.bbl [19]) AED endfloat: Processing
+ end Figures and Tables [20] (./writeup.lof [21
+
+
+])
 \tf@lof=\write7
 \openout7 = `writeup.lof'.
 
-[21
-
-
-] [22] (./writeup.fff
-<../images/3d_plot_top_context_breakoff.png, id=319, 722.7pt x 542.025pt>
-File: ../images/3d_plot_top_context_breakoff.png Graphic file (type png)
-<use ../images/3d_plot_top_context_breakoff.png>
-Package pdftex.def Info: ../images/3d_plot_top_context_breakoff.png  used on in
-put line 2.
-(pdftex.def)             Requested size: 462.26999pt x 346.70459pt.
-[23 <../images/3d_plot_top_context_breakoff.png>]
-<../images/3d_plot_top_crosscut.png, id=326, 752.8125pt x 250.9375pt>
+[22] (./writeup.fff
+<../images/scanning-stage0.png, id=307, 672.5125pt x 399.4925pt>
+File: ../images/scanning-stage0.png Graphic file (type png)
+<use ../images/scanning-stage0.png>
+Package pdftex.def Info: ../images/scanning-stage0.png  used on input line 3.
+(pdftex.def)             Requested size: 231.135pt x 137.30081pt.
+<../images/bullet-sketch.png, id=309, 160.6pt x 291.0875pt>
+File: ../images/bullet-sketch.png Graphic file (type png)
+<use ../images/bullet-sketch.png>
+Package pdftex.def Info: ../images/bullet-sketch.png  used on input line 5.
+(pdftex.def)             Requested size: 92.45258pt x 167.57387pt.
+[23 <../images/scanning-stage0.png> <../images/bullet-sketch.png>]
+<../images/scan_example.png, id=316, 1437.37pt x 483.8075pt>
+File: ../images/scan_example.png Graphic file (type png)
+<use ../images/scan_example.png>
+Package pdftex.def Info: ../images/scan_example.png  used on input line 13.
+(pdftex.def)             Requested size: 416.04016pt x 140.03482pt.
+[24 <../images/scan_example.png>]
+<../images/3d_plot_top_crosscut.png, id=322, 752.8125pt x 250.9375pt>
 File: ../images/3d_plot_top_crosscut.png Graphic file (type png)
 <use ../images/3d_plot_top_crosscut.png>
 Package pdftex.def Info: ../images/3d_plot_top_crosscut.png  used on input line
- 11.
+ 22.
 (pdftex.def)             Requested size: 208.02008pt x 69.33922pt.
-<../images/Profile_1.png, id=327, 764.8575pt x 289.08pt>
+<../images/Profile_1.png, id=323, 764.8575pt x 289.08pt>
 File: ../images/Profile_1.png Graphic file (type png)
 <use ../images/Profile_1.png>
-Package pdftex.def Info: ../images/Profile_1.png  used on input line 18.
+Package pdftex.def Info: ../images/Profile_1.png  used on input line 29.
 (pdftex.def)             Requested size: 208.02008pt x 78.62166pt.
-<../images/Profile_1_red_grooves.png, id=328, 1019.81pt x 385.44pt>
+<../images/Profile_1_red_grooves.png, id=324, 1019.81pt x 385.44pt>
 File: ../images/Profile_1_red_grooves.png Graphic file (type png)
 <use ../images/Profile_1_red_grooves.png>
 Package pdftex.def Info: ../images/Profile_1_red_grooves.png  used on input lin
-e 26.
+e 37.
 (pdftex.def)             Requested size: 208.02008pt x 78.62166pt.
-<../images/signature.png, id=329, 1083.04625pt x 400.49625pt>
+<../images/signature.png, id=325, 1083.04625pt x 400.49625pt>
 File: ../images/signature.png Graphic file (type png)
 <use ../images/signature.png>
-Package pdftex.def Info: ../images/signature.png  used on input line 33.
+Package pdftex.def Info: ../images/signature.png  used on input line 44.
 (pdftex.def)             Requested size: 208.02008pt x 76.92006pt.
-[24 <../images/3d_plot_top_crosscut.png> <../images/Profile_1.png> <../images/P
+[25 <../images/3d_plot_top_crosscut.png> <../images/Profile_1.png> <../images/P
 rofile_1_red_grooves.png> <../images/signature.png>]
-<writeup_files/figure-latex/groove-no-groove-1.pdf, id=338, 426.59375pt x 279.0
-425pt>
+<writeup_files/figure-latex/groove-no-groove-1.pdf, id=335, 426.59375pt x 206.7
+725pt>
 File: writeup_files/figure-latex/groove-no-groove-1.pdf Graphic file (type pdf)
 
 <use writeup_files/figure-latex/groove-no-groove-1.pdf>
 Package pdftex.def Info: writeup_files/figure-latex/groove-no-groove-1.pdf  use
-d on input line 44.
-(pdftex.def)             Requested size: 426.5927pt x 279.04181pt.
-[25 <./writeup_files/figure-latex/groove-no-groove-1.pdf>]
-<writeup_files/figure-latex/loess-vs-locfit-1.pdf, id=351, 426.59375pt x 279.04
-25pt>
+d on input line 55.
+(pdftex.def)             Requested size: 426.5927pt x 206.77199pt.
+[26 <./writeup_files/figure-latex/groove-no-groove-1.pdf>]
+<writeup_files/figure-latex/loess-vs-locfit-1.pdf, id=347, 427.5975pt x 198.742
+5pt>
 File: writeup_files/figure-latex/loess-vs-locfit-1.pdf Graphic file (type pdf)
 <use writeup_files/figure-latex/loess-vs-locfit-1.pdf>
 Package pdftex.def Info: writeup_files/figure-latex/loess-vs-locfit-1.pdf  used
- on input line 53.
-(pdftex.def)             Requested size: 426.5927pt x 279.04181pt.
-[26 <./writeup_files/figure-latex/loess-vs-locfit-1.pdf>]
-<writeup_files/figure-latex/houston-locfit-1.pdf, id=363, 426.59375pt x 279.042
+ on input line 64.
+(pdftex.def)             Requested size: 427.59645pt x 198.742pt.
+[27 <./writeup_files/figure-latex/loess-vs-locfit-1.pdf>]
+<writeup_files/figure-latex/houston-locfit-1.pdf, id=360, 427.5975pt x 201.7537
 5pt>
 File: writeup_files/figure-latex/houston-locfit-1.pdf Graphic file (type pdf)
 <use writeup_files/figure-latex/houston-locfit-1.pdf>
 Package pdftex.def Info: writeup_files/figure-latex/houston-locfit-1.pdf  used 
-on input line 64.
-(pdftex.def)             Requested size: 426.5927pt x 279.04181pt.
-[27 <./writeup_files/figure-latex/houston-locfit-1.pdf>]
-<writeup_files/figure-latex/houston-adapted-rlo-1.pdf, id=375, 430.60875pt x 27
-9.0425pt>
+on input line 73.
+(pdftex.def)             Requested size: 427.59645pt x 201.75325pt.
+[28 <./writeup_files/figure-latex/houston-locfit-1.pdf>]
+<writeup_files/figure-latex/houston-adapted-rlo-1.pdf, id=373, 468.75125pt x 31
+3.17pt>
 File: writeup_files/figure-latex/houston-adapted-rlo-1.pdf Graphic file (type p
 df)
 <use writeup_files/figure-latex/houston-adapted-rlo-1.pdf>
 Package pdftex.def Info: writeup_files/figure-latex/houston-adapted-rlo-1.pdf  
-used on input line 75.
-(pdftex.def)             Requested size: 430.60768pt x 279.04181pt.
-[28 <./writeup_files/figure-latex/houston-adapted-rlo-1.pdf>]
-<writeup_files/figure-latex/adapted-rlo-shift-1.pdf, id=387, 426.59375pt x 351.
+used on input line 84.
+(pdftex.def)             Requested size: 468.75009pt x 313.16922pt.
+
+Overfull \hbox (6.4801pt too wide) in paragraph at lines 84--89
+ [][] 
+ []
+
+[29 <./writeup_files/figure-latex/houston-adapted-rlo-1.pdf>]
+<writeup_files/figure-latex/adapted-rlo-shift-1.pdf, id=386, 426.59375pt x 351.
 3125pt>
 File: writeup_files/figure-latex/adapted-rlo-shift-1.pdf Graphic file (type pdf
 )
 <use writeup_files/figure-latex/adapted-rlo-shift-1.pdf>
 Package pdftex.def Info: writeup_files/figure-latex/adapted-rlo-shift-1.pdf  us
-ed on input line 86.
+ed on input line 95.
 (pdftex.def)             Requested size: 426.5927pt x 351.31163pt.
-[29 <./writeup_files/figure-latex/adapted-rlo-shift-1.pdf>]
-<writeup_files/figure-latex/lasso-features-1.pdf, id=402, 405.515pt x 423.5825p
+[30 <./writeup_files/figure-latex/adapted-rlo-shift-1.pdf>]
+<writeup_files/figure-latex/lasso-features-1.pdf, id=401, 405.515pt x 423.5825p
 t>
 File: writeup_files/figure-latex/lasso-features-1.pdf Graphic file (type pdf)
 <use writeup_files/figure-latex/lasso-features-1.pdf>
 Package pdftex.def Info: writeup_files/figure-latex/lasso-features-1.pdf  used 
-on input line 97.
+on input line 106.
 (pdftex.def)             Requested size: 405.51399pt x 423.58147pt.
-[30 <./writeup_files/figure-latex/lasso-features-1.pdf>]
+[31 <./writeup_files/figure-latex/lasso-features-1.pdf>]
 <writeup_files/figure-latex/hamby-groove-results-1.pdf, id=418, 403.5075pt x 42
 4.58624pt>
 File: writeup_files/figure-latex/hamby-groove-results-1.pdf Graphic file (type 
 pdf)
 <use writeup_files/figure-latex/hamby-groove-results-1.pdf>
 Package pdftex.def Info: writeup_files/figure-latex/hamby-groove-results-1.pdf 
- used on input line 109.
+ used on input line 118.
 (pdftex.def)             Requested size: 403.50652pt x 424.5852pt.
-[31 <./writeup_files/figure-latex/hamby-groove-results-1.pdf>]
-<writeup_files/figure-latex/phoenix-groove-results-1.pdf, id=434, 403.5075pt x 
+[32 <./writeup_files/figure-latex/hamby-groove-results-1.pdf>]
+<writeup_files/figure-latex/phoenix-groove-results-1.pdf, id=433, 403.5075pt x 
 424.58624pt>
 File: writeup_files/figure-latex/phoenix-groove-results-1.pdf Graphic file (typ
 e pdf)
 <use writeup_files/figure-latex/phoenix-groove-results-1.pdf>
 Package pdftex.def Info: writeup_files/figure-latex/phoenix-groove-results-1.pd
-f  used on input line 120.
+f  used on input line 129.
 (pdftex.def)             Requested size: 403.50652pt x 424.5852pt.
-[32 <./writeup_files/figure-latex/phoenix-groove-results-1.pdf>]
-<writeup_files/figure-latex/houston-groove-results-1.pdf, id=449, 403.5075pt x 
+[33 <./writeup_files/figure-latex/phoenix-groove-results-1.pdf>]
+<writeup_files/figure-latex/houston-groove-results-1.pdf, id=448, 403.5075pt x 
 424.58624pt>
 File: writeup_files/figure-latex/houston-groove-results-1.pdf Graphic file (typ
 e pdf)
 <use writeup_files/figure-latex/houston-groove-results-1.pdf>
 Package pdftex.def Info: writeup_files/figure-latex/houston-groove-results-1.pd
-f  used on input line 131.
+f  used on input line 140.
 (pdftex.def)             Requested size: 403.50652pt x 424.5852pt.
-) [33 <./writeup_files/figure-latex/houston-groove-results-1.pdf>] (./writeup.l
+) [34 <./writeup_files/figure-latex/houston-groove-results-1.pdf>] (./writeup.l
 ot)
 \tf@lot=\write8
 \openout8 = `writeup.lot'.
 
-[34
+[35
+
 
 
 
@@ -704,7 +728,7 @@ Overfull \hbox (29.5537pt too wide) in paragraph at lines 3--12
  [][] 
  []
 
-[35]
+[36]
 
 LaTeX Warning: No positions in optional float specifier.
                Default added (so using `tbp') on input line 17.
@@ -714,7 +738,7 @@ Overfull \hbox (29.5537pt too wide) in paragraph at lines 19--28
  [][] 
  []
 
-[36]
+[37]
 
 LaTeX Warning: No positions in optional float specifier.
                Default added (so using `tbp') on input line 33.
@@ -724,25 +748,25 @@ Overfull \hbox (47.17851pt too wide) in paragraph at lines 35--44
  [][] 
  []
 
-) [37]
-Package atveryend Info: Empty hook `BeforeClearDocument' on input line 1021.
-Package atveryend Info: Empty hook `AfterLastShipout' on input line 1021.
+) [38]
+Package atveryend Info: Empty hook `BeforeClearDocument' on input line 1054.
+Package atveryend Info: Empty hook `AfterLastShipout' on input line 1054.
 (./writeup.aux)
-Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 1021.
-Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 1021.
+Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 1054.
+Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 1054.
 
 Package rerunfilecheck Info: File `writeup.out' has not changed.
 (rerunfilecheck)             Checksum: A4D1464C5EC834CDB41DC571980D6492;848.
-Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 1021.
+Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 1054.
  ) 
 Here is how much of TeX's memory you used:
- 10919 strings out of 492649
- 162424 string characters out of 6129622
- 278623 words of memory out of 5000000
- 14483 multiletter control sequences out of 15000+600000
+ 10922 strings out of 492649
+ 162525 string characters out of 6129622
+ 278599 words of memory out of 5000000
+ 14482 multiletter control sequences out of 15000+600000
  15188 words of font info for 60 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 61i,12n,96p,901b,444s stack positions out of 5000i,500n,10000p,200000b,80000s
+ 61i,12n,96p,901b,441s stack positions out of 5000i,500n,10000p,200000b,80000s
  </Users/crazykiwi7/Library/texlive/2018/texmf-var/fonts/pk/ljfour/public/bbm
 /bbm12.600pk></usr/local/texlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm
 /cmbx10.pfb></usr/local/texlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/
@@ -762,10 +786,10 @@ texlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy8.pfb></usr/local/te
 xlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmti12.pfb></usr/local/tex
 live/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt12.pfb></usr/local/texl
 ive/2018/texmf-dist/fonts/type1/public/amsfonts/symbols/msbm10.pfb>
-Output written on writeup.pdf (37 pages, 2724034 bytes).
+Output written on writeup.pdf (38 pages, 3040825 bytes).
 PDF statistics:
- 573 PDF objects out of 1000 (max. 8388607)
- 473 compressed objects within 5 object streams
- 107 named destinations out of 1000 (max. 500000)
- 183 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 574 PDF objects out of 1000 (max. 8388607)
+ 469 compressed objects within 5 object streams
+ 109 named destinations out of 1000 (max. 500000)
+ 193 words of extra memory for PDF output out of 10000 (max. 10000000)
 

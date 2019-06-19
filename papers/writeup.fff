@@ -1,7 +1,18 @@
 \begin{figure}
-\includegraphics[width=\textwidth]{../images/3d_plot_top_context_breakoff.png}
-\caption{An example of a high-resolution LEA scan captured on a Confocal Light Microscope.}
-\label{LEA-scan}
+
+\includegraphics[width=0.5\textwidth]{../images/scanning-stage0}
+\hspace{3cm}
+\includegraphics[width=0.2\textwidth]{../images/bullet-sketch}
+\caption{(Left) A sketch depicting lands inside a traditionally rifled barrel with six lands. (Right) A sketch of a land engraved area and striation marks left on the bullet. Groove engraved areas are found between land engraved areas. The red area denotes the area of a bullet which would be captured as part of a LEA scan.}
+\label{barrel-bullet}
+\end{figure}
+\efloatseparator
+ 
+\begin{figure}
+\centering
+\includegraphics[width=0.9\textwidth]{../images/scan_example}
+\caption{Computer rendering of a high resolution 3D scan of a bullet land engraved area (LEA).}
+\label{scan-example}
 \end{figure}
 \efloatseparator
  
@@ -53,9 +64,7 @@ features are obfuscated in the signature by remaining GEA structure.}
 \includegraphics{writeup_files/figure-latex/loess-vs-locfit-1.pdf}
 \caption{\label{loess-vs-locfit}An example of the difference between
 traditional LOESS fit and robust LOESS fit to an LEA profile from Hamby
-set 44. While the GEA structure present is relatively minor, even the
-small improvement in model fit with robust LOESS results in
-significantly different residual structures.}
+set 44.}
 \end{figure}
 \efloatseparator
  
@@ -73,11 +82,11 @@ the left is still problematic.}
 \begin{figure}
 \centering
 \includegraphics{writeup_files/figure-latex/houston-adapted-rlo-1.pdf}
-\caption{\label{houston-adapted-rlo}An example of the difference between
-robust LOESS fit and adapted robust LOESS fit to an LEA profile from the
-Houston-test set. Iteratively downweighting only positive residuals
-results in a significantly different fit which accounts for GEA
-structures on both the left and right.}
+\caption{\label{houston-adapted-rlo} An example of the difference
+between LOESS, robust LOESS, and adapted robust LOESS fits to an LEA
+profile from the Houston-test set. Iteratively downweighting only
+positive residuals results in a significantly different fit which
+accounts for GEA structures on both the left and right.}
 \end{figure}
 \efloatseparator
  
