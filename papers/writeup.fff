@@ -3,7 +3,7 @@
 \includegraphics[width=0.5\textwidth]{../images/scanning-stage0}
 \hspace{3cm}
 \includegraphics[width=0.2\textwidth]{../images/bullet-sketch}
-\caption{(Left) A sketch depicting lands inside a traditionally rifled barrel with six lands. (Right) A sketch of a land engraved area and striation marks left on the bullet. Groove engraved areas are found between land engraved areas. The red area denotes the area of a bullet which would be captured as part of a LEA scan.}
+\caption{(Left) A sketch depicting lands inside a traditionally rifled barrel with six lands. (Right) A sketch of a land engraved area and striation marks engraved on the bullet. Groove engraved areas are found between land engraved areas. The red area denotes the area of a bullet which would be captured as part of a LEA scan.}
 \label{barrel-bullet}
 \end{figure}
 \efloatseparator
@@ -17,35 +17,9 @@
 \efloatseparator
  
 \begin{figure}
-\begin{minipage}[b]{0.45\linewidth}
-    \raggedleft
-    \includegraphics[width=\textwidth]{../images/3d_plot_top_crosscut.png}
-    \centering
-    Step 0: High-resolution 3D scan
-\end{minipage}
-\hspace{.2cm}
-\begin{minipage}[b]{0.45\linewidth}
-    \raggedright
-    \includegraphics[width=\textwidth]{../images/Profile_1.png}
-    \centering
-    Step 1: Horizontal crosscut (profile)
-\end{minipage}
-\vspace{.6cm}
-
-\begin{minipage}[b]{0.45\linewidth}
-    \raggedleft
-    \includegraphics[width=\textwidth]{../images/Profile_1_red_grooves.png}
-    \centering
-    Step 2: GEA data removal
-\end{minipage}
-\hspace{.2cm}
-\begin{minipage}[b]{0.45\linewidth}
-    \raggedright
-    \includegraphics[width=\textwidth]{../images/signature.png}
-    \centering
-    Step 3: Extracted signature
-\end{minipage}
-\caption{The process of extracting a 2D signature from a high-resolution 3D scan of a land engraved area (LEA) on a bullet. Extraction of a signature is dependent on both the choice of horizontal crosscut and accuracy of GEA data removal procedure.}
+\centering
+\includegraphics[width=\textwidth]{../images/process_vertical_png}
+\caption{The process of extracting a 2D signature from a high-resolution 3D scan of a land engraved area (LEA) on a bullet. (Top) Computer rendering of a high-resolution 3D bullet LEA scan. Red line denotes horizontal crosscut which is extracted from the scan. (Middle) 2D extracted profile. Red boxes denote data which are part of the GEAs to the left and right sides of the LEA data. (Bottom) 2D extracted LEA signature with bullet curvature removed. Signatures are a representation of the striation pattern on each LEA. Vertical lines depict alignment of valleys with prominent striation marks.}
 \label{processing-process}
 \end{figure}
 \efloatseparator
@@ -95,7 +69,7 @@ accounts for GEA structures on both the left and right.}
 \includegraphics{writeup_files/figure-latex/adapted-rlo-shift-1.pdf}
 \caption{\label{adapted-rlo-shift}Mean shift in predictions when
 applying the adapted robust LOESS procedure in place of the traditional
-robust LOESS procedure. For Hamby set 44, predictions are, on average,
+robust LOESS procedure. For Hamby set 44 predictions are, on average,
 very similar. The Phoenix PD and Houston-test sets have more significant
 downwards shifts in predictions near the left and right boundaries.}
 \end{figure}

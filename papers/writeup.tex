@@ -171,13 +171,13 @@ individual LEA-to-LEA image comparisons of each LEA scan from one bullet
 to each LEA scan from a second bullet. Each LEA-to-LEA comparison
 compares the patterns of striation marks engraved on the LEA, which can
 be extracted from a 3D LEA scan as a 2D signature which details a
-pattern of peaks and valleys representing situation marks.
-\kr{Figure of signature compared to LEA scan..}.
+pattern of peaks and valleys representing striation marks.
 
 Signatures are extracted by first obtaining a horizontal slice of the 3D
 scan, called a crosscut \kr{profile?}, followed by removing the overall
-bullet curvature which odminates the data structure of each crosscut
-\kr{profile?}. \kr{Reference to figure depicting process}.
+bullet curvature which dominates the data structure of each crosscut
+\kr{profile?}. \autoref{processing-process} depicts the process of
+translating a 3D LEA scan to a 2D LEA signature.
 
 Currently accepted best practice for capturing 3D LEA scans involves
 capturing portions of the neighboring groove engraved areas (GEAs),
@@ -203,7 +203,7 @@ sets of bullets.
 \includegraphics[width=0.5\textwidth]{../images/scanning-stage0}
 \hspace{3cm}
 \includegraphics[width=0.2\textwidth]{../images/bullet-sketch}
-\caption{(Left) A sketch depicting lands inside a traditionally rifled barrel with six lands. (Right) A sketch of a land engraved area and striation marks left on the bullet. Groove engraved areas are found between land engraved areas. The red area denotes the area of a bullet which would be captured as part of a LEA scan.}
+\caption{(Left) A sketch depicting lands inside a traditionally rifled barrel with six lands. (Right) A sketch of a land engraved area and striation marks engraved on the bullet. Groove engraved areas are found between land engraved areas. The red area denotes the area of a bullet which would be captured as part of a LEA scan.}
 \label{barrel-bullet}
 \end{figure}
 
@@ -215,35 +215,9 @@ sets of bullets.
 \end{figure}
 
 \begin{figure}
-\begin{minipage}[b]{0.45\linewidth}
-    \raggedleft
-    \includegraphics[width=\textwidth]{../images/3d_plot_top_crosscut.png}
-    \centering
-    Step 0: High-resolution 3D scan
-\end{minipage}
-\hspace{.2cm}
-\begin{minipage}[b]{0.45\linewidth}
-    \raggedright
-    \includegraphics[width=\textwidth]{../images/Profile_1.png}
-    \centering
-    Step 1: Horizontal crosscut (profile)
-\end{minipage}
-\vspace{.6cm}
-
-\begin{minipage}[b]{0.45\linewidth}
-    \raggedleft
-    \includegraphics[width=\textwidth]{../images/Profile_1_red_grooves.png}
-    \centering
-    Step 2: GEA data removal
-\end{minipage}
-\hspace{.2cm}
-\begin{minipage}[b]{0.45\linewidth}
-    \raggedright
-    \includegraphics[width=\textwidth]{../images/signature.png}
-    \centering
-    Step 3: Extracted signature
-\end{minipage}
-\caption{The process of extracting a 2D signature from a high-resolution 3D scan of a land engraved area (LEA) on a bullet. Extraction of a signature is dependent on both the choice of horizontal crosscut and accuracy of GEA data removal procedure.}  
+\centering
+\includegraphics[width=\textwidth]{../images/process_vertical_png}
+\caption{The process of extracting a 2D signature from a high-resolution 3D scan of a land engraved area (LEA) on a bullet. (Top) Computer rendering of a high-resolution 3D bullet LEA scan. Red line denotes horizontal crosscut which is extracted from the scan. (Middle) 2D extracted profile. Red boxes denote data which are part of the GEAs to the left and right sides of the LEA data. (Bottom) 2D extracted LEA signature with bullet curvature removed. Signatures are a representation of the striation pattern on each LEA. Vertical lines depict alignment of valleys with prominent striation marks.}  
 \label{processing-process}
 \end{figure}
 
@@ -364,16 +338,15 @@ large absolute residual values. When GEA data is present on a crosscut,
 largest residual values will occur in areas where GEA data begins as it
 presents a competing structure with overall LEA curvature.
 
-\kr{Figure of LOESS v robust LOESS} depicts the impact this iterative
-re-weighting process has on curvature removal for an example LEA from
-Hamby set 44. Predictions \(\widehat{z}_i\) are updated and more closely
-follow the primary structure of bullet curvature.
+\autoref{loess-vs-locfit} depicts the impact this iterative re-weighting
+process has on curvature removal for an example LEA from Hamby set 44.
+Predictions \(\widehat{z}_i\) are updated and more closely follow the
+primary structure of bullet curvature.
 
 However, this method fails to mitigate GEA data impact when GEA
-structures are more pronounced
-\kr{(see Figure of Houston Robust LOESS)}. Thus, we make a small
-adaptation to the procedure to function more effectively with these data
-structures:
+structures are more pronounced (see \autoref{houston-locfit}. Thus, we
+make a small adaptation to the procedure to function more effectively
+with these data structures:
 
 \begin{enumerate}
 
@@ -389,9 +362,9 @@ where $MAD$ is the median absolute deviation of residuals $e_i$. This is known a
 \end{enumerate}
 
 This adapted robust LOESS, while a small procedural change, more adeptly
-fits bullet cruvature. \kr{Figure w/robust LOESS/adapted robust LOESS}
-demonstrates the impact of the adaptation on predicted height values
-\(z_i\). This impact differs for each of the bullet test sets.
+fits bullet cruvature. \autoref{houston-adapted-rlo} demonstrates the
+impact of the adaptation on predicted height values \(z_i\). This impact
+differs for each of the bullet test sets.
 \kr{Figure w/pulling down of predictions} demonstrates the differing
 impact dependent on bullet test set.
 
@@ -443,7 +416,7 @@ accounts for GEA structures on both the left and right.}
 \includegraphics{writeup_files/figure-latex/adapted-rlo-shift-1.pdf}
 \caption{\label{adapted-rlo-shift}Mean shift in predictions when
 applying the adapted robust LOESS procedure in place of the traditional
-robust LOESS procedure. For Hamby set 44, predictions are, on average,
+robust LOESS procedure. For Hamby set 44 predictions are, on average,
 very similar. The Phoenix PD and Houston-test sets have more significant
 downwards shifts in predictions near the left and right boundaries.}
 \end{figure}

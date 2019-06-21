@@ -56,9 +56,9 @@ For barrels with traditional (i.e., not polygonal) rifling, striation marks foun
 
 The recent application of high resolution 3D scanning technology to bullet LEAs coupled with concerns about the objectivity of visual pattern comparison have motivated the development of several image-analysis algorithms which aim to complete automated, quantitative analyses of bullet evidence [see @DeKinder1; @DeKinder2; @Bachrach1; @Ma1; @Chu1; @Chu2; @Hare1]. The data used in such algorithms are high resolution 3D scans of LEAs, such as that pictured in \autoref{scan-example}.  
 
-Bullets can be algorithmically compared to one another by completing individual LEA-to-LEA image comparisons of each LEA scan from one bullet to each LEA scan from a second bullet. Each LEA-to-LEA comparison compares the patterns of striation marks engraved on the LEA, which can be extracted from a 3D LEA scan as a 2D signature which details a pattern of peaks and valleys representing situation marks. \kr{Figure of signature compared to LEA scan..}.  
+Bullets can be algorithmically compared to one another by completing individual LEA-to-LEA image comparisons of each LEA scan from one bullet to each LEA scan from a second bullet. Each LEA-to-LEA comparison compares the patterns of striation marks engraved on the LEA, which can be extracted from a 3D LEA scan as a 2D signature which details a pattern of peaks and valleys representing striation marks.  
 
-Signatures are extracted by first obtaining a horizontal slice of the 3D scan, called a crosscut \kr{profile?}, followed by removing the overall bullet curvature which odminates the data structure of each crosscut \kr{profile?}. \kr{Reference to figure depicting process}.  
+Signatures are extracted by first obtaining a horizontal slice of the 3D scan, called a crosscut \kr{profile?}, followed by removing the overall bullet curvature which dominates the data structure of each crosscut \kr{profile?}. \autoref{processing-process} depicts the process of translating a 3D LEA scan to a 2D LEA signature.  
 
 Currently accepted best practice for capturing 3D LEA scans involves capturing portions of the neighboring groove engraved areas (GEAs), which introduce a secondary data structure on the edges of the LEA scan, which is not attributed to the pattern of interest: striation marks left on the LEA.  
 
@@ -77,7 +77,7 @@ We describe here two methods for automated identification and removal of GEA dat
 \includegraphics[width=0.5\textwidth]{../images/scanning-stage0}
 \hspace{3cm}
 \includegraphics[width=0.2\textwidth]{../images/bullet-sketch}
-\caption{(Left) A sketch depicting lands inside a traditionally rifled barrel with six lands. (Right) A sketch of a land engraved area and striation marks left on the bullet. Groove engraved areas are found between land engraved areas. The red area denotes the area of a bullet which would be captured as part of a LEA scan.}
+\caption{(Left) A sketch depicting lands inside a traditionally rifled barrel with six lands. (Right) A sketch of a land engraved area and striation marks engraved on the bullet. Groove engraved areas are found between land engraved areas. The red area denotes the area of a bullet which would be captured as part of a LEA scan.}
 \label{barrel-bullet}
 \end{figure}
 
@@ -100,38 +100,136 @@ We describe here two methods for automated identification and removal of GEA dat
 \end{figure}
 
 
-\begin{figure}
-\begin{minipage}[b]{0.45\linewidth}
-    \raggedleft
-    \includegraphics[width=\textwidth]{../images/3d_plot_top_crosscut.png}
-    \centering
-    Step 0: High-resolution 3D scan
-\end{minipage}
-\hspace{.2cm}
-\begin{minipage}[b]{0.45\linewidth}
-    \raggedright
-    \includegraphics[width=\textwidth]{../images/Profile_1.png}
-    \centering
-    Step 1: Horizontal crosscut (profile)
-\end{minipage}
-\vspace{.6cm}
+```{r, echo = F, warning = F, message = F}
+library(zoo)
+library(x3ptools)
+#barrel6_example <- readRDS("../../CSAFE-ISU/bullet-scan-variability/data/barrel6_example_x3p.rda")
+#process_scan <- barrel6_example[13,]
+#process_scan <- process_scan %>% mutate(crosscut = bulletxtrctr::x3p_crosscut_optimize(x3p[[1]]))
+#process_scan$crosscut <- 200
+#process_scan <- process_scan %>% mutate(ccdata = purrr::map(x3p, .f = function(x3p){x3ptools::x3p_to_df(x3p)}))
+#ccdata_ten_crosscut <- function(ccdata, y = NULL, range = 1e-05){
+   #x3pdat <- bulletxtrctr::check_x3p(x3p)
+#   x3p_df <- na.trim(ccdata)
+#   ys <- unique(x3p_df$y)
+#   if (is.null(y))
+#     y <- median(ys)
+#   ind <- which.min(abs(y - ys))
+#   y_min <- ys[ind - 5]
+#   y_max <- ys[ind + 4]
+#   lower <- min(y_min, y_max)
+#   upper <- max(y_min, y_max)
+#   x3p_df_fix <- x3p_df[x3p_df$y >= lower & x3p_df$y <= upper,]
+#   return(na.omit(x3p_df_fix))
+#}
+#process_scan <- process_scan %>% mutate(
+#  ccdata = purrr::map2(.x = ccdata, .y = crosscut, 
+#                        .f = ccdata_ten_crosscut)
+#)
+#process_scan <- process_scan %>% mutate(
+#   ccdata = purrr::map(ccdata, .f = function(ccdata){
+#     ccdata %>% group_by(x) %>% summarise(y = mean(y, na.rm = T), value = #mean(value, na.rm = T))
+#   })
+# )
 
-\begin{minipage}[b]{0.45\linewidth}
-    \raggedleft
-    \includegraphics[width=\textwidth]{../images/Profile_1_red_grooves.png}
-    \centering
-    Step 2: GEA data removal
-\end{minipage}
-\hspace{.2cm}
-\begin{minipage}[b]{0.45\linewidth}
-    \raggedright
-    \includegraphics[width=\textwidth]{../images/signature.png}
-    \centering
-    Step 3: Extracted signature
-\end{minipage}
-\caption{The process of extracting a 2D signature from a high-resolution 3D scan of a land engraved area (LEA) on a bullet. Extraction of a signature is dependent on both the choice of horizontal crosscut and accuracy of GEA data removal procedure.}  
+#process_scan$ccdata[[1]] %>% ggplot() + geom_point(aes(x = x, y =value)) + geom_vline(xintercept = 215, color = "red") + geom_vline(xintercept = 2150, color = "red")
+## find groove locations by hand here.. .
+#process_scan <- process_scan %>% mutate(grooves = purrr::map(x3p, .f = function(x3p){return(list(groove = c(215, 2150)))}))
+#process_scan <- process_scan %>% mutate(
+#   sigs = purrr::map2(
+#     .x = ccdata, .y = grooves, 
+#     .f = function(x, y) {
+#       bulletxtrctr::cc_get_signature(
+#         ccdata = x, grooves = y, span1 = 0.75, span2 = 0.03)
+#     })
+# )
+#saveRDS(process_scan, "../data/process_scan.rda")
+
+library(x3ptools)
+process_scan <- readRDS("../data/process_scan.rda")
+## save rendered image of x3p!! 
+
+#x3p <- process_scan$x3p[[1]]
+#filename <- "../images/process_scan_cc.png"
+#x3p_line <- x3p_add_hline(x3p, yintercept = process_scan$crosscut[1], size = 15, color = "red")
+#image_x3p(x3p_line, file = filename, size = c(3500, 1500), zoom = 0.5)
+
+process_scan <- process_scan %>% mutate(ccdata = purrr::map(ccdata, .f = function(ccdata){
+  min_val <- min(ccdata$value, na.rm = T)
+  ccdata$value_std <- ccdata$value - min_val
+  return(ccdata)
+}))
+max_val <- max(process_scan$ccdata[[1]]$value_std)
+max_x <- max(process_scan$ccdata[[1]]$x)
+profile_annotated <- process_scan$ccdata[[1]] %>%
+  ggplot() + 
+  annotate("rect", xmin=0, xmax=process_scan$grooves[[1]]$groove[1],
+           ymin=0, ymax=max_val, alpha=0.4, fill="red") +
+  annotate("rect", xmin = process_scan$grooves[[1]]$groove[2], xmax = max_x,
+           ymin = 0, ymax = max_val, alpha = 0.4, fill = "red") + 
+  geom_text(aes(x = 100, y = 100, label = "GEA")) + 
+  geom_text(aes(x = 2250, y = 100, label = "GEA")) + 
+  geom_text(aes(x = 1150, y = 100, label = "LEA")) + 
+  geom_line(aes(x = x, y = value_std)) + 
+  theme_bw() + 
+  labs(x = expression(paste("Relative Location x"[i], " (", mu, "m)")), 
+       y =  expression(paste("Relative Height z"[i], " (", mu, "m)")))
+  
+signature_plot <- process_scan$sigs[[1]] %>%
+  ggplot() + 
+  geom_line(aes(x = x, y = sig)) + 
+  annotate("rect", xmin=0, xmax=process_scan$grooves[[1]]$groove[1],
+           ymin=-5, ymax=6, alpha=0, fill="red") +
+  annotate("rect", xmin = process_scan$grooves[[1]]$groove[2], xmax = max_x,
+           ymin = -5, ymax = 6, alpha = 0, fill = "red") +
+  theme_bw() + 
+    labs(x = expression(paste("Relative Location x"[i], " (", mu, "m)")), 
+       y =  expression(paste("Signature Height", " (", mu, "m)")))
+
+# signature - saved at 1225 by 350
+# profile - saved at 1225 by 400
+
+```
+
+\begin{figure}
+\centering
+\includegraphics[width=\textwidth]{../images/process_vertical_png}
+\caption{The process of extracting a 2D signature from a high-resolution 3D scan of a land engraved area (LEA) on a bullet. (Top) Computer rendering of a high-resolution 3D bullet LEA scan. Red line denotes horizontal crosscut which is extracted from the scan. (Middle) 2D extracted profile. Red boxes denote data which are part of the GEAs to the left and right sides of the LEA data. (Bottom) 2D extracted LEA signature with bullet curvature removed. Signatures are a representation of the striation pattern on each LEA. Vertical lines depict alignment of valleys with prominent striation marks.}  
 \label{processing-process}
 \end{figure}
+
+<!-- \begin{figure} -->
+<!-- \begin{minipage}[b]{0.45\linewidth} -->
+<!--     \raggedleft -->
+<!--     \includegraphics[width=\textwidth]{../images/3d_plot_top_crosscut.png} -->
+<!--     \centering -->
+<!--     Step 0: High-resolution 3D scan -->
+<!-- \end{minipage} -->
+<!-- \hspace{.2cm} -->
+<!-- \begin{minipage}[b]{0.45\linewidth} -->
+<!--     \raggedright -->
+<!--     \includegraphics[width=\textwidth]{../images/Profile_1.png} -->
+<!--     \centering -->
+<!--     Step 1: Horizontal crosscut (profile) -->
+<!-- \end{minipage} -->
+<!-- \vspace{.6cm} -->
+
+<!-- \begin{minipage}[b]{0.45\linewidth} -->
+<!--     \raggedleft -->
+<!--     \includegraphics[width=\textwidth]{../images/Profile_1_red_grooves.png} -->
+<!--     \centering -->
+<!--     Step 2: GEA data removal -->
+<!-- \end{minipage} -->
+<!-- \hspace{.2cm} -->
+<!-- \begin{minipage}[b]{0.45\linewidth} -->
+<!--     \raggedright -->
+<!--     \includegraphics[width=\textwidth]{../images/signature.png} -->
+<!--     \centering -->
+<!--     Step 3: Extracted signature -->
+<!-- \end{minipage} -->
+<!-- \caption{The process of extracting a 2D signature from a high-resolution 3D scan of a land engraved area (LEA) on a bullet. Extraction of a signature is dependent on both the choice of horizontal crosscut and accuracy of GEA data removal procedure.}   -->
+<!-- \label{processing-process} -->
+<!-- \end{figure} -->
  
 
 <!-- While removal of a curve from data is typically a straightforward statistical problem, 3D scans of LEAs contain a unique data structure which obfuscates this task. Currently accepted best practice for collection of 3D images of bullet LEAs dictates that scanning begin and end slightly past the edges of the LEA, in the neighboring groove engraved areas (GEAs). GEAs are a secondary structure that need to be removed before LEA signatures can be reliably extracted from data.   -->
@@ -242,9 +340,9 @@ where $MAD$ is the median absolute deviation of residuals $e_i$. This is known a
 
 Reweighting data as in Step 3 reduces influence of data points with large absolute residual values. When GEA data is present on a crosscut, largest residual values will occur in areas where GEA data begins as it presents a competing structure with overall LEA curvature.  
 
-\kr{Figure of LOESS v robust LOESS} depicts the impact this iterative re-weighting process has on curvature removal for an example LEA from Hamby set 44. Predictions $\widehat{z}_i$ are updated and more closely follow the primary structure of bullet curvature.  
+\autoref{loess-vs-locfit} depicts the impact this iterative re-weighting process has on curvature removal for an example LEA from Hamby set 44. Predictions $\widehat{z}_i$ are updated and more closely follow the primary structure of bullet curvature.  
 
-However, this method fails to mitigate GEA data impact when GEA structures are more pronounced \kr{(see Figure of Houston Robust LOESS)}. Thus, we make a small adaptation to the procedure to function more effectively with these data structures: 
+However, this method fails to mitigate GEA data impact when GEA structures are more pronounced (see \autoref{houston-locfit}. Thus, we make a small adaptation to the procedure to function more effectively with these data structures: 
 
 \begin{enumerate}
 
@@ -259,7 +357,7 @@ where $MAD$ is the median absolute deviation of residuals $e_i$. This is known a
 
 \end{enumerate} 
 
-This adapted robust LOESS, while a small procedural change, more adeptly fits bullet cruvature. \kr{Figure w/robust LOESS/adapted robust LOESS} demonstrates the impact of the adaptation on predicted height values $z_i$. This impact differs for each of the bullet test sets. \kr{Figure w/pulling down of predictions} demonstrates the differing impact dependent on bullet test set.  
+This adapted robust LOESS, while a small procedural change, more adeptly fits bullet cruvature. \autoref{houston-adapted-rlo} demonstrates the impact of the adaptation on predicted height values $z_i$. This impact differs for each of the bullet test sets. \kr{Figure w/pulling down of predictions} demonstrates the differing impact dependent on bullet test set.  
 
 Once the adapted robust LOESS procedure has been applied to a LEA crosscut, the resulting residuals $e_i$ follow a reliable pattern: small residuals closer to zero in locations associated with LEA data, and sharply increasing, larger residuals in locations associated with GEA data. The resulting residual structure lends itself to statistical techniques to separate the two structures more effectively.  
 
@@ -556,7 +654,7 @@ grid.arrange(
 
 <!-- The utility of this adaptation can be seen in \autoref{adapted-rlo-shift}, which shows the mean shift in predicted values from the robust LOESS to the adapted robust LOESS for our three different test sets of interest. While the difference is almost imperceptible for Hamby set 44, the Phoenix PD and Houston-test sets demonstrate visible downward shifts near both the left and right boundaries.  -->
 
-```{r adapted-rlo-shift, echo = F, warning = F, message = F, fig.cap = "\\label{adapted-rlo-shift}Mean shift in predictions when applying the adapted robust LOESS procedure in place of the traditional robust LOESS procedure. For Hamby set 44, predictions are, on average, very similar. The Phoenix PD and Houston-test sets have more significant downwards shifts in predictions near the left and right boundaries.", fig.height=5, fig.width = 6}
+```{r adapted-rlo-shift, echo = F, warning = F, message = F, fig.cap = "\\label{adapted-rlo-shift}Mean shift in predictions when applying the adapted robust LOESS procedure in place of the traditional robust LOESS procedure. For Hamby set 44 predictions are, on average, very similar. The Phoenix PD and Houston-test sets have more significant downwards shifts in predictions near the left and right boundaries.", fig.height=5, fig.width = 6}
 
 adapted_rlo <- readRDS("../data/adapted_rlo.rda")
 #adapted_rlo <- adapted_rlo %>%
@@ -578,7 +676,8 @@ adapted_rlo %>%
   geom_ribbon(aes(x = x, ymin = mean_locfit_to_rlo, ymax = 0), fill = "grey50", alpha = 0.7) + 
   #geom_line(aes(x = x, y = mean_locfit_to_rlo), color = "black") + 
   theme_bw() + 
-  labs(x = "X Location", y = "Mean Shift in Predicted Values", 
+  labs(x = expression(paste("Relative Location x"[i], " (", mu, "m)")),
+       y = "Mean Shift in Predicted Values", 
        title = "Difference between robust and adapted robust LOESS predicted values") + 
   facet_wrap(~test_set, nrow = 3) + 
   theme(plot.title = element_text(size = 10), axis.title = element_text(size = 9))
