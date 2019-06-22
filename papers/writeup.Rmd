@@ -1016,7 +1016,7 @@ h44_manual_table <- controlfp_fun(h44_results$rfscore_manual, h44_results$truth_
 \textbf{Method} & \textbf{AUC} & Cutoff & FN &TP & TN & Accuracy & \textbf{Time to Calculate} \\ \hline
 Rollapply & `r round(auc_roll, 2)` &  `r round(h44_roll_table$cutoff, 2)` & `r h44_roll_table$fn` & `r h44_roll_table$tp`&`r h44_roll_table$tn` & `r round(h44_roll_table$acc, 2)` & 1 min.\\ \hline
 LASSO full & `r round(auc_lf, 2)` &  `r round(h44_lf_table$cutoff, 2)` &`r h44_lf_table$fn` &`r h44_lf_table$tp` &`r h44_lf_table$tn` & `r round(h44_lf_table$acc, 2)` & 6 min. \\ \hline
-Bayesian Changepoint & `r round(auc_bcp, 2)` &  `r round(h44_bcp_table$cutoff, 2)` &`r h44_bcp_table$fn` & `r h44_bcp_table$tp`&`r h44_bcp_table$tn` & `r round(h44_bcp_table$acc, 2)` & \\ \hline
+Bayesian Changepoint & `r round(auc_bcp, 2)` &  `r round(h44_bcp_table$cutoff, 2)` &`r h44_bcp_table$fn` & `r h44_bcp_table$tp`&`r h44_bcp_table$tn` & `r round(h44_bcp_table$acc, 2)` & 150 min. \\ \hline
 Manual ID & `r round(auc_manual, 2)` & `r round(h44_manual_table$cutoff, 2)` & `r h44_manual_table$fn`& `r h44_manual_table$tp`&`r h44_manual_table$tn` & `r round(h44_manual_table$acc, 2)` & 45 min. \\ \hline 
 \end{tabular}
 \caption{Land-to-land comparison results for Hamby set 44.}
@@ -1112,7 +1112,7 @@ pho_manual_table <- controlfp_fun(phoenix_results$rfscore_manual, phoenix_result
 \textbf{Method} & \textbf{AUC} & Cutoff & FN &TP & TN & Accuracy & \textbf{Time to Calculate} \\ \hline
 Rollapply & `r round(auc_roll_p, 3)` &  `r round(pho_roll_table$cutoff, 3)` & `r pho_roll_table$fn` & `r pho_roll_table$tp`&`r pho_roll_table$tn` & `r round(pho_roll_table$acc, 2)`& 1 min. \\ \hline
 LASSO full & `r round(auc_lf_p, 3)` &  `r round(pho_lf_table$cutoff, 3)` &`r pho_lf_table$fn` &`r pho_lf_table$tp` &`r pho_lf_table$tn` & `r round(pho_lf_table$acc, 2)`  & 6 min. \\ \hline
-Bayesian Changepoint & `r round(auc_bcp_p, 3)` &  `r round(pho_bcp_table$cutoff, 3)` &`r pho_bcp_table$fn` & `r pho_bcp_table$tp`&`r pho_bcp_table$tn` & `r round(pho_bcp_table$acc, 2)` &  \\ \hline
+Bayesian Changepoint & `r round(auc_bcp_p, 3)` &  `r round(pho_bcp_table$cutoff, 3)` &`r pho_bcp_table$fn` & `r pho_bcp_table$tp`&`r pho_bcp_table$tn` & `r round(pho_bcp_table$acc, 2)` & 140 min. \\ \hline
 Manual ID & `r round(auc_manual_p, 3)` &  `r round(pho_manual_table$cutoff, 3)` & `r pho_manual_table$fn`& `r pho_manual_table$tp`&`r pho_manual_table$tn` & `r round(pho_manual_table$acc, 2)` & 45 min. \\ \hline 
 \end{tabular}
 \caption{Land-to-land comparison results for the Phoenix PD set.}
@@ -1193,7 +1193,7 @@ hou_manual_table <- controlfp_fun(houston_results$rfscore_manual, houston_result
 \textbf{Method} & \textbf{AUC} & Cutoff & FN &TP & TN & Accuracy & \textbf{Time to Calculate} \\ \hline
 Rollapply & `r round(auc_roll_h, 3)` &  `r round(hou_roll_table$cutoff, 3)` & `r hou_roll_table$fn` & `r hou_roll_table$tp`&`r hou_roll_table$tn` & `r round(hou_roll_table$acc, 2)` & 2 min. \\ \hline
 LASSO full & `r round(auc_lf_h, 3)` &  `r round(hou_lf_table$cutoff, 3)` &`r hou_lf_table$fn` &`r hou_lf_table$tp` &`r hou_lf_table$tn` & `r round(hou_lf_table$acc, 2)` & 12 min. \\ \hline
-Bayesian Changepoint & `r round(auc_bcp_h, 3)` &  `r round(hou_bcp_table$cutoff, 3)` &`r hou_bcp_table$fn` & `r hou_bcp_table$tp`&`r hou_bcp_table$tn` & `r round(hou_bcp_table$acc, 2)` & \\ \hline
+Bayesian Changepoint & `r round(auc_bcp_h, 3)` &  `r round(hou_bcp_table$cutoff, 3)` &`r hou_bcp_table$fn` & `r hou_bcp_table$tp`&`r hou_bcp_table$tn` & `r round(hou_bcp_table$acc, 2)` & 280 min. \\ \hline
 Manual ID & `r round(auc_manual_h, 3)` &  `r round(hou_manual_table$cutoff, 3)` & `r hou_manual_table$fn`& `r hou_manual_table$tp`&`r hou_manual_table$tn` & `r round(hou_manual_table$acc, 2)` & 75 min. \\ \hline 
 \end{tabular}
 \caption{Land-to-land comparison results for the Houston-test set.}

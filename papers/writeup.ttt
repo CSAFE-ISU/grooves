@@ -5,7 +5,7 @@
 \textbf{Method} & \textbf{AUC} & Cutoff & FN &TP & TN & Accuracy & \textbf{Time to Calculate} \\ \hline
 Rollapply & 0.8 &  0.92 & 332 & 420&42126 & 0.98 & 1 min.\\ \hline
 LASSO full & 0.94 &  0.75 &126 &626 &42106 & 0.99 & 6 min. \\ \hline
-Bayesian Changepoint & 0.93 &  0.74 &152 & 600&42098 & 0.99 & \\ \hline
+Bayesian Changepoint & 0.93 &  0.74 &152 & 600&42098 & 0.99 & 150 min. \\ \hline
 Manual ID & 0.94 & 0.74 & 124& 628&42088 & 0.99 & 45 min. \\ \hline
 \end{tabular}
 \caption{Land-to-land comparison results for Hamby set 44.}
@@ -20,7 +20,7 @@ Manual ID & 0.94 & 0.74 & 124& 628&42088 & 0.99 & 45 min. \\ \hline
 \textbf{Method} & \textbf{AUC} & Cutoff & FN &TP & TN & Accuracy & \textbf{Time to Calculate} \\ \hline
 Rollapply & 0.818 &  0.9 & 364 & 378&38082 & 0.98& 1 min. \\ \hline
 LASSO full & 0.893 &  0.953 &238 &504 &38082 & 0.98  & 6 min. \\ \hline
-Bayesian Changepoint & 0.903 &  0.937 &256 & 486&38080 & 0.98 &  \\ \hline
+Bayesian Changepoint & 0.903 &  0.937 &256 & 486&38080 & 0.98 & 140 min. \\ \hline
 Manual ID & 0.953 &  0.853 & 96& 646&38084 & 0.99 & 45 min. \\ \hline
 \end{tabular}
 \caption{Land-to-land comparison results for the Phoenix PD set.}
@@ -35,7 +35,7 @@ Manual ID & 0.953 &  0.853 & 96& 646&38084 & 0.99 & 45 min. \\ \hline
 \textbf{Method} & \textbf{AUC} & Cutoff & FN &TP & TN & Accuracy & \textbf{Time to Calculate} \\ \hline
 Rollapply & 0.761 &  0.91 & 1652 & 1016&167118 & 0.98 & 2 min. \\ \hline
 LASSO full & 0.858 &  0.823 &1144 &1524 &167062 & 0.98 & 12 min. \\ \hline
-Bayesian Changepoint & 0.795 &  0.863 &1552 & 1116&167096 & 0.98 & \\ \hline
+Bayesian Changepoint & 0.795 &  0.863 &1552 & 1116&167096 & 0.98 & 280 min. \\ \hline
 Manual ID & 0.931 &  0.823 & 614& 2054&167098 & 0.99 & 75 min. \\ \hline
 \end{tabular}
 \caption{Land-to-land comparison results for the Houston-test set.}

@@ -108,7 +108,7 @@ in 3D Bullet Land Scans}
 
 \bigskip
 \begin{abstract}
-
+null
 \end{abstract}
 
 \noindent%
@@ -123,18 +123,13 @@ in 3D Bullet Land Scans}
 \newcommand{\ug}[1]{{\color{purple}{#1}}}
 \newcommand{\nate}[1]{{\color{olive}{#1}}}
 
-
-
-
-
 TO DO:
 
 \begin{itemize}
-\tightlist
 \item
-  \kr{Abstract}
+  {\color{teal}{Abstract}}
 \item
-  \kr{Time to calculate for BCP}
+  {\color{teal}{Time to calculate for BCP}}
 \end{itemize}
 
 \section{Background}
@@ -255,17 +250,18 @@ the barrel, thereby creating marks on the land that are not due to the
 contact with the barrel.
 
 The Phoenix PD set consists of 33 bullets fired from 8 barrels
-\kr{more information on the type of barrels?}. There are three known
-bullets for each of the eight barrels, as well as 9 additional
-questioned bullets. There are 6 LEAs for each of the fired bullets,
-producing a total of 198 individual land engraved areas.
+{\color{teal}{more information on the type of barrels?}}. There are
+three known bullets for each of the eight barrels, as well as 9
+additional questioned bullets. There are 6 LEAs for each of the fired
+bullets, producing a total of 198 individual land engraved areas.
 
 The Houston-test set consists of 45 bullets fired from at least 10
-barrels \kr{more information on the type of barrels?}. There are three
-known bullets for each of the ten barrels, as well as 24 questioned
-bullets that are fired from a combination of the 10 known barrels and
-additional, out-of-set barrels. There are 6 LEAs for each of the fired
-bullets, producing a total of 414 individual land engraved areas.
+barrels {\color{teal}{more information on the type of barrels?}}. There
+are three known bullets for each of the ten barrels, as well as 24
+questioned bullets that are fired from a combination of the 10 known
+barrels and additional, out-of-set barrels. There are 6 LEAs for each of
+the fired bullets, producing a total of 414 individual land engraved
+areas.
 
 A crosscut was extracted from each scan by identifying an optimal
 crosscut using \texttt{x3p\_crosscut\_optimize} in the
@@ -371,7 +367,7 @@ the impact of the adaptation on predicted height values \(z_i\). This
 impact differs for each of the bullet test sets.
 \autoref{adapted-rlo-shift} depicts the differing levels of impact our
 adjustment has, dependent on bullet test set.
-\kr{Once I have more barrel information, I could go into a little more detail here about differing barrel types/ammo types or something, but no more than a sentence to bring the point home.}
+{\color{teal}{Once I have more barrel information, I could go into a little more detail here about differing barrel types/ammo types or something, but no more than a sentence to bring the point home.}}
 
 Once the adapted robust LOESS procedure has been applied to a LEA
 profile, the resulting residuals \(e_i\) follow a reliable pattern:
@@ -833,7 +829,7 @@ demonstrate significant improvement over Rollapply.}
 \textbf{Method} & \textbf{AUC} & Cutoff & FN &TP & TN & Accuracy & \textbf{Time to Calculate} \\ \hline
 Rollapply & 0.8 &  0.92 & 332 & 420&42126 & 0.98 & 1 min.\\ \hline
 LASSO full & 0.94 &  0.75 &126 &626 &42106 & 0.99 & 6 min. \\ \hline
-Bayesian Changepoint & 0.93 &  0.74 &152 & 600&42098 & 0.99 & \\ \hline
+Bayesian Changepoint & 0.93 &  0.74 &152 & 600&42098 & 0.99 & 150 min. \\ \hline
 Manual ID & 0.94 & 0.74 & 124& 628&42088 & 0.99 & 45 min. \\ \hline 
 \end{tabular}
 \caption{Land-to-land comparison results for Hamby set 44.}
@@ -857,7 +853,7 @@ separated as the Manual ID distributions.}
 \textbf{Method} & \textbf{AUC} & Cutoff & FN &TP & TN & Accuracy & \textbf{Time to Calculate} \\ \hline
 Rollapply & 0.818 &  0.9 & 364 & 378&38082 & 0.98& 1 min. \\ \hline
 LASSO full & 0.893 &  0.953 &238 &504 &38082 & 0.98  & 6 min. \\ \hline
-Bayesian Changepoint & 0.903 &  0.937 &256 & 486&38080 & 0.98 &  \\ \hline
+Bayesian Changepoint & 0.903 &  0.937 &256 & 486&38080 & 0.98 & 140 min. \\ \hline
 Manual ID & 0.953 &  0.853 & 96& 646&38084 & 0.99 & 45 min. \\ \hline 
 \end{tabular}
 \caption{Land-to-land comparison results for the Phoenix PD set.}
@@ -882,7 +878,7 @@ improve as much as the LASSO method.}
 \textbf{Method} & \textbf{AUC} & Cutoff & FN &TP & TN & Accuracy & \textbf{Time to Calculate} \\ \hline
 Rollapply & 0.761 &  0.91 & 1652 & 1016&167118 & 0.98 & 2 min. \\ \hline
 LASSO full & 0.858 &  0.823 &1144 &1524 &167062 & 0.98 & 12 min. \\ \hline
-Bayesian Changepoint & 0.795 &  0.863 &1552 & 1116&167096 & 0.98 & \\ \hline
+Bayesian Changepoint & 0.795 &  0.863 &1552 & 1116&167096 & 0.98 & 280 min. \\ \hline
 Manual ID & 0.931 &  0.823 & 614& 2054&167098 & 0.99 & 75 min. \\ \hline 
 \end{tabular}
 \caption{Land-to-land comparison results for the Houston-test set.}
