@@ -1,0 +1,227 @@
+---
+title: "Extract LASSO Features - all 3 datasets"
+author: "Kiegan Rice"
+output: html_document
+---
+
+```{r}
+library(tidyverse)
+
+```
+
+```{r}
+hamby44_paper <- readRDS("../data/hamby44/hamby44_paper.rda")
+phoenix_paper <- readRDS("../data/phoenix/phoenix_paper.rda")
+houston_paper <- readRDS("../data/houston-test/houstontest_paper.rda")
+```
+
+```{r}
+#process_scan <- process_scan %>% mutate(
+#   
+# )
+hamby44_paper <- hamby44_paper %>% mutate(sigs = purrr::map2(
+     .x = ccdata, .y = grooves_kr1, 
+     .f = function(x, y) {
+       bulletxtrctr::cc_get_signature(
+         ccdata = x, grooves = y, span1 = 0.75, span2 = 0.03)
+     }))
+
+houston_grooves_kr1 <- readRDS("../data/houston-test/grooves_kr1.rda")
+houston_paper$grooves_kr1 <- houston_grooves_kr1
+houston_paper <- houston_paper %>% 
+  mutate(ccdata = purrr::map(ccdata, .f = function(ccdata){
+    ccdata$y <- 0
+    return(ccdata)
+  })) %>%
+  mutate(sigs = purrr::map2(
+     .x = ccdata, .y = grooves_kr1, 
+     .f = function(x, y) {
+       bulletxtrctr::cc_get_signature(
+         ccdata = x, grooves = y, span1 = 0.75, span2 = 0.03)
+     }))
+
+phoenix_paper <- phoenix_paper %>% 
+  mutate(ccdata = purrr::map(ccdata, .f = function(ccdata){
+    ccdata$y <- 0
+    return(ccdata)
+  })) %>%
+  mutate(sigs = purrr::map2(
+     .x = ccdata, .y = grooves_kr1, 
+     .f = function(x, y) {
+       bulletxtrctr::cc_get_signature(
+         ccdata = x, grooves = y, span1 = 0.75, span2 = 0.03)
+     }))
+```
+
+
+We need to calculate the range of height values in the signature (maximum signature magnitude). Then we can look at the distributions for each test set to get a sense for. 
+
+```{r}
+hamby44_paper <- hamby44_paper %>% mutate(magnitude = purrr::map_dbl(sigs, .f = function(sigs){
+  max(abs(sigs$sig), na.rm = T)
+}))
+
+phoenix_paper <- phoenix_paper %>% mutate(magnitude = purrr::map_dbl(sigs, .f = function(sigs){
+   max(abs(sigs$sig), na.rm = T)
+}))
+
+houston_paper <- houston_paper %>% mutate(magnitude = purrr::map_dbl(sigs, .f = function(sigs){
+   max(abs(sigs$sig), na.rm = T)
+}))
+
+
+hamby44_paper$test_set <- "Hamby 44"
+phoenix_paper$test_set <- "Phoenix PD"
+houston_paper$test_set <- "Houston-Test"
+
+h44_mag <- hamby44_paper %>% ungroup() %>% select(source,test_set, magnitude)
+pho_mag <- phoenix_paper %>% select(source, test_set, magnitude)
+hou_mag <- houston_paper %>% select(source, test_set, magnitude)
+
+mag_viz_data <- rbind(h44_mag, pho_mag, hou_mag)
+
+dataInt <- mag_viz_data %>%
+  group_by(test_set) %>%
+  summarize(med = median(magnitude, na.rm = T))
+
+
+mag_viz_data %>% ggplot() + 
+  geom_histogram(aes(x = magnitude, fill = factor(test_set))) + 
+  geom_vline(data = dataInt, aes(xintercept = med)) +
+  geom_text(data = dataInt, aes(x = med + 4.5, y = 90, label = paste("Median = ", round(med,2))), size = 3) + 
+  facet_wrap(~test_set, nrow = 3) + 
+  theme_bw() + 
+  scale_fill_discrete(name = "Test Set") + 
+  labs(x = "Maximum striation mark depth", y = "")
+
+saveRDS(mag_viz_data, "../data/magnitude_viz.rda")
+```
+
+
+```{r}
+extract_logisticfull_feats <- function(x, value) {
+  
+  land <- data.frame(x = x, value = value)
+  original_land <- land
+
+  ## generate additional variables  
+  
+  check_min <- min(land$value[!is.na(land$value)])
+  land <- land %>% mutate(value_std = value - check_min) 
+  #install.packages("locfit")
+  #library(locfit)
+  
+  robust_loess_fit <- function(bullet, iter){
+  n <- nrow(bullet)
+  weights <- rep(1, n)
+  fit <- loess(value_std~x, data = bullet, span = 1)
+  bullet$fit <- predict(fit, newdata = bullet)
+  bullet$resid <- bullet$value_std - bullet$fit
+  i <- 1
+  while(i < iter){
+    mar <- median(abs(bullet$resid), na.rm = T)
+    bullet$bisq <- pmax(1 - (bullet$resid/(6*mar))^2, 0)^2
+    weights <- ifelse(bullet$resid > 0 , bullet$bisq, 1)
+    fit <- loess(value_std~x, data = bullet, span = 1, weights = weights)
+    bullet$fit <- predict(fit, newdata = bullet)
+    bullet$resid <- bullet$value_std - bullet$fit
+    i <- i+1
+  }
+  return(fit)
+}
+  
+  rlo_fit <- robust_loess_fit(bullet = land, iter = 20)
+  #robust_loess_fit <- locfit.robust(value_std~x, data = land, alpha = 1, kern = "tcub")
+  land$rlo_pred <- predict(rlo_fit, newdata = land)
+  
+  land$rlo_absresid <- with(land, abs(value_std-rlo_pred))
+  land$rlo_resid <- with(land, value_std-rlo_pred)
+  
+  
+    mx <- max(land$x, na.rm = T)
+    diff_mx <- mx/2 - land$x
+    median <- land$x[which.min(abs(diff_mx))]
+    #median <- median(land$x) # some of the houston data appears to have a shifted x
+    land$side <- "right"
+    land$side <- ifelse(land$x <= median, "left", land$side)
+    land$depth <- abs(land$x - median)
+  
+    ## range20 : range of values in a 20-wide band around each data point. 
+    land$range_50 <- rollapply(land$rlo_resid, width = 50, FUN = function(x){max(x) - min(x)}, partial = TRUE)
+  
+  ## xint1 and xint2: the predicted locations that the robust LOESS crosses the x-axis.  
+  xint1 <- min(abs(land$rlo_pred[(land$x < median(land$x))]), na.rm = T)
+  xint2 <- min(abs(land$rlo_pred[(land$x > median(land$x))]), na.rm = T)
+  ind1 <- which(land$rlo_pred == xint1 | land$rlo_pred == -1*xint1)
+  ind2 <- which(land$rlo_pred == xint2 | land$rlo_pred == -1*xint2)
+  land$xint1 <- land$x[ind1]
+  land$xint2 <- land$x[ind2]
+  
+  land$ind_edges <- ifelse(land$x < land$xint1 | land$x > land$xint2, 1, 0)
+  
+  ## ind_2mad: whether the data point is above the 2*MAR cutoff previously used as an ad-hoc method. 
+  mad <- mad(land$rlo_resid, na.rm = T)
+  land$ind_2mad <- ifelse(land$rlo_resid > 2*mad, 1, 0)
+  
+  ## numpos_50: how many positive residuals there are in a 50-wide band around each data point. 
+  land$numpos_50 <- rollapply(land$rlo_resid, width = 50, FUN = function(x){sum(x > 0)}, partial = TRUE)
+  
+  land$numNA_50 <- rollapply(land$rlo_resid, width = 50, FUN = function(x){sum(is.na(x))}, partial = TRUE)
+  lower <- quantile(land$x, prob = .25)
+  upper <- quantile(land$x, prob = .75)
+  proxy_dat <- land %>% filter(x < upper & x > lower)
+  proxy <- sd(proxy_dat$rlo_resid, na.rm = T)
+  land$rlo_resid_std <- land$rlo_resid/proxy
+  land$range_50_std <- land$range_50/proxy
+  
+  xrange <- max(land$x) #- min(land$x) # again correcting for shifted houston persistence data
+  land$depth_std <- land$depth/xrange
+  land$xint1_std <- land$xint1/xrange
+  land$xint2_std <- land$xint2/xrange
+
+  land <- na.omit(land)
+  return(land)
+}
+```
+
+```{r}
+hamby_lassofeats <- hamby44_paper %>% mutate(lasso_feats = purrr::map(ccdata, .f = function(ccdata){
+  land_df <- extract_logisticfull_feats(ccdata$x, ccdata$value)
+  return(land_df)
+}))
+
+head(hamby_lassofeats$lasso_feats[[1]])
+
+phoenix_lassofeats <- phoenix_paper %>% mutate(lasso_feats = purrr::map(ccdata, .f - function(ccdata){
+  land_df <- extract_logisticfull_feats(ccdata$x, ccdata$value)
+  return(land_df)
+}))
+
+houston_lassofeats <- houston_paper %>% mutate(lasso_feats = purrr::map(ccdata, .f - function(ccdata){
+  land_df <- extract_logisticfull_feats(ccdata$x, ccdata$value)
+  return(land_df)
+}))
+```
+
+```{r}
+
+```
+
+```{r}
+houston_lassofeats <- houston_paper %>% mutate(lasso_feats = purrr::map(ccdata, .f - function(ccdata){
+  land_df <- extract_logisticfull_feats(ccdata$x, ccdata$value)
+  return(land_df)
+}))
+```
+
+
+
+
+We also need to get "Time to calculate" for grooves_bcp method.  
+
+
+
+
+
+
+

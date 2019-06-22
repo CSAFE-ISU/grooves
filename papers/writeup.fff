@@ -55,12 +55,9 @@ the left is still problematic.}
  
 \begin{figure}
 \centering
-\includegraphics{writeup_files/figure-latex/houston-adapted-rlo-1.pdf}
-\caption{\label{houston-adapted-rlo} An example of the difference
-between LOESS, robust LOESS, and adapted robust LOESS fits to an LEA
-profile from the Houston-test set. Iteratively downweighting only
-positive residuals results in a significantly different fit which
-accounts for GEA structures on both the left and right.}
+\includegraphics[width=\textwidth]{../images/loess_comparison_plot_all}
+\caption{An example of the difference between LOESS, robust LOESS, and adapted robust LOESS fits to an LEA profile from the Houston-test set. (a) depicts predicted curves for all three methods on one LEA. Adapted robust LOESS most closely fits the LEA structure and allows GEA data to remain a separate structure. (b), (c), and (d) depict residuals $e_i$ resulting from each respective prediction method. Adapted robust LOESS in (d) results in the most desirable residual pattern, with LEA data residuals remaining closer to zero, and GEA data residuals being positive and large.}
+\label{houston-adapted-rlo-pdf}
 \end{figure}
 \efloatseparator
  
@@ -77,13 +74,24 @@ downwards shifts in predictions near the left and right boundaries.}
  
 \begin{figure}
 \centering
+\includegraphics{writeup_files/figure-latex/striae-magnitudes-1.pdf}
+\caption{\label{striae-magnitudes}Distribution of maximum striation
+depth for each of the three bullet test sets. Maximum striation depths
+are calculated as the largest observed absolute signature value in each
+individual LEA signature. Black vertical lines represent the median
+depth for each test set. Each test set has a different distribution,
+which indicates standardization of residual heights is crucial for
+generalizability of parameter estimates.}
+\end{figure}
+\efloatseparator
+ 
+\begin{figure}
+\centering
 \includegraphics{writeup_files/figure-latex/lasso-features-1.pdf}
 \caption{\label{lasso-features}Example distributions of features used in
 two-class classification from Hamby set 44. While depth shows the most
 clear separation between GEA and LEA data, it alone will not suffice to
-classify data correctly. While other distributions are relatively tight
-for LEA, there is still significant overlap with the wider GEA
-distributions.}
+classify data correctly.}
 \end{figure}
 \efloatseparator
  
@@ -93,8 +101,8 @@ distributions.}
 \caption{\label{hamby-groove-results}Random forest score distributions
 for same source and different source land-to-land comparisons for Hamby
 set 44. Distributions should ideally separate between same source and
-different source pairs. LASSO Basic, LASSO Full and Bayesian changepoint
-all demonstrate significant improvement over Rollapply.}
+different source pairs. LASSO Full and Bayesian changepoint both
+demonstrate significant improvement over Rollapply.}
 \end{figure}
 \efloatseparator
  
@@ -103,9 +111,9 @@ all demonstrate significant improvement over Rollapply.}
 \includegraphics{writeup_files/figure-latex/phoenix-groove-results-1.pdf}
 \caption{\label{phoenix-groove-results}Random forest score distributions
 for same source and different source land-to-land comparisons for the
-Phoenix PD set. LASSO Basic, LASSO Full, and Bayesian changepoint all
-demonstrate significant improvement over Rollapply, but are still not as
-well separated as the Manual ID distributions.}
+Phoenix PD set. LASSO Full and Bayesian changepoint all demonstrate
+significant improvement over Rollapply, but are still not as well
+separated as the Manual ID distributions.}
 \end{figure}
 \efloatseparator
  
@@ -114,8 +122,8 @@ well separated as the Manual ID distributions.}
 \includegraphics{writeup_files/figure-latex/houston-groove-results-1.pdf}
 \caption{\label{houston-groove-results}Random forest score distributions
 for same source and different source land-to-land comparisons for the
-Houston-test set. LASSO Basic and LASSO Full both demonstrate
-improvement over Rollapply, but are still not as well separated as the
-Manual ID distributions. Bayesian changepoint demonstrates minor
-improvement, but does not improve as much as the LASSO methods.}
+Houston-test set. LASSO Full demonstrates improvement over Rollapply,
+but is still not as well separated as the Manual ID distributions.
+Bayesian changepoint demonstrates minor improvement, but does not
+improve as much as the LASSO method.}
 \end{figure}

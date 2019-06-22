@@ -8,9 +8,7 @@ devtools::install_github("heike/bulletxtrctr", force = T) ## Latest commit d6b41
 #devtools::install_github("nategarton13/bulletcp") ## Latest commit d1e3cea - updates on 12/7/2018 from Nate
 
 library(bulletxtrctr)
-library(tidyr)
-library(purrr)
-library(dplyr)
+library(tidyverse)
 library(ggplot2)
 ```
 
@@ -224,4 +222,27 @@ houstontest_paper <- houston
 head(houstontest_paper)
 
 saveRDS(houstontest_paper, file = "../data/houston-test/houstontest_paper.rda")
+```
+
+
+
+## TIMING FOR BCP
+```{r}
+system.time(hamby44[1:10,] %>% mutate(grooves_bcp = purrr::map(ccdata, .f = function(land){
+  bulletxtrctr::cc_locate_grooves(method = "bcp", ccdata = land, return_plot = F)
+  #bulletcp::get_grooves_bcp(x = land$x, value = land$value, adjust = 10)
+  })))
+
+system.time(phoenix[1:10,] %>% mutate(grooves_bcp = purrr::map(ccdata, .f = function(land){
+  bulletxtrctr::cc_locate_grooves(method = "bcp", ccdata = land, return_plot = F)
+  #bulletcp::get_grooves_bcp(x = land$x, value = land$value, adjust = 10)
+  })))
+
+system.time(houston[1:10,] %>% mutate(grooves_bcp = purrr::map(ccdata, .f = function(land){
+  bulletxtrctr::cc_locate_grooves(method = "bcp", ccdata = land, return_plot = F)
+  #bulletcp::get_grooves_bcp(x = land$x, value = land$value, adjust = 10)
+  })))
+
+
+
 ```
