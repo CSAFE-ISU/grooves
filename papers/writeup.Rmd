@@ -960,7 +960,7 @@ Logistic LASSO & `r round(auc_lf, 2)` &  `r round(h44_lf_table$cutoff, 2)` &`r h
 Bayesian Changepoint & `r round(auc_bcp, 2)` &  `r round(h44_bcp_table$cutoff, 2)` &`r h44_bcp_table$fn` & `r h44_bcp_table$tp`&`r h44_bcp_table$tn` & `r round(h44_bcp_table$acc, 2)` & 150 min. \\ \hline
 Manual ID & `r round(auc_manual, 2)` & `r round(h44_manual_table$cutoff, 2)` & `r h44_manual_table$fn`& `r h44_manual_table$tp`&`r h44_manual_table$tn` & `r round(h44_manual_table$acc, 2)` & 45 min. \\ \hline 
 \end{tabular}
-\caption{LEA-to-LEA comparison results for Hamby set 44.}
+\caption{LEA-to-LEA comparison results for Hamby set 44. Results are reported as area under the curve (AUC), as well as False Negative, True Positive, and True Negative rates for a controlled false positive rate of .01. Both logistic LASSO and Bayesian changepoint show significant improvement over the rollapply method.}
 \label{hamby-table}
 \end{table}
 
@@ -1056,7 +1056,7 @@ Logistic LASSO & `r round(auc_lf_p, 3)` &  `r round(pho_lf_table$cutoff, 3)` &`r
 Bayesian Changepoint & `r round(auc_bcp_p, 3)` &  `r round(pho_bcp_table$cutoff, 3)` &`r pho_bcp_table$fn` & `r pho_bcp_table$tp`&`r pho_bcp_table$tn` & `r round(pho_bcp_table$acc, 2)` & 140 min. \\ \hline
 Manual ID & `r round(auc_manual_p, 3)` &  `r round(pho_manual_table$cutoff, 3)` & `r pho_manual_table$fn`& `r pho_manual_table$tp`&`r pho_manual_table$tn` & `r round(pho_manual_table$acc, 2)` & 45 min. \\ \hline 
 \end{tabular}
-\caption{LEA-to-LEA comparison results for the Phoenix PD set.}
+\caption{LEA-to-LEA comparison results for the Phoenix PD set. Results are reported as area under the curve (AUC), as well as False Negative, True Positive, and True Negative rates for a controlled false positive rate of .01. Both logistic LASSO and Bayesian changepoint show significant improvement over the rollapply method.}
 \label{phoenix-table}
 \end{table}
 
@@ -1137,7 +1137,7 @@ Logistic LASSO & `r round(auc_lf_h, 3)` &  `r round(hou_lf_table$cutoff, 3)` &`r
 Bayesian Changepoint & `r round(auc_bcp_h, 3)` &  `r round(hou_bcp_table$cutoff, 3)` &`r hou_bcp_table$fn` & `r hou_bcp_table$tp`&`r hou_bcp_table$tn` & `r round(hou_bcp_table$acc, 2)` & 280 min. \\ \hline
 Manual ID & `r round(auc_manual_h, 3)` &  `r round(hou_manual_table$cutoff, 3)` & `r hou_manual_table$fn`& `r hou_manual_table$tp`&`r hou_manual_table$tn` & `r round(hou_manual_table$acc, 2)` & 75 min. \\ \hline 
 \end{tabular}
-\caption{LEA-to-LEA comparison results for the Houston-test set.}
+\caption{LEA-to-LEA comparison results for the Houston-test set. Results are reported as area under the curve (AUC), as well as False Negative, True Positive, and True Negative rates for a controlled false positive rate of .01. Logistic LASSO method shows significant improvement over the rollapply method. Bayesian changepoint shows improvement, but less significant than the improvement shown by logistic LASSO.}
 \label{houston-table}
 \end{table}
 
