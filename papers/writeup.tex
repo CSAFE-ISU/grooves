@@ -124,11 +124,16 @@ OK'd.
 \newcommand{\ug}[1]{{\color{purple}{#1}}}
 \newcommand{\nate}[1]{{\color{olive}{#1}}}
 
+
+
+
+
 TO DO:
 
 \begin{itemize}
+\tightlist
 \item
-  {\color{teal}{Abstract}}
+  \kr{Abstract}
 \end{itemize}
 
 \section{Background}
@@ -240,27 +245,25 @@ consecutively rifled Ruger P85 barrels. There are two known bullets for
 each of the ten barrels, as well as 15 additional questioned bullets.
 Every LEA was scanned for each of the 35 fired bullets in the set,
 producing data for 210 individual land engraved areas. Two lands
-{\color{teal}{-- Barrel 9, Bullet 2, Land 3 and Unknowns, Bullet L, Land 5 -- - remove?}}
+\kr{-- Barrel 9, Bullet 2, Land 3 and Unknowns, Bullet L, Land 5 -- - remove?}
 were removed from consideration due to ``tank rash''. Tank rash results
 from a bullet striking the bottom of a water recovery tank after exiting
 the barrel, thereby creating marks on the land that are not due to the
 contact with the barrel.
 
 The Phoenix PD set is a closed test set consisting of 33 bullets fired
-from 8 barrels {\color{teal}{more information on the type of barrels?}}.
-There are three known bullets for each of the eight barrels, as well as
-9 additional questioned bullets. Every LEA was scanned for each of the
-33 fired bullets, producing a total of 198 individual land engraved
-areas.
+from 8 barrels \kr{more information on the type of barrels?}. There are
+three known bullets for each of the eight barrels, as well as 9
+additional questioned bullets. Every LEA was scanned for each of the 33
+fired bullets, producing a total of 198 individual land engraved areas.
 
 The Houston-test set is an open test set consisting of 69 bullets fired
-from more than 10 barrels
-{\color{teal}{more information on the type of barrels?}}. There are at
-least three known bullets for each of the ten barrels, with a total of
-33 known bullets. There are 24 questioned bullets that were fired from a
-combination of the 10 known barrels and additional, out-of-set barrels.
-Every LEA was scanned for each of the 69 fired bullets, producing a
-total of 414 individual land engraved areas.
+from more than 10 barrels \kr{more information on the type of barrels?}.
+There are at least three known bullets for each of the ten barrels, with
+a total of 33 known bullets. There are 24 questioned bullets that were
+fired from a combination of the 10 known barrels and additional,
+out-of-set barrels. Every LEA was scanned for each of the 69 fired
+bullets, producing a total of 414 individual land engraved areas.
 
 A vertical crosscut location was extracted from each scan by identifying
 an optimal crosscut using \texttt{x3p\_crosscut\_optimize} in the
@@ -374,7 +377,7 @@ fits bullet curvature. \autoref{houston-adapted-rlo-pdf} demonstrates
 the impact of the adaptation on predicted height values \(z_i\) and
 residual value \(e_i\). \autoref{adapted-rlo-shift} depicts the
 differing levels of impact our adjustment has on each bullet test set.
-{\color{teal}{Once I have more barrel information, I could go into a little more detail here about differing barrel types/ammo types or something, but no more than a sentence to bring the point home.}}
+\kr{Once I have more barrel information, I could go into a little more detail here about differing barrel types/ammo types or something, but no more than a sentence to bring the point home.}
 
 Once the adapted robust LOESS procedure has been applied to a LEA
 profile, the resulting residuals \(e_i\) follow a reliable pattern:
@@ -462,29 +465,29 @@ The full list of standardized features are as follows:
 
 \begin{itemize}
 
-\item[] \textbf{Standardized residuals $e_i$} {\color{teal}{(\texttt{rlo\_resid\_std})}}: Robust LOESS residual value $e_i$, standardized by dividing by standard deviation of residual values from middle 50\% of $\mathbf{x_i}$ values.  
+\item[] \textbf{Standardized residuals $e_i$} \kr{(\texttt{rlo\_resid\_std})}: Robust LOESS residual value $e_i$, standardized by dividing by standard deviation of residual values from middle 50\% of $\mathbf{x_i}$ values.  
 
-\item[] \textbf{Standardized residuals squared, $e_i^2$} {\color{teal}{(\texttt{(rlo\_resid\_std$\mathbf{)^2}$})}}: Squared term of \texttt{rlo\_resid\_std}.   
+\item[] \textbf{Standardized residuals squared, $e_i^2$} \kr{(\texttt{(rlo\_resid\_std$\mathbf{)^2}$})}: Squared term of \texttt{rlo\_resid\_std}.   
 
-\item[] \textbf{Side of scan} {\color{teal}{(\texttt{side})}}: Whether data point is to left or right of median $x_i$ value.  
+\item[] \textbf{Side of scan} \kr{(\texttt{side})}: Whether data point is to left or right of median $x_i$ value.  
 
-\item[] \textbf{Standardized depth from scan center} {\color{teal}{(\texttt{depth\_std})}}: Distance of data point from median $x_i$ value, standardized by dividing by maximum $x_i$ value (a proxy for the range of $x$ values).  
+\item[] \textbf{Standardized depth from scan center} \kr{(\texttt{depth\_std})}: Distance of data point from median $x_i$ value, standardized by dividing by maximum $x_i$ value (a proxy for the range of $x$ values).  
 
-\item[] \textbf{Side of scan, depth interaction} {\color{teal}{(\texttt{side:depth\_std})}}: Interaction between \texttt{side} and \texttt{depth\_std} variables.  
+\item[] \textbf{Side of scan, depth interaction} \kr{(\texttt{side:depth\_std})}: Interaction between \texttt{side} and \texttt{depth\_std} variables.  
 
-\item[] \textbf{Left $x_i$ intercept} {\color{teal}{(\texttt{xint1\_std})}}: Predicted location $x_i$ at which adapted robust LOESS crosses $y$ axis on left side of profile, standardized by dividing by maximum $x_i$ value (a proxy for the range of $x$ values).  
+\item[] \textbf{Left $x_i$ intercept} \kr{(\texttt{xint1\_std})}: Predicted location $x_i$ at which adapted robust LOESS crosses $y$ axis on left side of profile, standardized by dividing by maximum $x_i$ value (a proxy for the range of $x$ values).  
 
-\item[] \textbf{Right $x_i$ intercept} {\color{teal}{(\texttt{xint2\_std})}}: Predicted location $x_i$ at which adapted robust LOESS crosses $y$ axis on right side of profile, standardized by dividing by maximum $x_i$ value (a proxy for the range of $x$ values).  
+\item[] \textbf{Right $x_i$ intercept} \kr{(\texttt{xint2\_std})}: Predicted location $x_i$ at which adapted robust LOESS crosses $y$ axis on right side of profile, standardized by dividing by maximum $x_i$ value (a proxy for the range of $x$ values).  
 
-\item[] \textbf{Range of local residuals $e_i$} {\color{teal}{(\texttt{range\_50\_std})}}: Range of residual values $e_i$ within a 50-point window $(x_{i-25}, x_{i+25})$ around data point $x_i$, standardized by dividing by standard deviation of residual values from middle 50\% of $x_i$ values.  
+\item[] \textbf{Range of local residuals $e_i$} \kr{(\texttt{range\_50\_std})}: Range of residual values $e_i$ within a 50-point window $(x_{i-25}, x_{i+25})$ around data point $x_i$, standardized by dividing by standard deviation of residual values from middle 50\% of $x_i$ values.  
 
-\item[] \textbf{Number of local missing values} {\color{teal}{(\texttt{numNA\_50})}}: Number of missing values within a 50-point window $(x_{i-25}, x_{i+25})$ around data point $x_i$.  
+\item[] \textbf{Number of local missing values} \kr{(\texttt{numNA\_50})}: Number of missing values within a 50-point window $(x_{i-25}, x_{i+25})$ around data point $x_i$.  
 
-\item[] \textbf{Magnitude indicator for residual $e_i$} {\color{teal}{(\texttt{ind\_2mad})}}: Indicator of whether \texttt{rlo\_resid} is greater than \texttt{2*MAD(rlo\_resid)}, where $MAD$ is the median absolute deviation of residual values $e_i$ for an entire profile.    
+\item[] \textbf{Magnitude indicator for residual $e_i$} \kr{(\texttt{ind\_2mad})}: Indicator of whether \texttt{rlo\_resid} is greater than \texttt{2*MAD(rlo\_resid)}, where $MAD$ is the median absolute deviation of residual values $e_i$ for an entire profile.    
 
-\item[] \textbf{Number of local positive $e_i$ values} {\color{teal}{(\texttt{numpos\_50})}}: Number of positive residual values within a 50-point window $(x_{i-25}, x_{i+25})$ around data point $x_i$.  
+\item[] \textbf{Number of local positive $e_i$ values} \kr{(\texttt{numpos\_50})}: Number of positive residual values within a 50-point window $(x_{i-25}, x_{i+25})$ around data point $x_i$.  
 
-\item[] \textbf{Outside edges indicator} {\color{teal}{(\texttt{ind\_edges})}}: Indicator of whether data point is to the left of \texttt{xint1} or to the right of \texttt{xint2}. Values between \texttt{xint1} and \texttt{xint2} receive a value of 0, while values on the outside of the two values receive a value of 1.  
+\item[] \textbf{Outside edges indicator} \kr{(\texttt{ind\_edges})}: Indicator of whether data point is to the left of \texttt{xint1} or to the right of \texttt{xint2}. Values between \texttt{xint1} and \texttt{xint2} receive a value of 0, while values on the outside of the two values receive a value of 1.  
 
 \end{itemize}
 
@@ -558,10 +561,10 @@ follows:
 
 This method for shoulder location identification can be found in the
 \texttt{R} package \texttt{bulletxtrctr} as the function
-\texttt{get\_grooves\_lassofull}. {\color{teal}{Another method,}}
-\texttt{get\_grooves\_lassobasic},
-{\color{teal}{is also available through}} \texttt{bulletxtrctr},
-{\color{teal}{but is slightly less accurate and thus is not laid out here.}}
+\texttt{get\_grooves\_lassofull}. \kr{Another method,}
+\texttt{get\_grooves\_lassobasic}, \kr{is also available through}
+\texttt{bulletxtrctr},
+\kr{but is slightly less accurate and thus is not laid out here.}
 
 \subsection{Bayesian Changepoint Analysis}
 
@@ -571,10 +574,10 @@ pattern: decreasing values in the left GEA, values with no discernable
 slope change in the LEA, and increasing values in the right GEA. This
 can be thought of as a line with negative slope for the left GEA, line
 with zero slope for the LEA, and a line with positive slope for the
-right GEA. The next model will be therefore be defined in a piecewise
+right GEA. The next model will therefore be defined in a piecewise
 fashion. The points of global structural change are what we will call
-changepoints. Changepoint locations can be treated as parameters and
-estimated in the same manner as any other parameter in a statistical
+changepoints. Changepoint locations can be treated as unknown parameters
+and estimated in the same manner as any other parameter in a statistical
 model.
 
 Identifying such structural points was proposed more generally as
@@ -584,10 +587,11 @@ marks), but the overall linear structure remains on a larger scale. We
 will consider the smaller scale striation patterns as dependence in the
 data after accounting for the large scale structures we are estimating.
 
-We first perform a few additional data processing steps to streamline
+We first perform some additional data processing steps to streamline
 computation. First, we scale the residuals \(e_i\) from the robust LOESS
 procedure by dividing by the standard deviation of residuals \(e_i\) for
-the entire profile. Secondly, we impute missing residual values \(e_i\)
+the entire profile. The purpose of this is purely to make certain priors
+easier to specify. Secondly, we impute missing residual values \(e_i\)
 to maintain equidistance between \(x_i\) locations.
 
 We next develop a model which we will use to identify changepoints, and
@@ -600,16 +604,16 @@ For model formulation, we will define random variables associated with
 residual values \(e_i\). Let \(\{Y(x_i): i = 1,2, ..., n\}\) denote the
 set of random variables representing the residuals from the robust LOESS
 procedure at the values \(x_i\). Also assume that
-\(x_1 < x_2 < ... < x_n\). Also, let \(c_l\) be the value of the left
+\(x_1 < x_2 < ... < x_n\). Let \(c_l\) be the value of the left
 changepoint and \(c_r\) be the value of the right changepoint. Here, the
 left changepoint is where the left GEA meets the LEA, and the right
-changepoint is where the right GEA meets the LEA. Also, denote the
-median centered \(x\) values as \(x'_i = x_i - \tilde{x}\) where
-\(\tilde{x}\) is the median \(x\) value. Complex small scale patterns,
-such as the striae, will be modeled through a covariance structure on
-the data that will be allowed to differ between each GEA and between the
-GEAs and LEA. We will construct the covariance matrices from the
-exponential covariance function
+changepoint is where the right GEA meets the LEA. Denote the median
+centered \(x\) values as \(x'_i = x_i - \tilde{x}\) where \(\tilde{x}\)
+is the median \(x\) value. Complex small scale patterns, such as the
+striae, will be modeled through a covariance structure on the data that
+will be allowed to differ between each GEA and between the GEAs and LEA.
+We will construct the covariance matrices from the exponential
+covariance function
 \(K(x, x';\sigma, \ell) = \sigma^2 e^{-\frac{|x - x'|}{\ell}} = cov(Y(x), Y(x'))\).
 The differences in covariance matrices for the GEAs and LEA will be
 reflected in the parameters \(\sigma\) and \(\ell\). The data model that
@@ -625,19 +629,27 @@ we consider is then,
 \(x_{k_2} < c_r \leq x_{k_2 + 1}\) Here, \(x_{1:k}\) denotes the column
 vector \((x_1, x_2, ..., x_k)^\top\), and \(\mathbbm{1}\) denotes the
 vector of ones. Independence is assumed between each of these three
-distributions for simplicity. The parameters that need to be estimated
-include the four mean parameters in the GEAs, the six covariance
-parameters (two for each of the three areas), and the two changepoint
-parameters, \(c_l\) and \(c_r\).
+distributions for two reasons. Firstly, it simplifies the computations
+significantly. Secondly, the robust loess residual values are the sum of
+the relevant global structure (GEA or LEA) and finer local structure
+(e.g.~striae). The global structure component of any two residual values
+should be independent conditioned on the known global structure at the
+location of each residual. The local structure tends to be meaningful
+only over small regions of the land, and so any dependence between the
+GEAs and LEA due to local structure should be small enough to safely
+ignore. The parameters that need to be estimated include the four mean
+parameters in the GEAs, the six covariance parameters (two for each of
+the three areas), and the two changepoint parameters, \(c_l\) and
+\(c_r\).
 
 The above model encapsulates the essence of the approach. However, there
 are a few difficulties. The first difficulty is that there are not
 always two GEAs in a particular land. There may be one GEA, or the land
-may only consist of the LEA. Thus, the above model is actually
-conditional on there being two GEAs in the data. We also define models
-for when there is one GEA on the left, one GEA on the right, or no GEAs.
-The models are defined in an essentially identical way. Conditional on
-there being only one GEA, the left GEA model is defined as,
+may only consist of the LEA. Thus, the above model is conditional on
+there being two GEAs in the data. We also define models for when there
+is one GEA on the left, one GEA on the right, or no GEAs. The models are
+defined in an essentially identical way. Conditional on there being only
+one GEA, the left GEA model is defined as,
 
 \begin{align}
 (Y(x_1), Y(x_2), ..., Y(x_{k}))^{\top} &\sim N(\beta_{0}\mathbbm{1} + \beta_{1} x_{1:k}, \Sigma_1(\sigma_1, \ell_1)) \\
@@ -659,28 +671,30 @@ model is simply
 \end{align}
 
 Estimating the changepoint locations also involves selecting the most
-appropriate model from these four. In order to avoid confusion, we have
-slightly abused notation and, for example,
-\(\Sigma_1(\sigma_1, \ell_1)\) as it is estimated in the two changepoint
-model is \emph{not} the same as \(\Sigma_1(\sigma_1, \ell_1)\) from
-either of the one changepoint models, and \(\Sigma_1(\sigma_1, \ell_1)\)
-is also \emph{not} the same between the two one changepoint models. As
-another example, \(\beta_0\) is \emph{not} the same between each of the
-one changepoint models. So, to be clear, duplication of notation in
-\emph{different} models is not meant to imply that those parameters are
-shared between models.
+appropriate model from these four. We use \(m_0\) to denote the model
+with no GEA, \(m_{1l}\) and \(m_{1r}\) to denote the models with one
+left or one right GEA, respectively, and we use \(m_2\) to denote the
+model with two GEAs. In order to avoid confusion, we have slightly
+abused notation and, for example, \(\Sigma_1(\sigma_1, \ell_1)\) as it
+is estimated in the two changepoint model is \emph{not} the same as
+\(\Sigma_1(\sigma_1, \ell_1)\) from either of the one changepoint
+models, and \(\Sigma_1(\sigma_1, \ell_1)\) is also \emph{not} the same
+between the two one changepoint models. As another example, \(\beta_0\)
+is \emph{not} the same between each of the one changepoint models. So,
+to be clear, duplication of notation in \emph{different} models is not
+meant to imply that those parameters are shared between models.
 
-Ultimately, these above four models are each individually fitted on each
-individual profile, and each model above is given a prior. From there,
-we do model selection in the formal Bayesian way, selecting number and
+Ultimately, models \(m_0\), \(m_{1l}\), \(m_{1r}\), and \(m_2\) are each
+given a prior and individually fitted on every profile. From there, we
+do model selection in the formal Bayesian way, selecting number and
 location of changepoints by maximizing the estimated posterior
 distribution.
 
 In order to complete a Bayesian model specification, we need priors on
-each of the parameters in each model as well as each model itself. We
-will assume independence between each parameter a priori. For each
-length scale \(\ell\), we will assume \(\ell \sim \text{Gamma}(3,5)\).
-For each standard deviation, we will assume
+the parameters in each model as well as the model itself. We will assume
+independence between each parameter a priori. For each length scale
+\(\ell\), we will assume \(\ell \sim \text{Gamma}(3,5)\). For each
+standard deviation, we will assume
 \(\sigma \sim \text{Half-Normal}^{+}(0,1)\), where
 \(\text{Half-Normal}^{+}(\cdot,\cdot)\) is notation for the normal
 distribution restricted to the positive real numbers. For intercept
@@ -701,7 +715,8 @@ close those values are to the edges is a parameter that is set manually.
 Further, we include another hyperparameter, \(\gamma\), which can be set
 so that the changepoints are not allowed to be too close to each other.
 This is also a parameter that is set manually. Lastly, we assume a
-uniform prior over all four models.
+uniform prior over all four models, i.e.
+\(P(M = m_0) = P(M = m_{1l}) = P(M = m_{1r}) = P(M = m_2) = 1/4\).
 
 \subsubsection{Bayesian Model Estimation}
 
@@ -713,24 +728,24 @@ it crosses the nearest point to the right or left, at which point the
 likelihood makes a jump. This makes maximum likelihood estimation in the
 standard way infeasible, but Bayesian estimation can be done in a fairly
 straightforward way via Markov chain Monte Carlo (MCMC). The basic idea
-is that, for each model, we can construct a two step Gibbs sampler. In
-step 1 we sample from the posterior distribution of the mean and
-covariance parameters given the changepoint locations, and in step 2 we
-sample from the changepoint locations given the mean and covariance
-parameters. Because of the non-conjugacy in our model, we perform both
-sampling steps using a random walk Metropolis-Hastings (RWMH) step with
-Gaussian proposals. For details on Gibbs sampling and the
-Metropolis-Hastings algorithm see \citet{gelman2013}. It is also worth
-mentioning that the zero changepoint model does not require Gibbs
-sampling at all, and we perform estimation there using a RWMH algorithm.
+is that, for models \(m_{1l}\), \(m_{1r}\), and \(m_2\), we can
+construct a two step Gibbs sampler. In step 1 we sample from the
+posterior distribution of the mean and covariance parameters given the
+changepoint locations, and in step 2 we sample from the changepoint
+locations given the mean and covariance parameters. Because of the
+non-conjugacy in our model, we perform both sampling steps using a
+random walk Metropolis-Hastings (RWMH) step with Gaussian proposals. For
+details on Gibbs sampling and the Metropolis-Hastings algorithm see
+\citet{gelman2013}. It is also worth mentioning that the model \(m_0\)
+does not require Gibbs sampling at all, and we perform estimation there
+using a RWMH algorithm in the same way that we do for the other models.
 
-We now provide the two basic steps of the Gibbs sampler for the two
-changepoint case. The algorithms to sample from the other three models
-are omitted, and are nearly identical except for the smaller number of
-parameters that need to be sampled. Denote collection of mean and
-covariance parameters for the left GEA as \(\theta_1\), the LEA as
-\(\theta_2\), and the right GEA as \(\theta_3\). Then, at iteration
-\(t\) after warmup
+We now provide the two basic steps of the Gibbs sampler for \(M = m_2\).
+The algorithms to sample from the other three models are omitted, and
+are nearly identical except for the smaller number of parameters that
+need to be sampled. Denote collection of mean and covariance parameters
+for the left GEA as \(\theta_1\), the LEA as \(\theta_2\), and the right
+GEA as \(\theta_3\). Then, at iteration \(t\)
 
 \begin{enumerate}
 \def\labelenumi{\arabic{enumi}.}
@@ -913,10 +928,12 @@ results.
 
 In our implementation of this algorithm, the sampling functions were
 originally written with the intention of tuning the proposal variances
-to potentially accelerate convergence, and thus several warmup
-iterations are required for this purpose. This turns out to be a bad
-idea in this context for two reasons. The first reason is that the
-warmup iterations allow the sampler to wander past the global modes and
+to potentially accelerate convergence, and thus several warm-up
+iterations are required for this purpose. The concept of warm-up
+iterations and tuning proposal variances based on warm-up iterations is
+described in Chapter 12.2 of \citet{gelman2013}. This turns out to be a
+bad idea in this context for two reasons. The first reason is that the
+warm-up iterations allow the sampler to wander past the global modes and
 get stuck in suboptimal modes far from the groove locations, from which
 the sampler may or may not find its way back to the optimal modes in
 just a few thousand iterations. Secondly, if the sampler does wander
@@ -940,7 +957,9 @@ becomes
 \(d\) is the dimension of \(\theta_i\) (which is not constant between
 GEAs and LEA), and \(\hat{Var}(\theta_i^{(1:w)})\) is the estimated
 variance covariance matrix from the \(w\) warmup iterations. Note that
-the addition of a diagonal matrix with entries \(0.1\) is to avoid the
+the approximately optimal proposal variance as described in Chapter 12.2
+of \citet{gelman2013} is \(\frac{2.4^2}{d}\hat{Var}(\theta_i^{(1:w)})\).
+The addition of a diagonal matrix with entries \(0.1\) is to avoid the
 case when most or all warmup iterations have the same value. Similarly,
 the proposal variance for \((c_l, c_r)\) after warmup becomes
 \(\frac{2.4^2}{2}\hat{Var}((c_l,c_r)^{(1:w)}) + \text{diag}(1)\).
