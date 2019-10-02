@@ -455,7 +455,9 @@ Classification into ``LEA'' or ``GEA'' is first approached by a process
 of feature engineering based on adapted robust LOESS residuals. While
 the residuals \(e_i\) should demonstrate differing patterns of
 magnitude, residuals alone are not sufficient to classify data with high
-accuracy. {\color{purple}{Add reason already here.}}
+accuracy. We expect small residual values in the LEA; however, small
+residuals may also be present in the GEA if there is not a pronounced
+GEA structure on one side.
 
 \begin{figure}
 \centering
@@ -469,10 +471,12 @@ which indicates standardization of residual heights is crucial for
 generalizability of parameter estimates.}
 \end{figure}
 
-\autoref{striae-magnitudes} demonstrates that each test set has distinct
-patterns of striation depth. Thus, standardization of features is
-imperative for transferability of fitted model parameters. The LEA scan
-context requires some non-traditional standardization practices.
+Before considering additional features, we also need to develop a method
+of standardization for new data features. Each test set has distinct
+patterns of striation depth (see \autoref{striae-magnitudes});
+standardization of features is imperative for transferability of fitted
+model parameters to different LEA types. The LEA scan context requires
+some non-traditional standardization practices.
 
 For example, consider the distribution of residual values \(e_i\)
 resulting from adapted robust LOESS. There is reason to believe that the

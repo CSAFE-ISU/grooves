@@ -648,7 +648,7 @@ adapted_rlo %>%
 
 Shoulder location can be predicted by first classifying each residual point as one of two classes ("LEA" or "GEA"), and subsequently gathering the range of values classified as "LEA" points.  
 
-Classification into "LEA" or "GEA" is first approached by a process of feature engineering based on adapted robust LOESS residuals. While the residuals $e_i$ should demonstrate differing patterns of magnitude, residuals alone are not sufficient to classify data with high accuracy. \ug{Add reason already here.}  
+Classification into "LEA" or "GEA" is first approached by a process of feature engineering based on adapted robust LOESS residuals. While the residuals $e_i$ should demonstrate differing patterns of magnitude, residuals alone are not sufficient to classify data with high accuracy. We expect small residual values in the LEA; however, small residuals may also be present in the GEA if there is not a pronounced GEA structure on one side.    
 
 ```{r striae-magnitudes, echo = F, warning = F, message = F, fig.cap = "\\label{striae-magnitudes}Distribution of maximum striation depth for each of the three bullet test sets. Maximum striation depths are calculated as the largest observed absolute signature value in each individual LEA signature. Black vertical lines represent the median depth for each test set. Each test set has a different distribution, which indicates standardization of residual heights is crucial for generalizability of parameter estimates.", fig.width =6, fig.height = 4} 
 mag_viz_data <- readRDS("../data/magnitude_viz.rda")
@@ -668,7 +668,8 @@ mag_viz_data %>% ggplot() +
 
 ```
 
-\autoref{striae-magnitudes} demonstrates that each test set has distinct patterns of striation depth. Thus, standardization of features is imperative for transferability of fitted model parameters. The LEA scan context requires some non-traditional standardization practices.  
+
+Before considering additional features, we also need to develop a method of standardization for new data features. Each test set has distinct patterns of striation depth (see \autoref{striae-magnitudes}); standardization of features is imperative for transferability of fitted model parameters to different LEA types. The LEA scan context requires some non-traditional standardization practices.  
 
 For example, consider the distribution of residual values $e_i$ resulting from adapted robust LOESS. There is reason to believe that the distribution will be quite skewed, which means a standard deviation will not be a good proxy for the spread of the distribution. Thus, rather than the standard deviation, we consider instead the standard deviation of residual values from the middle 50\% of $x_i$ values present in each profile. This alternative acts as a proxy for the depth of striae on each LEA, with higher standard deviations found for lands with deeper striae. Standardizing residual values by this proxy puts all residuals on a comparable scale.  
 
@@ -714,7 +715,7 @@ feat_resid <- lasso_features %>%
   ggplot() + geom_density(aes(x = rlo_resid, y = ..scaled.., fill = factor(response)), alpha = 0.6) + 
   theme_bw() + 
   scale_fill_brewer(name = "", palette = "Dark2", labels = c("LEA Data", "GEA Data")) + 
-  labs(x = "Robust LOESS Residual Value", y = "", title = "Robust LOESS Residual Densities") + 
+  labs(x = "Robust LOESS Residual Value", y = "", title = "Robust LOESS Residual") + 
   theme(plot.title = element_text(size = 10), axis.title = element_text(size = 9))
 
 
@@ -723,7 +724,7 @@ feat_depth <- lasso_features %>%
   ggplot() + geom_density(aes(x = depth_std, y = ..scaled.., fill = factor(response)), alpha = 0.6) + 
   theme_bw() + 
   scale_fill_brewer(name = "", palette = "Dark2", labels = c("LEA Data", "GEA Data")) + 
-  labs(x = "Standardized Depth from Scan Center", y = "", title= "Standardized Depth Densities") + 
+  labs(x = "Standardized Depth from Scan Center", y = "", title= "Standardized Depth") + 
   theme(plot.title = element_text(size = 10), axis.title = element_text(size = 9))
 
 
@@ -731,7 +732,7 @@ feat_range <- lasso_features %>%
   ggplot() + geom_density(aes(x = range_50, y = ..scaled.., fill = factor(response)), alpha = 0.6) + 
   theme_bw() + 
   scale_fill_brewer(name = "", palette = "Dark2", labels = c("LEA Data", "GEA Data")) + 
-  labs(x = "Range of Values within 50", y = "", title = "Range of Values within 50 Densities") + 
+  labs(x = "Range of Values within 50", y = "", title = "Range of Values within 50") + 
   theme(plot.title = element_text(size = 10), axis.title = element_text(size = 9))
 
 
